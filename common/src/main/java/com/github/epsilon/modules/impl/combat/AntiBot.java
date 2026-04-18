@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.GameType;
 
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class AntiBot extends Module {
                     }
                 }
             }
-        } else if (event.getPacket() instanceof ClientboundAddEntityPacket packet && packet.getType() == EntityType.PLAYER) {
+        } else if (event.getPacket() instanceof ClientboundAddEntityPacket packet && packet.getType() == EntityTypes.PLAYER) {
             if (uuids.containsKey(packet.getUUID())) {
                 uuids.remove(packet.getUUID());
                 ids.add(packet.getId());

@@ -21,15 +21,15 @@ public class MixinScreenEffectRenderer {
     @Shadow
     private @Nullable ItemStack itemActivationItem;
 
-    @Inject(method = "renderTex", at = @At("HEAD"), cancellable = true)
-    private static void onRenderFluid(TextureAtlasSprite texture, PoseStack poseStack, MultiBufferSource bufferSource, CallbackInfo ci) {
+    @Inject(method = "submitBlockSprite", at = @At("HEAD"), cancellable = true)
+    private static void onRenderFluid(TextureAtlasSprite sprite, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int color, CallbackInfo ci) {
         if (NoRender.INSTANCE.isEnabled() && NoRender.INSTANCE.blockOverlay.getValue()) {
             ci.cancel();
         }
     }
 
-    @Inject(method = "renderFire", at = @At("HEAD"), cancellable = true)
-    private static void onRenderFire(PoseStack poseStack, MultiBufferSource bufferSource, TextureAtlasSprite texture, CallbackInfo ci) {
+    @Inject(method = "submitFire", at = @At("HEAD"), cancellable = true)
+    private static void onRenderFire(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, TextureAtlasSprite sprite, CallbackInfo ci) {
         if (NoRender.INSTANCE.isEnabled() && NoRender.INSTANCE.fireOverlay.getValue()) {
             ci.cancel();
         }

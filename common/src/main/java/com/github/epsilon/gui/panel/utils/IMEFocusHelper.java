@@ -17,7 +17,7 @@ public class IMEFocusHelper {
      */
     public static void activate() {
         Minecraft mc = Minecraft.getInstance();
-        Screen screen = mc.screen;
+        Screen screen = mc.gui.screen();
         if (screen != null) {
             mc.onTextInputFocusChange(screen, true);
         }
@@ -34,7 +34,7 @@ public class IMEFocusHelper {
      */
     public static void deactivate() {
         Minecraft mc = Minecraft.getInstance();
-        Screen screen = mc.screen;
+        Screen screen = mc.gui.screen();
         if (screen != null) {
             mc.onTextInputFocusChange(screen, false);
         }

@@ -244,7 +244,7 @@ public class HudEditorScreen extends Screen {
         clearSnapPreview();
         IMEFocusHelper.deactivate();
         super.onClose();
-        minecraft.setScreen(PanelScreen.INSTANCE);
+        minecraft.gui.setScreen(PanelScreen.INSTANCE);
     }
 
     @Override

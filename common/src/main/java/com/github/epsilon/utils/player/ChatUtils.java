@@ -3,6 +3,7 @@ package com.github.epsilon.utils.player;
 import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.utils.render.ColorUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -21,7 +22,7 @@ public class ChatUtils {
     }
 
     public static void addChatMessage(boolean prefix, String message) {
-        mc.gui.getChat().addClientSystemMessage(buildClientMessage(prefix, message));
+        mc.gui.hud.getChat().addClientSystemMessage(buildClientMessage(prefix, message));
     }
 
     public static Component buildClientMessage(boolean prefix, String message) {

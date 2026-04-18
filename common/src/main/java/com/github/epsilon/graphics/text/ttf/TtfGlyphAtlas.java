@@ -1,12 +1,12 @@
 package com.github.epsilon.graphics.text.ttf;
 
 import com.github.epsilon.graphics.LuminTexture;
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.TextureFormat;
 
 import java.util.OptionalDouble;
 
@@ -23,7 +23,7 @@ public class TtfGlyphAtlas {
         final var texture = RenderSystem.getDevice().createTexture(
                 () -> "Lumin-TtfGlyphAtlas",
                 GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_COPY_DST,
-                TextureFormat.RED8,
+                GpuFormat.R8_UNORM,
                 SIZE, SIZE,
                 1, 1
         );

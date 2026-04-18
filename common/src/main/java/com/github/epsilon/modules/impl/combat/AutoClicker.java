@@ -60,7 +60,7 @@ public class AutoClicker extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (nullCheck() || mc.screen != null) return;
+        if (nullCheck() || mc.gui.screen() != null) return;
 
         long currentTime = System.currentTimeMillis();
 

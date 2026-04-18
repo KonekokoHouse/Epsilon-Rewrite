@@ -16,14 +16,14 @@ public class WorldToScreen {
     private static final Minecraft mc = Minecraft.getInstance();
 
     public static Vector3f getWorldPositionToScreen(Vec3 pos) {
-        final var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        final var camera = Minecraft.getInstance().gameRenderer.mainCamera();
         final Vector3f position = new Vec3(
                 pos.x - camera.position().x,
                 pos.y - camera.position().y,
                 pos.z - camera.position().z
         ).toVector3f();
 
-        CameraRenderState cameraState = mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
+        CameraRenderState cameraState = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         Matrix4f viewProjectionMatrix = new Matrix4f(cameraState.projectionMatrix).mul(cameraState.viewRotationMatrix);
 
         final int[] viewport = new int[]{0, 0, mc.getWindow().getWidth(), mc.getWindow().getHeight()};
@@ -50,9 +50,9 @@ public class WorldToScreen {
 
     public static Vector4d projectAbsoluteAABBOn2D(AABB absoluteBoundingBox) {
         final int[] viewport = new int[]{0, 0, mc.getWindow().getWidth(), mc.getWindow().getHeight()};
-        CameraRenderState cameraState = mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
+        CameraRenderState cameraState = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         Matrix4f viewProjectionMatrix = new Matrix4f(cameraState.projectionMatrix).mul(cameraState.viewRotationMatrix);
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = mc.gameRenderer.mainCamera().position();
 
         final Vector4d projection = projectEntity(viewport, viewProjectionMatrix, absoluteBoundingBox, cameraPos);
         if (projection == null) return null;
@@ -103,7 +103,7 @@ public class WorldToScreen {
     }
 
     public static Vector4d projectEntity(final int[] viewport, final Matrix4f matrix, final AABB absoluteBoundingBox) {
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = mc.gameRenderer.mainCamera().position();
         return projectEntity(viewport, matrix, absoluteBoundingBox, cameraPos);
     }
 
