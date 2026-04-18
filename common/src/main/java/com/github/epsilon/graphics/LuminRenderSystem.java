@@ -3,6 +3,9 @@ package com.github.epsilon.graphics;
 import com.github.epsilon.assets.holders.RenderTargetHolder;
 import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.text.StaticFontLoader;
+import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
+import com.github.epsilon.modules.impl.world.ComputeTest;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -33,8 +36,20 @@ public class LuminRenderSystem {
     @Nullable
     private static LuminRenderTarget activeTarget = null;
 
+    public static final LuminVulkanContext vulkanContext = new LuminVulkanContext();
+
     public static void setActiveTarget(@Nullable LuminRenderTarget target) {
         activeTarget = target;
+    }
+
+    public static void destroyAll() {
+        ComputeTest.INSTANCE.destroy();
+
+        guiProjectionMatrixBuffer.close();
+        RenderTargetHolder.INSTANCE.destroyAll();
+        StaticFontLoader.destroyAll();
+        RendererHolder.INSTANCE.destroyAll();
+        vulkanContext.destroy();
     }
 
     public static void destroyAll() {
@@ -73,7 +88,7 @@ public class LuminRenderSystem {
     @Nullable
     public static GpuTextureView resolveDepthView() {
         if (activeTarget != null) return activeTarget.depthView();
-        return mc.mainRenderTarget().getDepthTextureView();
+        return Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTextureView();
     }
 
     public static QuadRenderingInfo prepareQuadRendering(int vertexCount) {
@@ -121,7 +136,7 @@ public class LuminRenderSystem {
         private LuminRenderTarget(String name, int width, int height) {
             this.width = width;
             this.height = height;
-            this.identifier = ResourceLocationUtils.getIdentifier("lumin-rt" + name);
+            this.identifier = ResourceLocationUtils.getIdentifier("epsilon-rt" + name);
             createTextures();
         }
 
