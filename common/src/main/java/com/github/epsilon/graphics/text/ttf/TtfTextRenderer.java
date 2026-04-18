@@ -117,8 +117,8 @@ public class TtfTextRenderer implements ITextRenderer {
         if (colorView == null) return;
 
         GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(
-                RenderSystem.getModelViewMatrix(), new Vector4f(1, 1, 1, 1),
-                new Vector3f(0, 0, 0), TextureTransform.DEFAULT_TEXTURING.getMatrix()
+                RenderSystem.getModelViewMatrixCopy(), new Vector4f(1, 1, 1, 1),
+                new Vector3f(0, 0, 0), TextureTransform.DEFAULT_TEXTURING.createMatrix()
         );
 
         for (Map.Entry<TtfGlyphAtlas, Batch> entry : batches.entrySet()) {

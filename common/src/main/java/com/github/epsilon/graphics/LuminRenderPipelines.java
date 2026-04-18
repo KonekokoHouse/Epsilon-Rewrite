@@ -1,18 +1,25 @@
 package com.github.epsilon.graphics;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 
 
 public class LuminRenderPipelines {
 
-    private final static RenderPipeline.Snippet NO_BLEND_DEPTH_SNIPPET = RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
+    private final static BindGroupLayout TTF_INFO_UBO = BindGroupLayout.builder()
+            .withUniform("TtfInfo", UniformType.UNIFORM_BUFFER)
+            .build();
+
+    private final static RenderPipeline.Snippet NO_BLEND_DEPTH_SNIPPET = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.MATRICES_PROJECTION)
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .buildSnippet();
 
@@ -25,7 +32,7 @@ public class LuminRenderPipelines {
             .build();
 
     private final static RenderPipeline.Snippet TTF_SNIPPET = RenderPipeline.builder(NO_BLEND_DEPTH_SNIPPET)
-            .withUniform("TtfInfo", UniformType.UNIFORM_BUFFER)
+            .withBindGroupLayout(TTF_INFO_UBO)
             .buildSnippet();
 
     public final static RenderPipeline TTF_FONT = RenderPipeline.builder(TTF_SNIPPET)
@@ -33,7 +40,7 @@ public class LuminRenderPipelines {
             .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
             .withVertexShader(ResourceLocationUtils.getIdentifier("ttf_font"))
             .withFragmentShader(ResourceLocationUtils.getIdentifier("ttf_font"))
-            .withSampler("Sampler0")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
             .withCull(false)
             .build();
 
@@ -66,7 +73,7 @@ public class LuminRenderPipelines {
             .withVertexFormat(LuminVertexFormats.TEXTURE, VertexFormat.Mode.QUADS)
             .withVertexShader(ResourceLocationUtils.getIdentifier("texture"))
             .withFragmentShader(ResourceLocationUtils.getIdentifier("texture"))
-            .withSampler("Sampler0")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
             .withCull(false)
             .build();
 

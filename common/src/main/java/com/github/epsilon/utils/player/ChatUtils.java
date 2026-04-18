@@ -20,7 +20,7 @@ public class ChatUtils {
     }
 
     public static void addChatMessage(boolean prefix, String message) {
-        mc.gui.getChat().addClientSystemMessage(buildClientMessage(prefix, message));
+        mc.gui.hud.getChat().addClientSystemMessage(buildClientMessage(prefix, message));
     }
 
     public static Component buildClientMessage(boolean prefix, String message) {

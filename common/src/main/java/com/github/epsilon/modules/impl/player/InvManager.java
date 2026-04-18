@@ -234,7 +234,7 @@ public class InvManager extends Module {
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (!(mc.screen instanceof PanelScreen) && !this.checkConfig()) {
+        if (!(mc.gui.screen() instanceof PanelScreen) && !this.checkConfig()) {
             ChatUtils.addChatMessage("Duplicate slot config in Inventory Manager! Please check your config!");
             this.toggle();
             return;
@@ -252,12 +252,12 @@ public class InvManager extends Module {
 
         if (Stealer.INSTANCE.isWorking()
                 || Scaffold.INSTANCE.isEnabled()
-                || (this.inventoryOnly.getValue() ? !(mc.screen instanceof InventoryScreen) : this.noMoveTicks <= 1)) {
+                || (this.inventoryOnly.getValue() ? !(mc.gui.screen() instanceof InventoryScreen) : this.noMoveTicks <= 1)) {
             this.clickOffHand = false;
             return;
         }
 
-        if (mc.screen instanceof AbstractContainerScreen<?> container && container.getMenu().containerId != mc.player.inventoryMenu.containerId) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> container && container.getMenu().containerId != mc.player.inventoryMenu.containerId) {
             return;
         }
 

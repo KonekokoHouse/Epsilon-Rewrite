@@ -1,6 +1,7 @@
 package com.github.epsilon.utils.render.esp;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.immediate.LuminImmediateRenderer;
 import com.github.epsilon.utils.render.ColorUtils;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -57,26 +58,25 @@ public class CaptureMarkESP {
         poseStack.pushPose();
         poseStack.translate(ex, ey + target.getBbHeight() * 0.5, ez);
 
-        Camera camera = mc.gameRenderer.getMainCamera();
+        Camera camera = mc.gameRenderer.mainCamera();
         poseStack.mulPose(Axis.YP.rotationDegrees(-camera.yRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
 
-        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-
         Matrix4f matrix = poseStack.last().pose();
+        LuminImmediateRenderer.PosTexColorQuads builder = LuminImmediateRenderer.beginPosTexColorQuads(TARGET_ICON_PIPELINE, CAPTUREMARK);
 
-        Color c1 = getColorForProgress(0f, waveSpeed, color1, color2, timeSeconds);
-        Color c2 = getColorForProgress(0.25f, waveSpeed, color1, color2, timeSeconds);
-        Color c3 = getColorForProgress(0.5f, waveSpeed, color1, color2, timeSeconds);
-        Color c4 = getColorForProgress(0.75f, waveSpeed, color1, color2, timeSeconds);
+        Color c1 = getColorForProgress(0, waveSpeed, color1, color2);
+        Color c2 = getColorForProgress(0.25f, waveSpeed, color1, color2);
+        Color c3 = getColorForProgress(0.5f, waveSpeed, color1, color2);
+        Color c4 = getColorForProgress(0.75f, waveSpeed, color1, color2);
 
-        buffer.addVertex(matrix, -size, -size, 0).setUv(0, 0).setColor(c1.getRGB());
-        buffer.addVertex(matrix, -size, size, 0).setUv(0, 1).setColor(c2.getRGB());
-        buffer.addVertex(matrix, size, size, 0).setUv(1, 1).setColor(c3.getRGB());
-        buffer.addVertex(matrix, size, -size, 0).setUv(1, 0).setColor(c4.getRGB());
+        builder.vertex(matrix, -size, -size, 0, 0, 0, c1.getRGB());
+        builder.vertex(matrix, -size, size, 0, 0, 1, c2.getRGB());
+        builder.vertex(matrix, size, size, 0, 1, 1, c3.getRGB());
+        builder.vertex(matrix, size, -size, 0, 1, 0, c4.getRGB());
 
-        TARGET_ICON_LAYER.draw(buffer.buildOrThrow());
+        builder.end();
 
         poseStack.popPose();
     }
