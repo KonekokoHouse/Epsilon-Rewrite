@@ -1,6 +1,7 @@
 package com.github.epsilon.graphics;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -17,6 +18,7 @@ import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import javax.annotation.Nullable;
 import java.util.OptionalDouble;
 
 public class LuminRenderSystem {
@@ -25,12 +27,20 @@ public class LuminRenderSystem {
 
     private static final ProjectionMatrixBuffer guiProjectionMatrixBuffer = new ProjectionMatrixBuffer("lumin-gui");
 
+    @Nullable
     private static LuminRenderTarget activeTarget = null;
 
-    public static void setActiveTarget(LuminRenderTarget target) {
+    public static final LuminVulkanContext vulkanContext = new LuminVulkanContext();
+
+    public static void setActiveTarget(@Nullable LuminRenderTarget target) {
         activeTarget = target;
     }
 
+    public static void destroyVulkanContext() {
+        vulkanContext.destroy();
+    }
+
+    @Nullable
     public static LuminRenderTarget getActiveTarget() {
         return activeTarget;
     }
@@ -57,6 +67,7 @@ public class LuminRenderSystem {
         return Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTextureView();
     }
 
+    @Nullable
     public static GpuTextureView resolveDepthView() {
         if (activeTarget != null) return activeTarget.depthView();
         return Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTextureView();
@@ -87,7 +98,7 @@ public class LuminRenderSystem {
 
     public record QuadRenderingInfo(
             GpuTextureView colorView,
-            GpuTextureView depthView,
+            @Nullable GpuTextureView depthView,
             RenderSystem.AutoStorageIndexBuffer autoIndices,
             GpuBuffer ibo,
             int indexCount,
@@ -95,7 +106,7 @@ public class LuminRenderSystem {
     ) {
     }
 
-    public static class LuminRenderTarget implements AutoCloseable {
+    public static final class LuminRenderTarget implements AutoCloseable {
 
         private LuminTexture colorTexture;
         private GpuTexture depthTexture;
@@ -107,7 +118,7 @@ public class LuminRenderSystem {
         private LuminRenderTarget(String name, int width, int height) {
             this.width = width;
             this.height = height;
-            this.identifier = ResourceLocationUtils.getIdentifier("lumin-rt" + name);
+            this.identifier = ResourceLocationUtils.getIdentifier("epsilon-rt" + name);
             createTextures();
         }
 
@@ -142,7 +153,9 @@ public class LuminRenderSystem {
 
             this.colorTexture = new LuminTexture(colorTexture, colorView, sampler);
 
-            Minecraft.getInstance().getTextureManager().register(identifier, getColorTexture());
+            Minecraft.getInstance().getTextureManager().register(
+                    identifier, getLuminTexture()
+            );
         }
 
         public void resize(int newWidth, int newHeight) {
