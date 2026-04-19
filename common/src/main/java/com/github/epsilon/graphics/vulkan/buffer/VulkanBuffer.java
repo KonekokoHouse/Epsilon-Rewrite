@@ -133,9 +133,6 @@ public final class VulkanBuffer implements AutoCloseable {
     }
 
     @Override
-    /**
-     * 销毁 Vulkan buffer 与其 VMA 分配。
-     */
     public void close() {
         vmaDestroyBuffer(allocator, buffer, allocation);
         mappedData = null;

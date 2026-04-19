@@ -5,6 +5,7 @@ import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
+import com.github.epsilon.modules.impl.world.ComputeTest;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -40,6 +41,8 @@ public class LuminRenderSystem {
     }
 
     public static void destroyAll() {
+        ComputeTest.INSTANCE.destroy();
+
         guiProjectionMatrixBuffer.close();
         RenderTargetHolder.INSTANCE.destroyAll();
         StaticFontLoader.destroyAll();

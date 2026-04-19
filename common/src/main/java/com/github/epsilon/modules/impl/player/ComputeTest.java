@@ -323,4 +323,10 @@ public class ComputeTest extends Module {
         initialized = false;
         dispatched = false;
     }
+
+    public void destroy() {
+        if (initialized) {
+            destroyResources();
+        }
+    }
 }
