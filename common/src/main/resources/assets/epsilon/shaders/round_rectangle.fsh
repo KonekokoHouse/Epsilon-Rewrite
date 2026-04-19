@@ -7,63 +7,25 @@ in vec4 f_Radius;
 
 layout(location = 0) out vec4 fragColor;
 
-vec4 normalizeRadii(vec2 size, vec4 r) {
-    r = max(r, 0.0);
-
-    float sTop = size.x / max(r.x + r.y, 1e-5);
-    float sBottom = size.x / max(r.w + r.z, 1e-5);
-    float sLeft = size.y / max(r.x + r.w, 1e-5);
-    float sRight = size.y / max(r.y + r.z, 1e-5);
-
-    float scale = min(1.0, min(min(sTop, sBottom), min(sLeft, sRight)));
-    return r * scale;
-}
-
-float cornerRadius(vec2 p, vec4 radii) {
-    // radii order: TL, TR, BR, BL
-    bool right = p.x >= 0.0;
-    bool bottom = p.y >= 0.0;
-    if (!right && !bottom) return radii.x;
-    if (right && !bottom) return radii.y;
-    if (right) return radii.z;
-    return radii.w;
-}
-
-float sdRoundRect(vec2 p, vec2 size, vec4 radii) {
-    float rCurrent = cornerRadius(p, radii);
-    vec2 q = abs(p) - (size * 0.5 - vec2(rCurrent));
-    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - rCurrent;
-}
-
-float coverage2x2(vec2 p, vec2 size, vec4 radii) {
-    vec2 dx = dFdx(p);
-    vec2 dy = dFdy(p);
-
-    vec2 o00 = (-0.25 * dx) + (-0.25 * dy);
-    vec2 o10 = ( 0.25 * dx) + (-0.25 * dy);
-    vec2 o01 = (-0.25 * dx) + ( 0.25 * dy);
-    vec2 o11 = ( 0.25 * dx) + ( 0.25 * dy);
-
-    float c = 0.0;
-    c += sdRoundRect(p + o00, size, radii) <= 0.0 ? 1.0 : 0.0;
-    c += sdRoundRect(p + o10, size, radii) <= 0.0 ? 1.0 : 0.0;
-    c += sdRoundRect(p + o01, size, radii) <= 0.0 ? 1.0 : 0.0;
-    c += sdRoundRect(p + o11, size, radii) <= 0.0 ? 1.0 : 0.0;
-    return c * 0.25;
-}
-
 void main() {
-    vec2 size = f_InnerRect.zw - f_InnerRect.xy;
+    vec2 halfSize = (f_InnerRect.zw - f_InnerRect.xy) * 0.5;
     vec2 center = (f_InnerRect.xy + f_InnerRect.zw) * 0.5;
     vec2 p = f_Position - center;
 
-    vec4 radii = normalizeRadii(size, f_Radius);
-    float dist = sdRoundRect(p, size, radii);
+    vec2 s = step(0.0, p);
 
-    float aa = max(fwidth(dist), 1e-4);
-    float analyticAlpha = clamp(0.5 - dist / aa, 0.0, 1.0);
-    float sampledCoverage = coverage2x2(p, size, radii);
-    float alpha = mix(analyticAlpha, sampledCoverage, 0.85);
+    float r_current = mix(
+        mix(f_Radius.x, f_Radius.w, s.y),
+        mix(f_Radius.y, f_Radius.z, s.y),
+        s.x
+    );
+
+    vec2 q = abs(p) - halfSize + r_current;
+    float dist = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r_current;
+
+    float delta = fwidth(dist);
+    float alpha = 1.0 - smoothstep(-delta, delta, dist);
 
     fragColor = vec4(f_Color.rgb, f_Color.a * alpha);
+    if (alpha < 0.001) discard;
 }
