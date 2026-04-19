@@ -7,6 +7,8 @@ val minecraftVersion = project.property("minecraft_version").toString()
 val fabricLoaderVersion = project.property("fabric_loader_version").toString()
 val fabricVersion = project.property("fabric_version").toString()
 val modId = project.property("mod_id").toString()
+val vulkanSdkPath = providers.environmentVariable("VULKAN_SDK")
+    .orElse(providers.gradleProperty("vulkan_sdk"))
 
 dependencies {
     minecraft("com.mojang:minecraft:${minecraftVersion}")
@@ -26,6 +28,8 @@ loom {
             configName = "Fabric Client"
             ideConfigGenerated(true)
             runDir("runs/client")
+
+            programArgs.add("--vulkanValidation")
         }
         named("server") {
             server()
@@ -36,6 +40,23 @@ loom {
     }
 }
 
+tasks.withType<JavaExec>()
+    .matching { it.name == "runClient" || it.name == "runFabricClient" }
+    .configureEach {
+        // Only MacOS
+        if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+            return@configureEach
+        }
+
+        val sdkPath = vulkanSdkPath.orNull
+        if (sdkPath.isNullOrBlank()) {
+            logger.warn("[fabric] Vulkan validation layers are disabled in dev run: set VULKAN_SDK or -Pvulkan_sdk=<path> to enable layer discovery.")
+            return@configureEach
+        }
+
+        systemProperty("org.lwjgl.vulkan.libname", "$sdkPath/lib/libvulkan.1.dylib")
+}
+
 val loaderAttribute = Attribute.of("io.github.mcgradleconventions.loader", String::class.java)
 listOf("apiElements", "runtimeElements", "sourcesElements", "includeInternal", "modCompileClasspath").forEach { variant ->
     configurations.named(variant) {
@@ -44,6 +65,7 @@ listOf("apiElements", "runtimeElements", "sourcesElements", "includeInternal", "
         }
     }
 }
+
 sourceSets.configureEach {
     listOf(compileClasspathConfigurationName, runtimeClasspathConfigurationName).forEach { variant ->
         configurations.named(variant) {
