@@ -22,7 +22,7 @@ public class StringSettingRow extends SettingRow<StringSetting> {
     private static final float FIELD_WIDTH = 120.0f;
     private static final int MAX_LENGTH = 256;
 
-    private final TextRenderer measureTextRenderer = new TextRenderer();
+    private final TextRenderer measureTextRenderer = TextRenderer.create();
     private boolean focused;
     private String inputBuffer;
     private int cursorIndex;

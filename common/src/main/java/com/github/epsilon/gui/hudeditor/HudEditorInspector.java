@@ -41,10 +41,10 @@ public class HudEditorInspector {
     private static final float CONTENT_TOP = 40.0f;
     private static final float COLLAPSE_BUTTON_SIZE = 12.0f;
 
-    private final RoundRectRenderer roundRectRenderer = new RoundRectRenderer();
-    private final RectRenderer rectRenderer = new RectRenderer();
-    private final ShadowRenderer shadowRenderer = new ShadowRenderer();
-    private final TextRenderer textRenderer = new TextRenderer();
+    private final RoundRectRenderer roundRectRenderer = RoundRectRenderer.create();
+    private final RectRenderer rectRenderer = RectRenderer.create();
+    private final ShadowRenderer shadowRenderer = ShadowRenderer.create();
+    private final TextRenderer textRenderer = TextRenderer.create();
     private final PanelContentBuffer contentBuffer = new PanelContentBuffer();
     private final PanelPopupHost popupHost = new PanelPopupHost();
     private final SettingListController settingList = new SettingListController(popupHost);

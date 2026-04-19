@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.elements.TextElement;
 import com.github.epsilon.graphics.text.ITextRenderer;
@@ -13,12 +14,20 @@ public class TextRenderer implements IRenderer {
 
     private final ITextRenderer textRenderer;
 
-    public TextRenderer(long bufferSize) {
+    private TextRenderer(long bufferSize) {
         textRenderer = new TtfTextRenderer(bufferSize);
     }
 
-    public TextRenderer() {
+    private TextRenderer() {
         textRenderer = new TtfTextRenderer();
+    }
+
+    public static TextRenderer create(long bufferSize) {
+        return RendererHolder.INSTANCE.register(new TextRenderer(bufferSize));
+    }
+
+    public static TextRenderer create() {
+        return RendererHolder.INSTANCE.register(new TextRenderer());
     }
 
     public void addText(String text, float x, float y, float scale, Color color, TtfFontLoader fontLoader) {
@@ -79,6 +88,9 @@ public class TextRenderer implements IRenderer {
     }
 
     public void setScissor(int x, int y, int width, int height) {
+        if (x < 0 || y < 0) {
+            return;
+        }
         textRenderer.setScissor(x, y, width, height);
     }
 

@@ -1,6 +1,9 @@
 package com.github.epsilon.graphics;
 
+import com.github.epsilon.assets.holders.RenderTargetHolder;
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
@@ -36,7 +39,11 @@ public class LuminRenderSystem {
         activeTarget = target;
     }
 
-    public static void destroyVulkanContext() {
+    public static void destroyAll() {
+        guiProjectionMatrixBuffer.close();
+        RenderTargetHolder.INSTANCE.destroyAll();
+        StaticFontLoader.destroyAll();
+        RendererHolder.INSTANCE.destroyAll();
         vulkanContext.destroy();
     }
 
@@ -123,7 +130,7 @@ public class LuminRenderSystem {
         }
 
         public static LuminRenderTarget create(String name, int width, int height) {
-            return new LuminRenderTarget(name, width, height);
+            return RenderTargetHolder.INSTANCE.register(new LuminRenderTarget(name, width, height));
         }
 
         private void createTextures() {

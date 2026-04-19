@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
@@ -23,6 +24,13 @@ public class ShadowRenderer implements IRenderer {
     private int scissorX, scissorY, scissorW, scissorH;
     private long currentOffset = 0;
     private int vertexCount = 0;
+
+    private ShadowRenderer() {
+    }
+
+    public static ShadowRenderer create() {
+        return RendererHolder.INSTANCE.register(new ShadowRenderer());
+    }
 
     public void addShadow(float x, float y, float width, float height, float radius, float blurRadius, Color color) {
         addShadow(x, y, width, height, radius, radius, radius, radius, blurRadius, color);
@@ -92,6 +100,10 @@ public class ShadowRenderer implements IRenderer {
     }
 
     public void setScissor(int x, int y, int width, int height) {
+        if (x < 0 || y < 0) {
+            return;
+        }
+
         scissorEnabled = true;
         scissorX = x;
         scissorY = y;
