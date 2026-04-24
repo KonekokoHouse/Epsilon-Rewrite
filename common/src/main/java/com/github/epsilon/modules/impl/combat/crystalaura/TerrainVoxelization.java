@@ -25,18 +25,21 @@ import java.util.Arrays;
  *
  * <h3>写入字节数</h3>
  * Header: 4 × int = 16 bytes（Std430Writer 的 putInt 按 4 字节对齐，连续写无间隙）。
- * Body:   BITMAP_UINT_COUNT × 4 bytes = 32768 bytes。
- * 合计:   {@link #BUFFER_SIZE} = 32784 bytes。
+ * Body:   BITMAP_UINT_COUNT × 4 bytes = 4096 bytes。
+ * 合计:   {@link #BUFFER_SIZE} = 4112 bytes。
  */
 public class TerrainVoxelization {
 
     private static final Minecraft mc = Minecraft.getInstance();
 
-    public static final int GRID_SIZE = 64;
+    /** 玩家中心两侧各保留 16 格，总体素边长为 32。 */
+    public static final int HALF_EXTENT = 16;
+
+    public static final int GRID_SIZE = HALF_EXTENT * 2;
 
     public static final int TOTAL_VOXELS = GRID_SIZE * GRID_SIZE * GRID_SIZE;
 
-    public static final int BITMAP_UINT_COUNT = TOTAL_VOXELS / 32;
+    public static final int BITMAP_UINT_COUNT = (TOTAL_VOXELS + 31) / 32;
 
     public static final int HEADER_BYTES = 4 * Integer.BYTES;
 
@@ -44,11 +47,11 @@ public class TerrainVoxelization {
 
     public static final int BUFFER_SIZE = HEADER_BYTES + BODY_BYTES;
 
-    /** 每个 Z 切片占用的 uint 数：GRID_SIZE² / 32 = 128 */
+    /** 每个 Z 切片占用的 uint 数：GRID_SIZE² / 32 = 32 */
     private static final int SLICE_UINTS = GRID_SIZE * GRID_SIZE / 32;
 
-    /** 每个 Y 行（固定 y, z）占用的 uint 数：GRID_SIZE / 32 = 2 */
-    private static final int ROW_UINTS = GRID_SIZE / 32;
+    /** 每个 Y 行（固定 y, z）占用的 uint 数。 */
+    private static final int ROW_UINTS = (GRID_SIZE + 31) / 32;
 
     private int originX, originY, originZ;
     private final int[] voxelBits = new int[BITMAP_UINT_COUNT];
@@ -61,18 +64,17 @@ public class TerrainVoxelization {
      * 做各轴位移以保留不变体素，再仅对新进入视野的切片/行/列做世界查询重建。
      * 对于位移 ≥ GRID_SIZE 的大跳跃，回退到全量重建。
      * <p>
-     * 典型情况（三轴各偏移 1 块）：约 12,000 次 getBlockState 调用，
-     * 相较全量重建的 262,144 次节省约 95%。
+     * 典型情况（三轴各偏移 1 块）：约 3,000 次 getBlockState 调用，
+     * 相较全量重建的 32,768 次节省约 90%。
      *
      * @return true 表示数据已变更
      */
     public boolean update() {
         if (mc.player == null || mc.level == null) return false;
 
-        int half = GRID_SIZE / 2;
-        int cx = (int) Math.floor(mc.player.getX()) - half;
-        int cy = (int) Math.floor(mc.player.getY()) - half;
-        int cz = (int) Math.floor(mc.player.getZ()) - half;
+        int cx = (int) Math.floor(mc.player.getX()) - HALF_EXTENT;
+        int cy = (int) Math.floor(mc.player.getY()) - HALF_EXTENT;
+        int cz = (int) Math.floor(mc.player.getZ()) - HALF_EXTENT;
 
         if (needsFullRebuild) {
             originX = cx;
@@ -223,24 +225,19 @@ public class TerrainVoxelization {
     }
 
     /**
-     * 将每个 (y, z) 行的 64 个体素比特在 X 轴方向平移 dx 位。
-     * 每行恰好占 ROW_UINTS=2 个相邻 uint（64 bit），合并为 long 后整体移位。
+     * 将每个 (y, z) 行的体素比特在 X 轴方向平移 dx 位。
+     * 支持任意 {@link #ROW_UINTS}，不再假定一行恰好是 64 bit。
      * dx > 0：右移（低 bit 方向），高 dx bit 清零供重建。
      * dx < 0：左移（高 bit 方向），低 |dx| bit 清零供重建。
      */
     private void shiftX(int dx) {
         if (dx == 0) return;
         int totalRows = GRID_SIZE * GRID_SIZE;
+
         for (int row = 0; row < totalRows; row++) {
             int rowBase = row * ROW_UINTS;
-            long row64 = ((long) voxelBits[rowBase + 1] << 32) | (voxelBits[rowBase] & 0xFFFFFFFFL);
-            if (dx > 0) {
-                row64 >>>= dx;
-            } else {
-                row64 <<= (-dx);
-            }
-            voxelBits[rowBase]     = (int)(row64 & 0xFFFFFFFFL);
-            voxelBits[rowBase + 1] = (int)(row64 >>> 32);
+            int rowBits = voxelBits[rowBase];
+            voxelBits[rowBase] = dx > 0 ? rowBits >>> dx : rowBits << -dx;
         }
     }
 
@@ -292,7 +289,7 @@ public class TerrainVoxelization {
     /**
      * 将体素数据写入 {@link Std430Writer}。
      * <p>
-     * 写入精确 {@link #BUFFER_SIZE} 字节（16 header + 32768 body）。
+     * 写入精确 {@link #BUFFER_SIZE} 字节（16 header + 4096 body）。
      * 使用 {@code putInt} 而非 {@code putUInt}，二者等价（4 字节对齐 + 4 字节写入）。
      * 由于连续写 int 且起始 position 为 0（由调用方 clear），不会产生对齐填充。
      */
