@@ -38,15 +38,10 @@ public class Render3DUtils {
     }
 
     public static void drawFilledBox(AABB box, Color color) {
-        int c = color.getRGB();
-        drawFilledFadeBox(box, c, c);
+        drawFilledBox(box, color.getRGB());
     }
 
     public static void drawFilledBox(AABB box, int c) {
-        drawFilledFadeBox(box, c, c);
-    }
-
-    public static void drawFilledFadeBox(AABB box, int c, int c1) {
         LuminImmediateRenderer.PosColorQuads builder = LuminImmediateRenderer.beginPosColorQuads(FILLED_BOX_PIPELINE);
 
         Vec3 camPos = mc.getEntityRenderDispatcher().camera.position();
@@ -59,35 +54,47 @@ public class Render3DUtils {
 
         Matrix4f matrix = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.viewRotationMatrix;
 
-        vertex(builder, matrix, minX, minY, minZ, c);
-        vertex(builder, matrix, minX, minY, maxZ, c);
-        vertex(builder, matrix, maxX, minY, maxZ, c);
-        vertex(builder, matrix, maxX, minY, minZ, c);
+        quad(builder, matrix,
+                minX, minY, minZ, c,
+                minX, minY, maxZ, c,
+                maxX, minY, maxZ, c,
+                maxX, minY, minZ, c
+        );
 
-        vertex(builder, matrix, minX, maxY, minZ, c1);
-        vertex(builder, matrix, maxX, maxY, minZ, c1);
-        vertex(builder, matrix, maxX, maxY, maxZ, c1);
-        vertex(builder, matrix, minX, maxY, maxZ, c);
+        quad(builder, matrix,
+                minX, maxY, minZ, c,
+                maxX, maxY, minZ, c,
+                maxX, maxY, maxZ, c,
+                minX, maxY, maxZ, c
+        );
 
-        vertex(builder, matrix, minX, minY, minZ, c);
-        vertex(builder, matrix, minX, maxY, minZ, c1);
-        vertex(builder, matrix, maxX, maxY, minZ, c1);
-        vertex(builder, matrix, maxX, minY, minZ, c);
+        quad(builder, matrix,
+                minX, minY, minZ, c,
+                maxX, minY, minZ, c,
+                maxX, maxY, minZ, c,
+                minX, maxY, minZ, c
+        );
 
-        vertex(builder, matrix, maxX, minY, minZ, c);
-        vertex(builder, matrix, maxX, maxY, minZ, c1);
-        vertex(builder, matrix, maxX, maxY, maxZ, c1);
-        vertex(builder, matrix, maxX, minY, maxZ, c);
+        quad(builder, matrix,
+                maxX, minY, minZ, c,
+                maxX, minY, maxZ, c,
+                maxX, maxY, maxZ, c,
+                maxX, maxY, minZ, c
+        );
 
-        vertex(builder, matrix, minX, minY, maxZ, c);
-        vertex(builder, matrix, maxX, minY, maxZ, c);
-        vertex(builder, matrix, maxX, maxY, maxZ, c1);
-        vertex(builder, matrix, minX, maxY, maxZ, c1);
+        quad(builder, matrix,
+                minX, minY, maxZ, c,
+                minX, maxY, maxZ, c,
+                maxX, maxY, maxZ, c,
+                maxX, minY, maxZ, c
+        );
 
-        vertex(builder, matrix, minX, minY, minZ, c);
-        vertex(builder, matrix, minX, minY, maxZ, c);
-        vertex(builder, matrix, minX, maxY, maxZ, c1);
-        vertex(builder, matrix, minX, maxY, minZ, c1);
+        quad(builder, matrix,
+                minX, minY, minZ, c,
+                minX, maxY, minZ, c,
+                minX, maxY, maxZ, c,
+                minX, minY, maxZ, c
+        );
 
         builder.end();
     }
@@ -126,6 +133,17 @@ public class Render3DUtils {
 
     private static void vertex(LuminImmediateRenderer.PosColorQuads builder, Matrix4f matrix, float x, float y, float z, int color) {
         builder.vertex(matrix, x, y, z, color);
+    }
+
+    private static void quad(LuminImmediateRenderer.PosColorQuads builder, Matrix4f matrix,
+                             float x1, float y1, float z1, int c1,
+                             float x2, float y2, float z2, int c2,
+                             float x3, float y3, float z3, int c3,
+                             float x4, float y4, float z4, int c4) {
+        vertex(builder, matrix, x1, y1, z1, c1);
+        vertex(builder, matrix, x2, y2, z2, c2);
+        vertex(builder, matrix, x3, y3, z3, c3);
+        vertex(builder, matrix, x4, y4, z4, c4);
     }
 
     private static void vertexLine(LuminImmediateRenderer.Lines builder, Matrix4f matrix, PoseStack.Pose entry, float x1, float y1, float z1, float x2, float y2, float z2, int color, float thickness) {

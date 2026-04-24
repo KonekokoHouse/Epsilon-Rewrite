@@ -221,8 +221,17 @@ public final class LuminImmediateRenderer {
             if (!this.building || this.vertexBaseAddr == 0L) {
                 return;
             }
+            long completedVertexBaseAddr = this.vertexBaseAddr;
             this.currentOffset += this.stride;
             this.vertexCount++;
+
+            if (this.mode == VertexFormat.Mode.LINES) {
+                long duplicateVertexBaseAddr = MemoryUtil.memAddress(this.ringBuffer.getMappedBuffer()) + this.currentOffset;
+                MemoryUtil.memCopy(completedVertexBaseAddr, duplicateVertexBaseAddr, this.stride);
+                this.currentOffset += this.stride;
+                this.vertexCount++;
+            }
+
             this.vertexBaseAddr = 0L;
         }
 
@@ -233,7 +242,8 @@ public final class LuminImmediateRenderer {
             if (this.vertexBaseAddr != 0L) {
                 return true;
             }
-            if (this.currentOffset + this.stride > DEFAULT_BUFFER_SIZE) {
+            long requiredBytes = this.mode == VertexFormat.Mode.LINES ? this.stride * 2L : this.stride;
+            if (this.currentOffset + requiredBytes > DEFAULT_BUFFER_SIZE) {
                 this.vertexBaseAddr = 0L;
                 return false;
             }
@@ -279,14 +289,17 @@ public final class LuminImmediateRenderer {
                         pass.bindTexture("Sampler0", textureObject.getTextureView(), textureObject.getSampler());
                     }
 
-                    if (this.mode == VertexFormat.Mode.QUADS) {
-                        int indexCount = this.vertexCount / 4 * 6;
-                        RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-                        GpuBuffer ibo = autoIndices.getBuffer(indexCount);
-                        pass.setIndexBuffer(ibo, autoIndices.type());
-                        pass.drawIndexed(0, 0, indexCount, 1);
-                    } else {
-                        pass.draw(0, this.vertexCount);
+                    switch (this.mode) {
+                        case QUADS, LINES -> {
+                            int indexCount = this.mode.indexCount(this.vertexCount);
+                            if (indexCount > 0) {
+                                RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(this.mode);
+                                GpuBuffer ibo = autoIndices.getBuffer(indexCount);
+                                pass.setIndexBuffer(ibo, autoIndices.type());
+                                pass.drawIndexed(0, 0, indexCount, 1);
+                            }
+                        }
+                        default -> pass.draw(0, this.vertexCount);
                     }
                 }
             } finally {

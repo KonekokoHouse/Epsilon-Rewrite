@@ -104,7 +104,7 @@ public class NameTags extends Module {
             final var currentPosition = WorldToScreen.interpolate(target, partialTick);
 
             final var projectedPosition = WorldToScreen.getWorldPositionToScreen(currentPosition.add(0.0f, 0.5f + target.getEyeHeight(), 0.0f));
-            if (projectedPosition.z > 1.0f || projectedPosition.z < 0.0f) continue;
+            if (projectedPosition.z > 1.0f || projectedPosition.z < 0.5f) continue;
 
             float guiScale = mc.getWindow().getGuiScale();
 
