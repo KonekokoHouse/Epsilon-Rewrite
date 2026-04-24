@@ -5,6 +5,7 @@ import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
+import com.github.epsilon.modules.impl.combat.crystalaura.CrystalAura;
 import com.github.epsilon.modules.impl.world.ComputeTest;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
@@ -41,6 +42,7 @@ public class LuminRenderSystem {
     }
 
     public static void destroyAll() {
+        CrystalAura.INSTANCE.destroy();
         ComputeTest.INSTANCE.destroy();
 
         guiProjectionMatrixBuffer.close();
