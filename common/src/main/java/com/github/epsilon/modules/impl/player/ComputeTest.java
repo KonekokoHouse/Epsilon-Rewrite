@@ -7,22 +7,19 @@ import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.vulkan.buffer.VulkanOutputBuffer;
 import com.github.epsilon.graphics.vulkan.buffer.VulkanStd430Buffer;
 import com.github.epsilon.graphics.vulkan.compute.VulkanComputePipeline;
+import com.github.epsilon.graphics.vulkan.compute.VulkanComputeUtils;
 import com.github.epsilon.graphics.vulkan.descriptor.DescriptorSetWrite;
 import com.github.epsilon.graphics.vulkan.descriptor.DescriptorLayoutSpec;
 import com.github.epsilon.graphics.vulkan.descriptor.VulkanResourceManager;
 import com.github.epsilon.graphics.vulkan.shader.Glsl2SpirVCompiler;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
-import com.mojang.blaze3d.vulkan.VulkanUtils;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.*;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static org.lwjgl.vulkan.KHRSynchronization2.*;
 import static org.lwjgl.vulkan.VK12.*;
 
 public class ComputeTest extends Module {
@@ -41,9 +38,7 @@ public class ComputeTest extends Module {
     private @Nullable VulkanComputePipeline pipeline;
     private @Nullable VulkanResourceManager resourceManager;
     private @Nullable VulkanResourceManager.ManagedDescriptorSet descriptorSet;
-
-    private @Nullable VkCommandBuffer cmdBuf;
-    private long fence;
+    private @Nullable VulkanComputeUtils computeUtils;
 
     private final DescriptorLayoutSpec layoutSpec = DescriptorLayoutSpec.builder()
             .addSsbo(0)
@@ -71,14 +66,26 @@ public class ComputeTest extends Module {
         if (dispatched) return;
 
         ensureInitialized();
-        if (!initialized || cmdBuf == null || pipeline == null || inputBuffer == null || outputBuffer == null) {
+        if (!initialized || pipeline == null || inputBuffer == null
+                || outputBuffer == null || descriptorSet == null || computeUtils == null) {
             return;
         }
 
         generateInput();
-        recordCommands(cmdBuf, pipeline, inputBuffer, outputBuffer);
-        submitAndWait(cmdBuf);
-        readOutput(outputBuffer);
+
+        final int computeLocalSizeX = 64;
+        final int groupCountX = (ELEMENT_COUNT + computeLocalSizeX - 1) / computeLocalSizeX;
+
+        computeUtils.dispatchAndWait(
+                new VulkanStd430Buffer[]{ inputBuffer },
+                outputBuffer,
+                pipeline,
+                descriptorSet.handle(),
+                groupCountX, 1, 1,
+                BUFFER_SIZE
+        );
+
+        readOutput();
         dispatched = true;
     }
 
@@ -124,8 +131,8 @@ public class ComputeTest extends Module {
                             DescriptorSetWrite.storageBuffer(1, outputBuffer.gpuBuffer(), BUFFER_SIZE)
                     )
             );
-            cmdBuf = allocateCommandBuffer();
-            fence = createFence();
+
+            computeUtils = new VulkanComputeUtils();
             initialized = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -145,135 +152,16 @@ public class ComputeTest extends Module {
         }
     }
 
-    private VkCommandBuffer allocateCommandBuffer() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            var pCmd = stack.mallocPointer(1);
-            var allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                    .commandPool(LuminRenderSystem.vulkanContext.cmdPool())
-                    .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                    .commandBufferCount(1);
-
-            VulkanUtils.crashIfFailure(
-                    vkAllocateCommandBuffers(LuminRenderSystem.vulkanContext.device(), allocInfo, pCmd),
-                    "Failed to allocate command buffer"
-            );
-            return new VkCommandBuffer(pCmd.get(0), LuminRenderSystem.vulkanContext.device());
-        }
-    }
-
-    private long createFence() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            var pFence = stack.mallocLong(1);
-            var createInfo = VkFenceCreateInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            VulkanUtils.crashIfFailure(
-                    vkCreateFence(LuminRenderSystem.vulkanContext.device(), createInfo, null, pFence),
-                    "Failed to create fence");
-            return pFence.get(0);
-        }
-    }
-
-    private void recordCommands(
-            VkCommandBuffer cmd,
-            VulkanComputePipeline pipeline,
-            VulkanStd430Buffer inputBuffer,
-            VulkanOutputBuffer outputBuffer
-    ) {
-        if (descriptorSet == null) {
-            throw new IllegalStateException("Descriptor set is not initialized");
-        }
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            vkResetCommandBuffer(cmd, 0);
-
-            var beginInfo = VkCommandBufferBeginInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                    .flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-            vkBeginCommandBuffer(cmd, beginInfo);
-
-            inputBuffer.map(cmd);
-
-            var beforeCompute = VkBufferMemoryBarrier2KHR.calloc(1, stack)
-                    .sType(VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR)
-                    .srcStageMask(VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR)
-                    .srcAccessMask(VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR)
-                    .dstStageMask(VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR)
-                    .dstAccessMask(VK_ACCESS_2_SHADER_STORAGE_READ_BIT_KHR)
-                    .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                    .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                    .buffer(inputBuffer.gpuBuffer())
-                    .offset(0)
-                    .size(BUFFER_SIZE);
-
-            var beforeComputeDep = VkDependencyInfoKHR.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR)
-                    .pBufferMemoryBarriers(beforeCompute);
-
-            vkCmdPipelineBarrier2KHR(cmd, beforeComputeDep);
-
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.pipeline());
-            vkCmdBindDescriptorSets(
-                    cmd,
-                    VK_PIPELINE_BIND_POINT_COMPUTE,
-                    pipeline.pipelineLayout(),
-                    0,
-                    stack.longs(descriptorSet.handle()),
-                    null
-            );
-
-            final int computeLocalSizeX = 64;
-            final int groupCountX = (ELEMENT_COUNT + computeLocalSizeX - 1) / computeLocalSizeX;
-            vkCmdDispatch(cmd, groupCountX, 1, 1);
-
-            var beforeReadback = VkBufferMemoryBarrier2KHR.calloc(1, stack)
-                    .sType(VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR)
-                    .srcStageMask(VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR)
-                    .srcAccessMask(VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT_KHR)
-                    .dstStageMask(VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR)
-                    .dstAccessMask(VK_ACCESS_2_TRANSFER_READ_BIT_KHR)
-                    .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                    .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                    .buffer(outputBuffer.gpuBuffer())
-                    .offset(0)
-                    .size(BUFFER_SIZE);
-
-            var beforeReadbackDep = VkDependencyInfoKHR.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR)
-                    .pBufferMemoryBarriers(beforeReadback);
-
-            vkCmdPipelineBarrier2KHR(cmd, beforeReadbackDep);
-
-            outputBuffer.copyToReadback(cmd, BUFFER_SIZE);
-            vkEndCommandBuffer(cmd);
-        }
-    }
-
-    private void submitAndWait(VkCommandBuffer cmd) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            vkResetFences(LuminRenderSystem.vulkanContext.device(), stack.longs(fence));
-
-            var submitInfo = VkSubmitInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                    .pCommandBuffers(stack.pointers(cmd));
-
-            vkQueueSubmit(LuminRenderSystem.vulkanContext.graphicsQueue().vkQueue(), submitInfo, fence);
-            vkWaitForFences(LuminRenderSystem.vulkanContext.device(), stack.longs(fence), true, Long.MAX_VALUE);
-        }
-    }
-
-    private void readOutput(VulkanOutputBuffer outputBuffer) {
-        ByteBuffer out = outputBuffer.readMapped(BUFFER_SIZE);
-        for (int i = 0; i < 8; i++) {
-            float value = out.getFloat(i * BYTES_PER_FLOAT);
-            System.out.println("[ComputeTest] out[" + i + "] = " + value);
+    private void readOutput() {
+        if (outputBuffer == null || computeUtils == null) return;
+        float[] results = computeUtils.readFloats(outputBuffer, 8);
+        for (int i = 0; i < results.length; i++) {
+            System.out.println("[ComputeTest] out[" + i + "] = " + results[i]);
         }
     }
 
     private void generateInput() {
         if (inputBuffer == null) return;
-
         inputBuffer.writer().clear();
         for (int i = 0; i < ELEMENT_COUNT; i++) {
             inputBuffer.writer().putFloat(i);
@@ -286,9 +174,9 @@ public class ComputeTest extends Module {
             return;
         }
 
-        if (fence != VK_NULL_HANDLE) {
-            vkDestroyFence(LuminRenderSystem.vulkanContext.device(), fence, null);
-            fence = VK_NULL_HANDLE;
+        if (computeUtils != null) {
+            computeUtils.close();
+            computeUtils = null;
         }
 
         if (descriptorSet != null) {
@@ -316,10 +204,6 @@ public class ComputeTest extends Module {
             inputBuffer = null;
         }
 
-        if (cmdBuf != null) {
-            vkFreeCommandBuffers(LuminRenderSystem.vulkanContext.device(), LuminRenderSystem.vulkanContext.cmdPool(), cmdBuf);
-            cmdBuf = null;
-        }
         initialized = false;
         dispatched = false;
     }
