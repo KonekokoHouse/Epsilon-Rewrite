@@ -9,6 +9,7 @@ val fabricVersion = project.property("fabric_version").toString()
 val modId = project.property("mod_id").toString()
 val vulkanSdkPath = providers.environmentVariable("VULKAN_SDK")
     .orElse(providers.gradleProperty("vulkan_sdk"))
+val vulkanValidationLayer = providers.environmentVariable("VULKAN_VALIDATION_LAYER")
 
 dependencies {
     minecraft("com.mojang:minecraft:${minecraftVersion}")
@@ -29,7 +30,7 @@ loom {
             ideConfigGenerated(true)
             runDir("runs/client")
 
-            programArgs.add("--vulkanValidation")
+            if (vulkanValidationLayer.orNull == "1") programArgs.add("--vulkanValidation")
         }
         named("server") {
             server()
