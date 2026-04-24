@@ -215,9 +215,6 @@ public final class VulkanResourceManager implements AutoCloseable {
     }
 
     @Override
-    /**
-     * 关闭管理器并销毁其创建的所有 descriptor pool。
-     */
     public synchronized void close() {
         if (closed) return;
 

@@ -34,7 +34,7 @@ layout(std430, set = 0, binding = 2) writeonly buffer ResultBuffer {
 
 const float EPSILON = 1e-6;
 const float TRACE_EPSILON = 1e-4;
-const float RAYMARCH_STEP_SIZE = 0.25;
+const float RAYMARCH_STEP_SIZE = 0.1;
 const int   MAX_RAYMARCH_STEPS = 96;
 
 shared float s_weightedHit[64];
@@ -61,8 +61,7 @@ float sampleVoxel(ivec3 worldPos) {
     return valid * bit;
 }
 
-// 基础 raymarching 射线步进
-
+// Raymarching
 float traceRay(vec3 origin, vec3 target) {
     vec3 baseDir = target - origin;
     float rawDist = length(baseDir);
@@ -132,7 +131,6 @@ void main() {
     vec3 invSteps = bbSize * 2.0 + vec3(1.0);
     vec3 stepSize = vec3(1.0) / invSteps;
 
-    // 与 DamageUtils.getSeenPercent 对齐：x/z 偏移，y 不偏移。
     vec3 offset = vec3(
         (1.0 - floor(1.0 / stepSize.x) * stepSize.x) * 0.5,
         0.0,
@@ -174,7 +172,6 @@ void main() {
 
     barrier();
 
-    // 仅 thread 0 做最终归约和伤害计算
     if (rayId == 0u) {
         float totalWeightedHit = 0.0;
         float totalWeight      = 0.0;

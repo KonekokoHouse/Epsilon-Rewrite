@@ -258,6 +258,10 @@ public class CrystalDamageCompute {
         return taskCount;
     }
 
+    public void invalidateTerrain() {
+        voxelization.invalidate();
+    }
+
     public void destroy() {
         if (computeUtils != null) { computeUtils.close(); computeUtils = null; }
         if (descriptorSet != null) { descriptorSet.close(); descriptorSet = null; }
