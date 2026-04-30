@@ -132,10 +132,11 @@ public class EnumSelectPopup implements PanelPopupHost.Popup {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (!scrollable) {
+        if (!scrollable || maxScroll <= 0.0f) {
             return false;
         }
-        scroll = Math.clamp(maxScroll, 0, scroll - (float) scrollY * 20.0f);
+        float nextScroll = scroll - (float) scrollY * 20.0f;
+        scroll = Math.clamp(nextScroll, 0.0f, maxScroll);
         return true;
     }
 
