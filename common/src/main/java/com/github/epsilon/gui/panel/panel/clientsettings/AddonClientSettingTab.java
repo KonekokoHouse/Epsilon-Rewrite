@@ -12,7 +12,6 @@ import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
 import com.github.epsilon.gui.panel.adapter.SettingListController;
-import com.github.epsilon.gui.panel.component.PanelElements;
 import com.github.epsilon.gui.panel.component.setting.KeybindSettingRow;
 import com.github.epsilon.gui.panel.dsl.PanelUiCompiler;
 import com.github.epsilon.gui.panel.dsl.PanelUiTree;
@@ -48,8 +47,10 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
     private static final TranslateComponent modulesComponent = EpsilonTranslateComponent.create("gui", "addon.info.modules");
     private static final float LIST_GAP = 10.0f;
     private static final float LIST_ROW_HEIGHT = 34.0f;
-    private static final float DETAIL_INFO_HEIGHT = 86.0f;
     private static final float DETAIL_GAP = 8.0f;
+    private static final float DETAIL_INFO_MIN_HEIGHT = 54.0f;
+    private static final float DETAIL_INFO_MAX_HEIGHT = 92.0f;
+    private static final float DETAIL_SETTINGS_MIN_HEIGHT = 96.0f;
 
     private final PanelState state;
     private final RoundRectRenderer roundRectRenderer;
@@ -96,8 +97,8 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
         PanelLayout.Rect listPanelBounds = getListPanelBounds(bounds);
         PanelLayout.Rect listViewport = getListViewport(listPanelBounds);
         PanelLayout.Rect detailPanelBounds = getDetailPanelBounds(bounds, listPanelBounds);
-        PanelLayout.Rect infoBounds = getDetailInfoBounds(detailPanelBounds);
-        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(detailPanelBounds);
+        PanelLayout.Rect infoBounds = getDetailInfoBounds(detailPanelBounds, selectedAddon);
+        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(detailPanelBounds, selectedAddon);
 
         float listContentHeight = addons.size() * (LIST_ROW_HEIGHT + MD3Theme.ROW_GAP);
         state.setMaxAddonListScroll(listContentHeight - listViewport.height());
@@ -227,7 +228,7 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
         }
 
         PanelLayout.Rect listViewport = getListViewport(getListPanelBounds(bounds));
-        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)));
+        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)), resolveSelectedAddon(AddonManager.INSTANCE.getAddons()));
 
         if (listScrollBarDrag.mouseClicked(event.x(), event.y(), listViewport, state.getAddonListScroll(), state.getMaxAddonListScroll())) {
             float newScroll = listScrollBarDrag.mouseDragged(event.y(), listViewport, state.getMaxAddonListScroll());
@@ -275,15 +276,9 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         boolean consumed = false;
-        if (listScrollBarDrag.mouseReleased()) {
-            consumed = true;
-        }
-        if (detailScrollBarDrag.mouseReleased()) {
-            consumed = true;
-        }
-        if (settingListController.mouseReleased(event)) {
-            consumed = true;
-        }
+        consumed |= listScrollBarDrag.mouseReleased();
+        consumed |= detailScrollBarDrag.mouseReleased();
+        consumed |= settingListController.mouseReleased(event);
         if (consumed) {
             markDirty();
         }
@@ -302,7 +297,7 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
             return true;
         }
         if (detailScrollBarDrag.isDragging()) {
-            PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)));
+            PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)), resolveSelectedAddon(AddonManager.INSTANCE.getAddons()));
             float newScroll = detailScrollBarDrag.mouseDragged(event.y(), settingsViewport, state.getMaxAddonDetailScroll());
             if (newScroll >= 0.0f) {
                 state.setAddonDetailScroll(newScroll);
@@ -328,7 +323,7 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
             markDirty();
             return true;
         }
-        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)));
+        PanelLayout.Rect settingsViewport = getDetailSettingsViewport(getDetailPanelBounds(bounds, getListPanelBounds(bounds)), resolveSelectedAddon(AddonManager.INSTANCE.getAddons()));
         if (settingsViewport.contains(mouseX, mouseY)) {
             state.scrollAddonDetail(-scrollY * 20.0f);
             markDirty();
@@ -443,6 +438,8 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
         float titleScale = 0.72f;
         float labelScale = 0.52f;
         float descScale = 0.56f;
+        float titleHeight = textRenderer.getHeight(titleScale, StaticFontLoader.DUCKSANS);
+        float labelHeight = textRenderer.getHeight(labelScale);
         float textX = infoBounds.x() + MD3Theme.ROW_CONTENT_INSET;
         float titleY = infoBounds.y() + 8.0f;
         scope.text(trimToWidth(addon.getDisplayName(), titleScale, infoBounds.width() - 96.0f), textX, titleY, titleScale, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
@@ -450,14 +447,18 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
         String version = addon.getVersion().isBlank() ? "-" : addon.getVersion();
         String metaLine = idComponent.getTranslatedName() + ": " + addon.getAddonId()
                 + "  •  " + versionComponent.getTranslatedName() + ": " + version;
-        scope.text(trimToWidth(metaLine, labelScale, infoBounds.width() - 18.0f), textX, titleY + 15.0f, labelScale, MD3Theme.TEXT_SECONDARY);
+        float metaY = titleY + titleHeight + 3.0f;
+        scope.text(trimToWidth(metaLine, labelScale, infoBounds.width() - 18.0f), textX, metaY, labelScale, MD3Theme.TEXT_SECONDARY);
 
         String authors = addon.getAuthors().isEmpty() ? "-" : String.join(", ", addon.getAuthors());
+        float authorsY = metaY + labelHeight + 3.0f;
         scope.text(trimToWidth(authorsComponent.getTranslatedName() + ": " + authors, labelScale, infoBounds.width() - 18.0f),
-                textX, titleY + 28.0f, labelScale, MD3Theme.TEXT_MUTED);
+                textX, authorsY, labelScale, MD3Theme.TEXT_MUTED);
 
-        String detail = addon.getDescription().isBlank() ? noSettingsComponent.getTranslatedName() : addon.getDescription();
-        scope.text(trimToWidth(detail, descScale, infoBounds.width() - 18.0f), textX, titleY + 44.0f, descScale, MD3Theme.TEXT_PRIMARY);
+        if (!addon.getDescription().isBlank()) {
+            float detailY = authorsY + labelHeight + 5.0f;
+            scope.text(trimToWidth(addon.getDescription(), descScale, infoBounds.width() - 18.0f), textX, detailY, descScale, MD3Theme.TEXT_PRIMARY);
+        }
 
         String chipText = addon.getRegisteredModules().size() + " " + modulesComponent.getTranslatedName();
         float chipScale = 0.48f;
@@ -492,17 +493,17 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
         return new PanelLayout.Rect(x, bounds.y(), bounds.right() - x, bounds.height());
     }
 
-    private PanelLayout.Rect getDetailInfoBounds(PanelLayout.Rect detailPanelBounds) {
+    private PanelLayout.Rect getDetailInfoBounds(PanelLayout.Rect detailPanelBounds, EpsilonAddon addon) {
         return new PanelLayout.Rect(
                 detailPanelBounds.x() + 4.0f,
                 detailPanelBounds.y() + 4.0f,
                 detailPanelBounds.width() - 8.0f,
-                DETAIL_INFO_HEIGHT
+                getDetailInfoHeight(detailPanelBounds, addon)
         );
     }
 
-    private PanelLayout.Rect getDetailSettingsViewport(PanelLayout.Rect detailPanelBounds) {
-        PanelLayout.Rect infoBounds = getDetailInfoBounds(detailPanelBounds);
+    private PanelLayout.Rect getDetailSettingsViewport(PanelLayout.Rect detailPanelBounds, EpsilonAddon addon) {
+        PanelLayout.Rect infoBounds = getDetailInfoBounds(detailPanelBounds, addon);
         float y = infoBounds.bottom() + DETAIL_GAP;
         return new PanelLayout.Rect(
                 detailPanelBounds.x() + 4.0f,
@@ -510,6 +511,21 @@ public final class AddonClientSettingTab implements ClientSettingTabView {
                 detailPanelBounds.width() - 8.0f,
                 Math.max(0.0f, detailPanelBounds.bottom() - y - 4.0f)
         );
+    }
+
+    private float getDetailInfoHeight(PanelLayout.Rect detailPanelBounds, EpsilonAddon addon) {
+        float titleHeight = textRenderer.getHeight(0.72f, StaticFontLoader.DUCKSANS);
+        float labelHeight = textRenderer.getHeight(0.52f);
+        float descHeight = textRenderer.getHeight(0.56f);
+
+        float naturalHeight = 8.0f + titleHeight + 3.0f + labelHeight + 3.0f + labelHeight + 8.0f;
+        if (addon != null && !addon.getDescription().isBlank()) {
+            naturalHeight += 5.0f + descHeight;
+        }
+
+        float availableForInfo = detailPanelBounds.height() - DETAIL_GAP - DETAIL_SETTINGS_MIN_HEIGHT - 8.0f;
+        float maxHeight = Math.max(DETAIL_INFO_MIN_HEIGHT, Math.clamp(availableForInfo, DETAIL_INFO_MIN_HEIGHT, DETAIL_INFO_MAX_HEIGHT));
+        return Math.clamp(naturalHeight, DETAIL_INFO_MIN_HEIGHT, maxHeight);
     }
 
     private boolean shouldRebuild(PanelLayout.Rect bounds, int mouseX, int mouseY, List<EpsilonAddon> addons, EpsilonAddon selectedAddon, List<Setting<?>> selectedSettings, int guiHeight, long contentSignature) {
