@@ -22,7 +22,7 @@ public final class NeoForgeSelfAddonRegistrar {
     }
 
     private static void onAddonSetup(EpsilonAddonSetupEvent event) {
-        event.registerAddon(new NeoForgePlatformAddon());
+        event.registerAddon(NeoForgePlatformAddon.INSTANCE);
     }
 
 }

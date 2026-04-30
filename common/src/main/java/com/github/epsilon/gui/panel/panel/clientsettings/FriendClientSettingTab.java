@@ -10,6 +10,8 @@ import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
 import com.github.epsilon.gui.panel.component.PanelElements;
+import com.github.epsilon.gui.panel.dsl.PanelUiCompiler;
+import com.github.epsilon.gui.panel.dsl.PanelUiTree;
 import com.github.epsilon.gui.panel.util.PanelContentBuffer;
 import com.github.epsilon.gui.panel.util.PanelContentInvalidationState;
 import com.github.epsilon.gui.panel.util.ScrollBarDragState;
@@ -24,7 +26,11 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class FriendClientSettingTab implements ClientSettingTabView {
 
@@ -49,7 +55,6 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
     private final ClientSettingTextField inputField = new ClientSettingTextField(MAX_FRIEND_NAME_LENGTH);
 
     private PanelLayout.Rect bounds;
-    private int guiHeight;
     private float lastScroll = Float.NaN;
     private List<String> lastFriendList = List.of();
     private long lastContentSignature = Long.MIN_VALUE;
@@ -64,12 +69,8 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
     @Override
     public void render(GuiGraphicsExtractor guiGraphics, PanelLayout.Rect bounds, int mouseX, int mouseY, float partialTick) {
         this.bounds = bounds;
-        this.guiHeight = guiGraphics.guiHeight();
 
         PanelLayout.Rect inputBounds = getInputBounds(bounds);
-        inputField.render(inputBounds, mouseX, mouseY, roundRectRenderer, rectRenderer, textRenderer,
-                addFriendPlaceholderComponent.getTranslatedName(), FRIEND_INPUT_FIELD_SCALE, "↵");
-
         PanelLayout.Rect listViewport = getListViewport(bounds);
         List<String> friends = FriendManager.INSTANCE.getFriends().stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
         float contentHeight = friends.size() * (FRIEND_ROW_HEIGHT + MD3Theme.ROW_GAP);
@@ -78,51 +79,54 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
         boolean hasScrollBar = maxScroll > 0.0f;
         float rowWidth = hasScrollBar ? listViewport.width() - ScrollBarUtil.TOTAL_WIDTH : listViewport.width();
         long contentSignature = buildContentSignature(friends);
+        boolean rebuildContent = shouldRebuild(listViewport, mouseX, mouseY, friends, guiGraphics.guiHeight(), contentSignature);
 
-        if (shouldRebuild(listViewport, mouseX, mouseY, friends, guiGraphics.guiHeight(), contentSignature)) {
+        if (rebuildContent) {
             contentBuffer.clear();
             contentState.beginRebuild();
             rowEntries.clear();
             rowHoverAnimations.keySet().removeIf(name -> !friends.contains(name));
             removeHoverAnimations.keySet().removeIf(name -> !friends.contains(name));
-
-            float rowY = listViewport.y() - state.getFriendScroll();
-            for (String friendName : friends) {
-                PanelLayout.Rect rowBounds = new PanelLayout.Rect(listViewport.x(), rowY, rowWidth, FRIEND_ROW_HEIGHT);
-                PanelLayout.Rect removeBounds = getRemoveButtonBounds(rowBounds);
-                rowEntries.add(new FriendRowEntry(friendName, rowBounds, removeBounds));
-
-                Animation hoverAnimation = rowHoverAnimations.computeIfAbsent(friendName, ignored -> {
-                    Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
-                    animation.setStartValue(0.0f);
-                    return animation;
-                });
-                Animation removeAnimation = removeHoverAnimations.computeIfAbsent(friendName, ignored -> {
-                    Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
-                    animation.setStartValue(0.0f);
-                    return animation;
-                });
-                hoverAnimation.run(rowBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
-                removeAnimation.run(removeBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
-                contentState.noteAnimation(!hoverAnimation.isFinished() || !removeAnimation.isFinished());
-
-                renderFriendRow(friendName, rowBounds, removeBounds, hoverAnimation.getValue(), removeAnimation.getValue());
-                rowY += FRIEND_ROW_HEIGHT + MD3Theme.ROW_GAP;
-            }
-
-            if (friends.isEmpty()) {
-                float hintScale = 0.58f;
-                String hint = noFriendsComponent.getTranslatedName();
-                float hintWidth = contentBuffer.textRenderer().getWidth(hint, hintScale);
-                float hintX = listViewport.x() + (listViewport.width() - hintWidth) / 2.0f;
-                float hintY = listViewport.y() + listViewport.height() / 2.0f - contentBuffer.textRenderer().getHeight(hintScale) / 2.0f;
-                contentBuffer.textRenderer().addText(hint, hintX, hintY, hintScale, MD3Theme.TEXT_MUTED);
-            }
-
-            rememberSnapshot(listViewport, mouseX, mouseY, friends, guiGraphics.guiHeight(), contentSignature);
         }
 
-        contentBuffer.queueViewport(listViewport, guiHeight, state.getFriendScroll(), maxScroll, contentHeight);
+        PanelUiTree tree = PanelUiTree.build(scope -> {
+            inputField.buildUi(scope, inputBounds, mouseX, mouseY, textRenderer,
+                    addFriendPlaceholderComponent.getTranslatedName(), FRIEND_INPUT_FIELD_SCALE, "↵");
+            scope.viewport(contentBuffer, listViewport, guiGraphics.guiHeight(), state.getFriendScroll(), maxScroll, contentHeight, content -> {
+                if (!rebuildContent) {
+                    return;
+                }
+                float rowY = listViewport.y() - state.getFriendScroll();
+                for (String friendName : friends) {
+                    PanelLayout.Rect rowBounds = new PanelLayout.Rect(listViewport.x(), rowY, rowWidth, FRIEND_ROW_HEIGHT);
+                    PanelLayout.Rect removeBounds = getRemoveButtonBounds(rowBounds);
+                    rowEntries.add(new FriendRowEntry(friendName, rowBounds, removeBounds));
+
+                    Animation hoverAnimation = rowHoverAnimations.computeIfAbsent(friendName, ignored -> createAnimation());
+                    Animation removeAnimation = removeHoverAnimations.computeIfAbsent(friendName, ignored -> createAnimation());
+                    hoverAnimation.run(rowBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
+                    removeAnimation.run(removeBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
+                    contentState.noteAnimation(!hoverAnimation.isFinished() || !removeAnimation.isFinished());
+
+                    buildFriendRow(content, friendName, rowBounds, removeBounds, hoverAnimation.getValue(), removeAnimation.getValue());
+                    rowY += FRIEND_ROW_HEIGHT + MD3Theme.ROW_GAP;
+                }
+
+                if (friends.isEmpty()) {
+                    float hintScale = 0.58f;
+                    String hint = noFriendsComponent.getTranslatedName();
+                    float hintWidth = textRenderer.getWidth(hint, hintScale);
+                    float hintX = listViewport.x() + (listViewport.width() - hintWidth) / 2.0f;
+                    float hintY = listViewport.y() + listViewport.height() / 2.0f - textRenderer.getHeight(hintScale) / 2.0f;
+                    content.text(hint, hintX, hintY, hintScale, MD3Theme.TEXT_MUTED);
+                }
+            });
+        });
+        PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
+
+        if (rebuildContent) {
+            rememberSnapshot(listViewport, mouseX, mouseY, friends, guiGraphics.guiHeight(), contentSignature);
+        }
     }
 
     @Override
@@ -267,21 +271,18 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
         markDirty();
     }
 
-    private void renderFriendRow(String name, PanelLayout.Rect bounds, PanelLayout.Rect removeBounds, float hoverProgress, float removeHoverProgress) {
-        RoundRectRenderer roundRectRenderer = contentBuffer.roundRectRenderer();
-        TextRenderer textRenderer = contentBuffer.textRenderer();
-
-        PanelElements.drawRowSurface(roundRectRenderer, bounds, hoverProgress);
+    private void buildFriendRow(PanelUiTree.Scope scope, String name, PanelLayout.Rect bounds, PanelLayout.Rect removeBounds, float hoverProgress, float removeHoverProgress) {
+        PanelElements.buildRowSurface(scope, bounds, hoverProgress);
 
         float avatarSize = 20.0f;
         float avatarX = bounds.x() + MD3Theme.ROW_CONTENT_INSET + 2.0f;
         float avatarY = bounds.y() + (bounds.height() - avatarSize) / 2.0f;
-        roundRectRenderer.addRoundRect(avatarX, avatarY, avatarSize, avatarSize, avatarSize / 2.0f, MD3Theme.SECONDARY_CONTAINER);
+        scope.roundRect(avatarX, avatarY, avatarSize, avatarSize, avatarSize / 2.0f, MD3Theme.SECONDARY_CONTAINER);
         String initial = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
         float initialScale = 0.54f;
         float initialWidth = textRenderer.getWidth(initial, initialScale);
         float initialHeight = textRenderer.getHeight(initialScale);
-        textRenderer.addText(initial,
+        scope.text(initial,
                 avatarX + (avatarSize - initialWidth) / 2.0f,
                 avatarY + (avatarSize - initialHeight) / 2.0f - 1.0f,
                 initialScale,
@@ -290,9 +291,9 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
         float nameScale = 0.66f;
         float nameX = avatarX + avatarSize + 8.0f;
         float nameY = bounds.y() + (bounds.height() - textRenderer.getHeight(nameScale)) / 2.0f - 1.0f;
-        textRenderer.addText(name, nameX, nameY, nameScale, MD3Theme.TEXT_PRIMARY);
+        scope.text(name, nameX, nameY, nameScale, MD3Theme.TEXT_PRIMARY);
 
-        PanelElements.drawIconButton(roundRectRenderer, textRenderer, removeBounds, "✕", 0.50f, MD3Theme.ERROR, removeHoverProgress);
+        PanelElements.buildIconButton(scope, textRenderer, removeBounds, "✕", 0.50f, MD3Theme.ERROR, removeHoverProgress);
     }
 
     private PanelLayout.Rect getListViewport(PanelLayout.Rect bounds) {
@@ -351,6 +352,12 @@ public final class FriendClientSettingTab implements ClientSettingTabView {
             signature = signature * 31L + friend.hashCode();
         }
         return signature;
+    }
+
+    private Animation createAnimation() {
+        Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
+        animation.setStartValue(0.0f);
+        return animation;
     }
 
     private record FriendRowEntry(String name, PanelLayout.Rect rowBounds, PanelLayout.Rect removeBounds) {

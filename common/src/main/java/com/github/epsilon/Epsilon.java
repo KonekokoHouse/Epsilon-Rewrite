@@ -1,6 +1,7 @@
 package com.github.epsilon;
 
 import com.github.epsilon.assets.i18n.I18NFileGenerator;
+import com.github.epsilon.managers.AddonManager;
 import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.managers.ModuleManager;
 import com.github.epsilon.managers.SyncManager;
@@ -43,6 +44,7 @@ public class Epsilon {
 
         // 初始化 Managers
         ModuleManager.INSTANCE.initModules();
+        AddonManager.INSTANCE.setupAddons();
 
         SyncManager.INSTANCE.getClass();
         ClientboundPacketManager.INSTANCE.getClass();

@@ -10,6 +10,8 @@ import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
+import com.github.epsilon.gui.panel.dsl.PanelUiCompiler;
+import com.github.epsilon.gui.panel.dsl.PanelUiTree;
 import com.github.epsilon.gui.panel.popup.ConfirmActionPopup;
 import com.github.epsilon.gui.panel.popup.MessagePopup;
 import com.github.epsilon.gui.panel.popup.PanelPopupHost;
@@ -28,8 +30,11 @@ import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class ConfigClientSettingTab implements ClientSettingTabView {
@@ -79,7 +84,6 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
     private final List<ConfigRowEntry> rowEntries = new ArrayList<>();
 
     private PanelLayout.Rect bounds;
-    private int guiHeight;
     private float lastScroll = Float.NaN;
     private List<String> lastConfigList = List.of();
     private String lastActiveConfig = "";
@@ -96,13 +100,10 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
     @Override
     public void render(GuiGraphicsExtractor guiGraphics, PanelLayout.Rect bounds, int mouseX, int mouseY, float partialTick) {
         this.bounds = bounds;
-        this.guiHeight = guiGraphics.guiHeight();
 
         List<String> configs = ConfigManager.INSTANCE.listConfigs();
         String activeConfig = ConfigManager.INSTANCE.getActiveConfigName();
-
-        renderInputs(getInputSectionBounds(bounds), mouseX, mouseY);
-
+        PanelLayout.Rect inputSection = getInputSectionBounds(bounds);
         PanelLayout.Rect listViewport = getListViewport(bounds);
         float contentHeight = configs.size() * (ROW_HEIGHT + MD3Theme.ROW_GAP);
         state.setMaxConfigScroll(contentHeight - listViewport.height());
@@ -110,43 +111,57 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
         boolean hasScrollBar = maxScroll > 0.0f;
         float rowWidth = hasScrollBar ? listViewport.width() - ScrollBarUtil.TOTAL_WIDTH : listViewport.width();
         long contentSignature = buildContentSignature(configs, activeConfig);
+        boolean rebuildContent = shouldRebuild(listViewport, mouseX, mouseY, configs, activeConfig, guiGraphics.guiHeight(), contentSignature);
 
-        if (shouldRebuild(listViewport, mouseX, mouseY, configs, activeConfig, guiGraphics.guiHeight(), contentSignature)) {
+        if (rebuildContent) {
             contentBuffer.clear();
             contentState.beginRebuild();
             rowEntries.clear();
             rowHoverAnimations.keySet().removeIf(name -> !configs.contains(name));
             deleteHoverAnimations.keySet().removeIf(name -> !configs.contains(name));
-
-            float rowY = listViewport.y() - state.getConfigScroll();
-            for (String configName : configs) {
-                PanelLayout.Rect rowBounds = new PanelLayout.Rect(listViewport.x(), rowY, rowWidth, ROW_HEIGHT);
-                PanelLayout.Rect deleteBounds = getDeleteButtonBounds(rowBounds);
-                rowEntries.add(new ConfigRowEntry(configName, rowBounds, deleteBounds));
-
-                Animation rowHover = rowHoverAnimations.computeIfAbsent(configName, ignored -> createAnimation());
-                Animation deleteHover = deleteHoverAnimations.computeIfAbsent(configName, ignored -> createAnimation());
-                rowHover.run(rowBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
-                deleteHover.run(deleteBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
-                contentState.noteAnimation(!rowHover.isFinished() || !deleteHover.isFinished());
-
-                renderConfigRow(configName, activeConfig, rowBounds, deleteBounds, rowHover.getValue(), deleteHover.getValue());
-                rowY += ROW_HEIGHT + MD3Theme.ROW_GAP;
-            }
-
-            if (configs.isEmpty()) {
-                float hintScale = 0.58f;
-                String hint = emptyComponent.getTranslatedName();
-                float hintWidth = contentBuffer.textRenderer().getWidth(hint, hintScale);
-                float hintX = listViewport.x() + (listViewport.width() - hintWidth) / 2.0f;
-                float hintY = listViewport.y() + listViewport.height() / 2.0f - contentBuffer.textRenderer().getHeight(hintScale) / 2.0f;
-                contentBuffer.textRenderer().addText(hint, hintX, hintY, hintScale, MD3Theme.TEXT_MUTED);
-            }
-
-            rememberSnapshot(listViewport, mouseX, mouseY, configs, activeConfig, guiGraphics.guiHeight(), contentSignature);
         }
 
-        contentBuffer.queueViewport(listViewport, guiHeight, state.getConfigScroll(), maxScroll, contentHeight);
+        PanelUiTree tree = PanelUiTree.build(scope -> {
+            inputField.buildUi(scope, getInputFieldBounds(inputSection), mouseX, mouseY, textRenderer,
+                    inputPlaceholderComponent.getTranslatedName(), FIELD_SCALE, null);
+            for (ActionButton button : getActionButtons(inputSection)) {
+                buildActionButton(scope, button, mouseX, mouseY);
+            }
+            scope.viewport(contentBuffer, listViewport, guiGraphics.guiHeight(), state.getConfigScroll(), maxScroll, contentHeight, content -> {
+                if (!rebuildContent) {
+                    return;
+                }
+                float rowY = listViewport.y() - state.getConfigScroll();
+                for (String configName : configs) {
+                    PanelLayout.Rect rowBounds = new PanelLayout.Rect(listViewport.x(), rowY, rowWidth, ROW_HEIGHT);
+                    PanelLayout.Rect deleteBounds = getDeleteButtonBounds(rowBounds);
+                    rowEntries.add(new ConfigRowEntry(configName, rowBounds, deleteBounds));
+
+                    Animation rowHover = rowHoverAnimations.computeIfAbsent(configName, ignored -> createAnimation());
+                    Animation deleteHover = deleteHoverAnimations.computeIfAbsent(configName, ignored -> createAnimation());
+                    rowHover.run(rowBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
+                    deleteHover.run(deleteBounds.contains(mouseX, mouseY) ? 1.0f : 0.0f);
+                    contentState.noteAnimation(!rowHover.isFinished() || !deleteHover.isFinished());
+
+                    buildConfigRow(content, configName, activeConfig, rowBounds, deleteBounds, rowHover.getValue(), deleteHover.getValue());
+                    rowY += ROW_HEIGHT + MD3Theme.ROW_GAP;
+                }
+
+                if (configs.isEmpty()) {
+                    float hintScale = 0.58f;
+                    String hint = emptyComponent.getTranslatedName();
+                    float hintWidth = textRenderer.getWidth(hint, hintScale);
+                    float hintX = listViewport.x() + (listViewport.width() - hintWidth) / 2.0f;
+                    float hintY = listViewport.y() + listViewport.height() / 2.0f - textRenderer.getHeight(hintScale) / 2.0f;
+                    content.text(hint, hintX, hintY, hintScale, MD3Theme.TEXT_MUTED);
+                }
+            });
+        });
+        PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
+
+        if (rebuildContent) {
+            rememberSnapshot(listViewport, mouseX, mouseY, configs, activeConfig, guiGraphics.guiHeight(), contentSignature);
+        }
     }
 
     @Override
@@ -302,22 +317,11 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
         markDirty();
     }
 
-    private void renderInputs(PanelLayout.Rect inputBounds, int mouseX, int mouseY) {
-        inputField.render(getInputFieldBounds(inputBounds), mouseX, mouseY, roundRectRenderer, rectRenderer, textRenderer,
-                inputPlaceholderComponent.getTranslatedName(), FIELD_SCALE, null);
-
-        for (ActionButton button : getActionButtons(inputBounds)) {
-            renderActionButton(button, mouseX, mouseY);
-        }
-
-    }
-
-    private void renderActionButton(ActionButton button, int mouseX, int mouseY) {
+    private void buildActionButton(PanelUiTree.Scope scope, ActionButton button, int mouseX, int mouseY) {
         Animation hoverAnimation = buttonHoverAnimations.computeIfAbsent(button.type().name(), ignored -> createAnimation());
         boolean hovered = button.bounds().contains(mouseX, mouseY);
-        hoverAnimation.run(hovered ? 1.0f : 0.0f);
+        float hover = scope.animate(hoverAnimation, hovered);
 
-        float hover = hoverAnimation.getValue();
         Color baseColor = switch (button.type()) {
             case SAVE_AS -> MD3Theme.PRIMARY_CONTAINER;
             case RELOAD -> MD3Theme.SECONDARY_CONTAINER;
@@ -334,62 +338,60 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
             case EXPORT, IMPORT -> MD3Theme.TEXT_PRIMARY;
         };
 
-        roundRectRenderer.addRoundRect(button.bounds().x(), button.bounds().y(), button.bounds().width(), button.bounds().height(),
+        scope.roundRect(button.bounds().x(), button.bounds().y(), button.bounds().width(), button.bounds().height(),
                 button.bounds().height() / 2.0f, MD3Theme.lerp(baseColor, hoverColor, hover * 0.35f));
 
         float labelScale = 0.56f;
         float labelWidth = textRenderer.getWidth(button.label(), labelScale);
         float labelHeight = textRenderer.getHeight(labelScale);
-        textRenderer.addText(button.label(),
+        scope.text(button.label(),
                 button.bounds().x() + (button.bounds().width() - labelWidth) / 2.0f,
                 button.bounds().y() + (button.bounds().height() - labelHeight) / 2.0f - 1.0f,
                 labelScale,
                 textColor);
     }
 
-    private void renderConfigRow(String configName, String activeConfig, PanelLayout.Rect rowBounds, PanelLayout.Rect deleteBounds, float hover, float deleteHover) {
+    private void buildConfigRow(PanelUiTree.Scope scope, String configName, String activeConfig, PanelLayout.Rect rowBounds, PanelLayout.Rect deleteBounds, float hover, float deleteHover) {
         boolean active = Objects.equals(configName, activeConfig);
-        RoundRectRenderer rowRenderer = contentBuffer.roundRectRenderer();
-        TextRenderer rowTextRenderer = contentBuffer.textRenderer();
 
         Color baseColor = MD3Theme.lerp(MD3Theme.SURFACE_CONTAINER, MD3Theme.SURFACE_CONTAINER_HIGH, hover);
         Color rowColor = active ? MD3Theme.lerp(baseColor, MD3Theme.PRIMARY_CONTAINER, 0.28f) : baseColor;
-        rowRenderer.addRoundRect(rowBounds.x(), rowBounds.y(), rowBounds.width(), rowBounds.height(), MD3Theme.CARD_RADIUS, rowColor);
+        scope.roundRect(rowBounds.x(), rowBounds.y(), rowBounds.width(), rowBounds.height(), MD3Theme.CARD_RADIUS, rowColor);
 
         float nameScale = 0.66f;
         float subScale = 0.52f;
         float textX = rowBounds.x() + MD3Theme.ROW_CONTENT_INSET + 1.0f;
         float nameY = rowBounds.y() + 7.0f;
-        rowTextRenderer.addText(trimToWidth(configName, nameScale, rowBounds.width() - 72.0f), textX, nameY, nameScale,
+        scope.text(trimToWidth(configName, nameScale, rowBounds.width() - 72.0f), textX, nameY, nameScale,
                 active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY);
 
         String subtitle = active ? currentComponent.getTranslatedName() : switchHintComponent.getTranslatedName();
         Color subtitleColor = active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_MUTED;
-        rowTextRenderer.addText(subtitle, textX, nameY + 12.0f, subScale, subtitleColor);
+        scope.text(subtitle, textX, nameY + 12.0f, subScale, subtitleColor);
 
         if (active) {
             String chipText = currentComponent.getTranslatedName();
             float chipScale = 0.48f;
-            float chipWidth = rowTextRenderer.getWidth(chipText, chipScale) + 10.0f;
+            float chipWidth = textRenderer.getWidth(chipText, chipScale) + 10.0f;
             float chipHeight = 14.0f;
             float chipX = deleteBounds.x() - chipWidth - 6.0f;
             float chipY = rowBounds.y() + (rowBounds.height() - chipHeight) / 2.0f;
-            rowRenderer.addRoundRect(chipX, chipY, chipWidth, chipHeight, chipHeight / 2.0f, MD3Theme.PRIMARY);
-            rowTextRenderer.addText(chipText,
-                    chipX + (chipWidth - rowTextRenderer.getWidth(chipText, chipScale)) / 2.0f,
-                    chipY + (chipHeight - rowTextRenderer.getHeight(chipScale)) / 2.0f - 1.0f,
+            scope.roundRect(chipX, chipY, chipWidth, chipHeight, chipHeight / 2.0f, MD3Theme.PRIMARY);
+            scope.text(chipText,
+                    chipX + (chipWidth - textRenderer.getWidth(chipText, chipScale)) / 2.0f,
+                    chipY + (chipHeight - textRenderer.getHeight(chipScale)) / 2.0f - 1.0f,
                     chipScale,
                     MD3Theme.ON_PRIMARY);
         }
 
-        rowRenderer.addRoundRect(deleteBounds.x(), deleteBounds.y(), deleteBounds.width(), deleteBounds.height(),
+        scope.roundRect(deleteBounds.x(), deleteBounds.y(), deleteBounds.width(), deleteBounds.height(),
                 deleteBounds.height() / 2.0f,
                 MD3Theme.lerp(MD3Theme.withAlpha(MD3Theme.ERROR, 0), MD3Theme.withAlpha(MD3Theme.ERROR, 32), deleteHover));
         float removeScale = 0.50f;
         String removeIcon = "✕";
-        rowTextRenderer.addText(removeIcon,
-                deleteBounds.x() + (deleteBounds.width() - rowTextRenderer.getWidth(removeIcon, removeScale)) / 2.0f,
-                deleteBounds.y() + (deleteBounds.height() - rowTextRenderer.getHeight(removeScale)) / 2.0f - 1.0f,
+        scope.text(removeIcon,
+                deleteBounds.x() + (deleteBounds.width() - textRenderer.getWidth(removeIcon, removeScale)) / 2.0f,
+                deleteBounds.y() + (deleteBounds.height() - textRenderer.getHeight(removeScale)) / 2.0f - 1.0f,
                 removeScale,
                 MD3Theme.lerp(MD3Theme.TEXT_MUTED, MD3Theme.ERROR, deleteHover));
     }
@@ -639,7 +641,6 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
         return ellipsis;
     }
 
-
     private record ConfigRowEntry(String name, PanelLayout.Rect rowBounds, PanelLayout.Rect deleteBounds) {
     }
 
@@ -653,5 +654,4 @@ public final class ConfigClientSettingTab implements ClientSettingTabView {
         IMPORT
     }
 }
-
 

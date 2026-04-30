@@ -31,9 +31,6 @@ public class EpsilonFabric implements ClientModInitializer {
                 .getMetadata().getVersion().getFriendlyString();
         Epsilon.platform = new FabricPlatformCompat();
 
-        Epsilon.init();
-        CommonListeners.register();
-
         // Load addon providers registered through Fabric custom entrypoints.
         EpsilonAddonSetupEvent addonEvent = new EpsilonAddonSetupEvent();
         for (EntrypointContainer<FabricEpsilonAddonEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ADDON_ENTRYPOINT_KEY, FabricEpsilonAddonEntrypoint.class)) {
@@ -45,7 +42,10 @@ public class EpsilonFabric implements ClientModInitializer {
                 Epsilon.LOGGER.error("Failed to register addon entrypoint from mod: {}", providerId, t);
             }
         }
-        AddonBootstrap.setupAddons(addonEvent);
+        AddonBootstrap.registerAddons(addonEvent);
+
+        Epsilon.init();
+        CommonListeners.register();
 
         // Register render pipelines
         LuminRenderPipelines.registerAll(pipeline -> {

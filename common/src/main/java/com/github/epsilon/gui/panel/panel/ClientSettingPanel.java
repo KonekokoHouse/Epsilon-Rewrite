@@ -12,6 +12,7 @@ import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
 import com.github.epsilon.gui.panel.dsl.PanelUiCompiler;
 import com.github.epsilon.gui.panel.dsl.PanelUiTree;
+import com.github.epsilon.gui.panel.panel.clientsettings.AddonClientSettingTab;
 import com.github.epsilon.gui.panel.panel.clientsettings.ClientSettingTabView;
 import com.github.epsilon.gui.panel.panel.clientsettings.ConfigClientSettingTab;
 import com.github.epsilon.gui.panel.panel.clientsettings.FriendClientSettingTab;
@@ -33,10 +34,12 @@ public class ClientSettingPanel {
     private static final TranslateComponent generalTabComponent = EpsilonTranslateComponent.create("gui", "tab.general");
     private static final TranslateComponent friendTabComponent = EpsilonTranslateComponent.create("gui", "tab.friend");
     private static final TranslateComponent configTabComponent = EpsilonTranslateComponent.create("gui", "tab.config");
+    private static final TranslateComponent addonTabComponent = EpsilonTranslateComponent.create("gui", "tab.addon");
     private static final List<TabDefinition> TABS = List.of(
             new TabDefinition(PanelState.ClientSettingTab.GENERAL, generalTabComponent),
             new TabDefinition(PanelState.ClientSettingTab.FRIEND, friendTabComponent),
-            new TabDefinition(PanelState.ClientSettingTab.CONFIG, configTabComponent)
+            new TabDefinition(PanelState.ClientSettingTab.CONFIG, configTabComponent),
+            new TabDefinition(PanelState.ClientSettingTab.ADDON, addonTabComponent)
     );
 
     private static final float TAB_BAR_HEIGHT = 26.0f;
@@ -58,9 +61,10 @@ public class ClientSettingPanel {
         this.rectRenderer = rectRenderer;
         this.textRenderer = textRenderer;
 
-        tabViews.put(PanelState.ClientSettingTab.GENERAL, new GeneralClientSettingTab(state, popupHost));
+        tabViews.put(PanelState.ClientSettingTab.GENERAL, new GeneralClientSettingTab(state, roundRectRenderer, rectRenderer, textRenderer, popupHost));
         tabViews.put(PanelState.ClientSettingTab.FRIEND, new FriendClientSettingTab(state, roundRectRenderer, rectRenderer, textRenderer));
         tabViews.put(PanelState.ClientSettingTab.CONFIG, new ConfigClientSettingTab(state, roundRectRenderer, rectRenderer, textRenderer, popupHost));
+        tabViews.put(PanelState.ClientSettingTab.ADDON, new AddonClientSettingTab(state, roundRectRenderer, rectRenderer, textRenderer, popupHost));
 
         for (PanelState.ClientSettingTab tab : PanelState.ClientSettingTab.values()) {
             Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
@@ -82,7 +86,7 @@ public class ClientSettingPanel {
             scope.text(titleComponent.getTranslatedName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
             buildTabs(scope, effectiveMouseX, effectiveMouseY);
         });
-        PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
+        PanelUiCompiler.render(tree, null, roundRectRenderer, rectRenderer, textRenderer);
 
         activeTab.render(guiGraphics, getContentBounds(), effectiveMouseX, effectiveMouseY, partialTick);
     }
@@ -192,7 +196,7 @@ public class ClientSettingPanel {
 
     private PanelState.ClientSettingTab resolveClickedTab(double mouseX, PanelLayout.Rect tabBar) {
         float segmentWidth = tabBar.width() / TABS.size();
-        int index = Math.min(TABS.size() - 1, Math.max(0, (int) ((mouseX - tabBar.x()) / segmentWidth)));
+        int index = Math.clamp((int) ((mouseX - tabBar.x()) / segmentWidth), 0, TABS.size() - 1);
         return TABS.get(index).tab();
     }
 
@@ -206,6 +210,7 @@ public class ClientSettingPanel {
             case GENERAL -> 0;
             case FRIEND -> 1;
             case CONFIG -> 2;
+            case ADDON -> 3;
         };
     }
 

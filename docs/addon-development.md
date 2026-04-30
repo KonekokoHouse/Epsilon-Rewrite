@@ -24,8 +24,25 @@ import com.github.epsilon.addon.EpsilonAddon;
 
 public class ExampleAddon extends EpsilonAddon {
 
+    private final BoolSetting enableParticles = boolSetting("Enable Particles", true);
+
     public ExampleAddon() {
         super("example_addon");
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "Example Addon";
+    }
+
+    @Override
+    public String getDescription() {
+        return "An example addon that demonstrates addon metadata and addon settings.";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
     }
 
     @Override
@@ -35,6 +52,21 @@ public class ExampleAddon extends EpsilonAddon {
     }
 }
 ```
+
+### Addon 元信息与 Addon Setting
+
+- `getDisplayName()`：用于在客户端 `Client Settings -> Addons` 中显示名称。
+- `getDescription()`：用于显示 Addon 的简介。
+- `getVersion()` / `getAuthors()`：用于显示基础信息。
+- `boolSetting(...)` / `intSetting(...)` / `enumSetting(...)` 等：用于声明 **Addon 自己的设置**，这些设置会显示在 `Client Settings -> Addons` 中，并随配置一起保存。
+
+Addon setting 的翻译 key 约定为：
+
+- `{addonId}.settings.{settingNameLowerCase}`
+
+Addon 模块翻译 key 仍然为：
+
+- `{addonId}.modules.{moduleNameLowerCase}`
 
 ## 3. Fabric 接入 (自定义 Entrypoint)
 

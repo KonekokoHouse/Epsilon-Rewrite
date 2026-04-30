@@ -26,7 +26,8 @@ public class PanelState {
     public enum ClientSettingTab {
         GENERAL,
         FRIEND,
-        CONFIG
+        CONFIG,
+        ADDON
     }
 
     private Category selectedCategory = Category.COMBAT;
@@ -50,6 +51,11 @@ public class PanelState {
     private float maxFriendScroll;
     private float configScroll;
     private float maxConfigScroll;
+    private String selectedAddonId = "";
+    private float addonListScroll;
+    private float maxAddonListScroll;
+    private float addonDetailScroll;
+    private float maxAddonDetailScroll;
 
     public PanelState() {
         ensureValidSelection();
@@ -217,6 +223,9 @@ public class PanelState {
                 clientSettingScroll = 0.0f;
                 friendScroll = 0.0f;
                 configScroll = 0.0f;
+                addonListScroll = 0.0f;
+                addonDetailScroll = 0.0f;
+                selectedAddonId = "";
                 clientSettingTab = ClientSettingTab.GENERAL;
             }
         }
@@ -301,6 +310,56 @@ public class PanelState {
     public void setMaxConfigScroll(float maxConfigScroll) {
         this.maxConfigScroll = Math.max(0.0f, maxConfigScroll);
         configScroll = clampScroll(configScroll, this.maxConfigScroll);
+    }
+
+    public String getSelectedAddonId() {
+        return selectedAddonId;
+    }
+
+    public void setSelectedAddonId(String selectedAddonId) {
+        this.selectedAddonId = selectedAddonId == null ? "" : selectedAddonId;
+    }
+
+    public float getAddonListScroll() {
+        return addonListScroll;
+    }
+
+    public void scrollAddonList(double amount) {
+        addonListScroll = clampScroll(addonListScroll + (float) amount, maxAddonListScroll);
+    }
+
+    public float getMaxAddonListScroll() {
+        return maxAddonListScroll;
+    }
+
+    public void setAddonListScroll(float scroll) {
+        this.addonListScroll = clampScroll(scroll, maxAddonListScroll);
+    }
+
+    public void setMaxAddonListScroll(float maxAddonListScroll) {
+        this.maxAddonListScroll = Math.max(0.0f, maxAddonListScroll);
+        addonListScroll = clampScroll(addonListScroll, this.maxAddonListScroll);
+    }
+
+    public float getAddonDetailScroll() {
+        return addonDetailScroll;
+    }
+
+    public void scrollAddonDetail(double amount) {
+        addonDetailScroll = clampScroll(addonDetailScroll + (float) amount, maxAddonDetailScroll);
+    }
+
+    public float getMaxAddonDetailScroll() {
+        return maxAddonDetailScroll;
+    }
+
+    public void setAddonDetailScroll(float scroll) {
+        this.addonDetailScroll = clampScroll(scroll, maxAddonDetailScroll);
+    }
+
+    public void setMaxAddonDetailScroll(float maxAddonDetailScroll) {
+        this.maxAddonDetailScroll = Math.max(0.0f, maxAddonDetailScroll);
+        addonDetailScroll = clampScroll(addonDetailScroll, this.maxAddonDetailScroll);
     }
 
     private float clampScroll(float scroll, float maxScroll) {

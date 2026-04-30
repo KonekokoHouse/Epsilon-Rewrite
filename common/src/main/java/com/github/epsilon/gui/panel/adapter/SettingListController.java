@@ -44,10 +44,17 @@ public final class SettingListController {
         return popupHost.getActivePopup() != null && popupHost.getActivePopup().getBounds().contains(mouseX, mouseY);
     }
 
-    public void layoutRows(List<Setting<?>> settings, PanelLayout.Rect viewport, float scroll, float rowWidth, RowRenderCallback callback) {
-        rowCache.keySet().removeIf(setting -> !settings.contains(setting));
+    public void prepareLayout(List<Setting<?>> settings) {
+        rowCache.keySet().removeIf(setting -> settings == null || !settings.contains(setting));
         settingEntries.clear();
+    }
 
+    public void layoutRows(List<Setting<?>> settings, PanelLayout.Rect viewport, float scroll, float rowWidth, RowRenderCallback callback) {
+        prepareLayout(settings);
+        appendRows(settings, viewport, scroll, rowWidth, callback);
+    }
+
+    public void appendRows(List<Setting<?>> settings, PanelLayout.Rect viewport, float scroll, float rowWidth, RowRenderCallback callback) {
         float rowY = viewport.y() - scroll;
         for (Setting<?> setting : settings) {
             SettingRow<?> row = rowCache.computeIfAbsent(setting, SettingViewFactory::create);

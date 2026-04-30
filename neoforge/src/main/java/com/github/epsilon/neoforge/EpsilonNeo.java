@@ -32,14 +32,13 @@ public class EpsilonNeo {
             Epsilon.platform = new NeoForgePlatformCompat();
         }
 
+        EpsilonAddonSetupEvent addonEvent = new EpsilonAddonSetupEvent();
+        NeoForge.EVENT_BUS.post(addonEvent);
+        AddonBootstrap.registerAddons(addonEvent.getAddons());
+
         // Common initialization
         Epsilon.init();
         CommonListeners.register();
-
-        // Register Addons
-        EpsilonAddonSetupEvent addonEvent = new EpsilonAddonSetupEvent();
-        NeoForge.EVENT_BUS.post(addonEvent);
-        AddonBootstrap.setupAddons(addonEvent.getAddons());
     }
 
 }
