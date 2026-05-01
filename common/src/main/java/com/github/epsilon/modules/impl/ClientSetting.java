@@ -1,5 +1,6 @@
 package com.github.epsilon.modules.impl;
 
+import com.github.epsilon.gui.compose.ComposeDemoScreen;
 import com.github.epsilon.gui.hudeditor.HudEditorScreen;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
@@ -37,6 +38,10 @@ public class ClientSetting extends Module {
 
     private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> {
         mc.setScreen(HudEditorScreen.INSTANCE);
+    });
+
+    private final ButtonSetting openComposeDemo = buttonSetting("Open Compose Demo", () -> {
+        mc.setScreen(new ComposeDemoScreen());
     });
 
     public final BoolSetting i18nFallback = boolSetting("I18n Fallback", true);

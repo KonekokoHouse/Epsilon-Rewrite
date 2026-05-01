@@ -8,6 +8,9 @@ val commonJava by configurations.creating {
 val commonResources by configurations.creating {
     isCanBeResolved = true
 }
+val commonKotlin by configurations.creating {
+    isCanBeResolved = true
+}
 
 dependencies {
     val loaderAttribute = Attribute.of("io.github.mcgradleconventions.loader", String::class.java)
@@ -18,6 +21,7 @@ dependencies {
     }
     commonJava(project(path = ":common", configuration = "commonJava"))
     commonResources(project(path = ":common", configuration = "commonResources"))
+    commonKotlin(project(path = ":common", configuration = "commonKotlin"))
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -30,6 +34,13 @@ tasks.named<ProcessResources>("processResources") {
     from(commonResources)
 }
 
+tasks.named("compileKotlin") {
+    dependsOn(commonKotlin)
+    javaClass.methods
+        .firstOrNull { it.name == "source" }
+        ?.invoke(this, arrayOf(commonKotlin) as Any)
+}
+
 tasks.named<Javadoc>("javadoc") {
     dependsOn(commonJava)
     source(commonJava)
@@ -38,6 +49,8 @@ tasks.named<Javadoc>("javadoc") {
 tasks.named<Jar>("sourcesJar") {
     dependsOn(commonJava)
     from(commonJava)
+    dependsOn(commonKotlin)
+    from(commonKotlin)
     dependsOn(commonResources)
     from(commonResources)
 }

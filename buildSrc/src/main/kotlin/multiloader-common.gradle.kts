@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    id("org.jetbrains.kotlin.jvm")
 }
 
 val modId = project.property("mod_id").toString()
@@ -26,7 +27,28 @@ java {
 }
 
 repositories {
+    google()
+    maven {
+        name = "JetBrainsCompose"
+        url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    }
+    maven {
+        name = "Modrinth"
+        url = uri("https://api.modrinth.com/maven")
+        content {
+            includeGroup("maven.modrinth")
+        }
+    }
     mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "TheDarkColour"
+                url = uri("https://maven.thedarkcolour.me/releases")
+            }
+        }
+        filter { includeGroup("thedarkcolour") }
+    }
     exclusiveContent {
         forRepository {
             maven {

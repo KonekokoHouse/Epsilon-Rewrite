@@ -25,7 +25,9 @@
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
+        "fabric-language-kotlin": "*",
         "minecraft": "~${minecraft_version}",
         "java": ">=${java_version}"
-    }
+    },
+    "accessWidener": "${mod_id}.accesswidener"
 }
