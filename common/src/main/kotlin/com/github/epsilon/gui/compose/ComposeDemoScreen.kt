@@ -1,6 +1,5 @@
 package com.github.epsilon.gui.compose
 
-import com.github.epsilon.gui.panel.PanelScreen
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.CharacterEvent
@@ -9,6 +8,7 @@ import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.network.chat.Component
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
     private val composeSurface = ComposeDemoSurface()
@@ -38,8 +38,13 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
             accentArgb = 0xFF8E7CFF.toInt(),
             backgroundArgb = 0xFF10131A.toInt()
         )
-        val scale = client.window.guiScale
-        val renderedPanel = composeSurface.render(panel.width * scale, panel.height * scale, state)
+        val scale = DEMO_SCALE
+        val renderedPanel = composeSurface.render(
+            width = (panel.width * scale).roundToInt(),
+            height = (panel.height * scale).roundToInt(),
+            densityScale = scale,
+            state = state
+        )
         graphics.blit(
             renderedPanel.textureView,
             renderedPanel.sampler,
@@ -56,7 +61,7 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
 
     override fun mouseClicked(event: MouseButtonEvent, isDoubleClick: Boolean): Boolean {
         val panel = getPanelLayout()
-        if (composeSurface.handleMousePressed(panel.localX(event.x()), panel.localY(event.y()), panel.contains(event.x(), event.y()), event.button(), event.modifiers())) {
+        if (composeSurface.handleMousePressed(panel.localX(event.x(), DEMO_SCALE), panel.localY(event.y(), DEMO_SCALE), panel.contains(event.x(), event.y()), event.button(), event.modifiers())) {
             return true
         }
         return super.mouseClicked(event, isDoubleClick)
@@ -64,7 +69,7 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
 
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
         val panel = getPanelLayout()
-        if (composeSurface.handleMouseReleased(panel.localX(event.x()), panel.localY(event.y()), panel.contains(event.x(), event.y()), event.button(), event.modifiers())) {
+        if (composeSurface.handleMouseReleased(panel.localX(event.x(), DEMO_SCALE), panel.localY(event.y(), DEMO_SCALE), panel.contains(event.x(), event.y()), event.button(), event.modifiers())) {
             return true
         }
         return super.mouseReleased(event)
@@ -73,12 +78,12 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
     override fun mouseMoved(x: Double, y: Double) {
         super.mouseMoved(x, y)
         val panel = getPanelLayout()
-        composeSurface.handleMouseMoved(panel.localX(x), panel.localY(y), panel.contains(x, y))
+        composeSurface.handleMouseMoved(panel.localX(x, DEMO_SCALE), panel.localY(y, DEMO_SCALE), panel.contains(x, y))
     }
 
     override fun mouseDragged(event: MouseButtonEvent, dx: Double, dy: Double): Boolean {
         val panel = getPanelLayout()
-        if (composeSurface.handleMouseDragged(panel.localX(event.x()), panel.localY(event.y()), panel.contains(event.x(), event.y()), event.modifiers())) {
+        if (composeSurface.handleMouseDragged(panel.localX(event.x(), DEMO_SCALE), panel.localY(event.y(), DEMO_SCALE), panel.contains(event.x(), event.y()), event.modifiers())) {
             return true
         }
         return super.mouseDragged(event, dx, dy)
@@ -86,7 +91,7 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
 
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         val panel = getPanelLayout()
-        if (composeSurface.handleMouseScroll(panel.localX(x), panel.localY(y), panel.contains(x, y), scrollX.toFloat(), scrollY.toFloat(), 0)) {
+        if (composeSurface.handleMouseScroll(panel.localX(x, DEMO_SCALE), panel.localY(y, DEMO_SCALE), panel.contains(x, y), scrollX.toFloat(), scrollY.toFloat(), 0)) {
             return true
         }
         return super.mouseScrolled(x, y, scrollX, scrollY)
@@ -125,7 +130,7 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
     override fun onClose() {
         composeSurface.clearFocus()
         super.onClose()
-        minecraft.setScreen(PanelScreen.INSTANCE)
+        minecraft.setScreen(ComposePanelScreen)
     }
 
     override fun removed() {
@@ -156,16 +161,17 @@ class ComposeDemoScreen : Screen(Component.literal("ComposeDemo")) {
             return x >= left && x < left + width && y >= top && y < top + height
         }
 
-        fun localX(x: Double): Float {
-            return (x - left).toFloat()
+        fun localX(x: Double, scale: Float): Float {
+            return ((x - left) * scale).toFloat()
         }
 
-        fun localY(y: Double): Float {
-            return (y - top).toFloat()
+        fun localY(y: Double, scale: Float): Float {
+            return ((y - top) * scale).toFloat()
         }
     }
 
     companion object {
+        private const val DEMO_SCALE = 1.0f
         private const val PANEL_MARGIN = 28
         private const val PANEL_MIN_WIDTH = 280
         private const val PANEL_MIN_HEIGHT = 220

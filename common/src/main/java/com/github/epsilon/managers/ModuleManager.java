@@ -5,7 +5,7 @@ import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.events.bus.EpsilonEventBus;
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.render.RenderFrameEvent;
-import com.github.epsilon.gui.panel.PanelScreen;
+import com.github.epsilon.gui.compose.ComposePanelScreen;
 import com.github.epsilon.modules.HudModule;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.modules.impl.ClientSetting;
@@ -124,7 +124,7 @@ public class ModuleManager {
                 && action == InputConstants.PRESS
                 && Minecraft.getInstance().screen == null
         ) {
-            Minecraft.getInstance().setScreen(PanelScreen.INSTANCE);
+            Minecraft.getInstance().setScreen(ComposePanelScreen.INSTANCE);
         }
 
         for (final var module : modules) {

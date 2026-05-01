@@ -2,8 +2,8 @@ package com.github.epsilon.gui.hudeditor;
 
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.renderers.RectRenderer;
+import com.github.epsilon.gui.compose.ComposePanelScreen;
 import com.github.epsilon.gui.panel.MD3Theme;
-import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.gui.panel.util.IMEFocusHelper;
 import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.managers.RenderManager;
@@ -255,7 +255,7 @@ public class HudEditorScreen extends Screen {
         IMEFocusHelper.deactivate();
         ConfigManager.INSTANCE.saveNow();
         super.onClose();
-        minecraft.setScreen(PanelScreen.INSTANCE);
+        minecraft.setScreen(ComposePanelScreen.INSTANCE);
     }
 
     @Override
