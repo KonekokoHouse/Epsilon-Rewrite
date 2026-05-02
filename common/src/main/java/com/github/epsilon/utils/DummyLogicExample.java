@@ -197,4 +197,79 @@ public final class DummyLogicExample {
 
         // 如果监听器把 key 改成了 -1（表示拦截），后续模块可以据此判断
     }
+
+    // ============================================================
+    // 示例 8：★ Mixin 变换模板（配合 MixinRuntimeLauncher）
+    // ============================================================
+    // 当你需要 @Inject、@Overwrite、@ModifyVariable 等 Mixin 注解能力时，
+    // 使用 MixinRuntimeLauncher 代替 BytecodeInjector。
+    //
+    // 前提：你的 Dummy 类必须编译为正常的 @Mixin 类（有 @Mixin 注解，
+    // 方法上有 @Inject/@Overwrite 等注解）。然后用 MixinRuntimeLauncher
+    // 在运行时加载它的 raw bytes 并触发完整的 Mixin 变换管线。
+    //
+    // 使用示例（在你的 Mixin 插件中）：
+    // <pre>{@code
+    // // 1. 获取目标类和模板 Mixin 的 raw bytes
+    // byte[] targetBytes = YourRuntimeClassProvider.getBytes("net.minecraft.world.entity.Entity");
+    // byte[] mixinBytes = YourRuntimeClassProvider.getBytes("com.github.epsilon.mixins.MixinEntity");
+    //
+    // // 2. 一步调用：启动 Mixin 管线
+    // byte[] transformed = MixinRuntimeLauncher.applyMixin(
+    //     "net.minecraft.world.entity.Entity",  // 目标类全限定名
+    //     targetBytes,                           // 目标类 raw bytes
+    //     mixinBytes                             // Mixin 类 raw bytes
+    // );
+    //
+    // // 3. 重定义类
+    // YourClassRedefiner.redefine("net.minecraft.world.entity.Entity", transformed);
+    // }</pre>
+    //
+    // 和 BytecodeInjector 的区别：
+    // <table>
+    //   <tr><th>特性</th><th>BytecodeInjector</th><th>MixinRuntimeLauncher</th></tr>
+    //   <tr>
+    //     <td>方法头注入</td><td>✓ (InsnList.insert)</td><td>✓ (通过 @Inject(at=@At("HEAD")))</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@Inject 任意位置</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@Overwrite</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@ModifyVariable</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@ModifyArg</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@Redirect</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>描述符重映射</td><td>✗ (需手动)</td><td>✓ (自动)</td>
+    //   </tr>
+    //   <tr>
+    //     <td>@Shadow 字段/方法</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>CallbackInfo</td><td>✗</td><td>✓</td>
+    //   </tr>
+    //   <tr>
+    //     <td>简单直接</td><td>✓✓✓</td><td>✓</td>
+    //   </tr>
+    // </table>
+
+    // ============================================================
+    // 示例 9：★ 混合模式 —— BytecodeInjector 参数转发 + MixinRuntimeLauncher 管线
+    // ============================================================
+    // 两种工具可以组合使用：
+    //   1. 先用 BytecodeInjector 注入自定义方法头（形参转发 + EventBus）
+    //   2. 再用 MixinRuntimeLauncher 启动完整 Mixin 管线（@Inject 等）
+    //
+    // 这让你同时拥有"免写 ASM"和"Mixin 注解全能力"。
+    //
+    // 注意：MixinRuntimeLauncher 要求 Mixin 框架已初始化。
+    // 在 Fabric/NeoForge 的 Minecraft 环境中，默认在 PREINIT 阶段完成。
+    // 你可以在 INIT 或之后的阶段安全调用 applyMixin()。
 }
