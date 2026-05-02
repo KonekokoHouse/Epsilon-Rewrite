@@ -26,7 +26,7 @@ dependencies {
     compileOnly(group = "org.ow2.asm", name = "asm", version = "9.8")
     compileOnly(group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2")
 
-    compileOnly("org.bytedeco:javacv-platform:1.5.11")
+//    compileOnly("org.bytedeco:javacv-platform:1.5.11")
 }
 
 configurations {

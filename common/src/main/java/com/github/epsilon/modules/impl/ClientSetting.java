@@ -58,7 +58,7 @@ public class ClientSetting extends Module {
 
     public final BoolSetting customTitle = boolSetting("Custom Title", true, _ -> mc.updateTitle());
 
-    public final BoolSetting useMainMenu = boolSetting("Use MainMenu", true);
+    //public final BoolSetting useMainMenu = boolSetting("Use MainMenu", true);
 
     public final BoolSetting soundNotify = boolSetting("Sound Notify", true);
 

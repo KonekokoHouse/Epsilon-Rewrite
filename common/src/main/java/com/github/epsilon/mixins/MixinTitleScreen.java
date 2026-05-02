@@ -14,10 +14,10 @@ public class MixinTitleScreen {
 
     @Inject(method = "init", at = @At("HEAD"), cancellable = true)
     private void redirectToMainMenu(CallbackInfo ci) {
-        if (ClientSetting.INSTANCE.useMainMenu.getValue()) {
-            ci.cancel();
-            Minecraft.getInstance().setScreen(MainMenuScreen.INSTANCE);
-        }
+//        if (ClientSetting.INSTANCE.useMainMenu.getValue()) {
+//            ci.cancel();
+//            Minecraft.getInstance().setScreen(MainMenuScreen.INSTANCE);
+//        }
     }
 
 }
