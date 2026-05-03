@@ -124,10 +124,16 @@ public abstract class HudModule extends Module {
     }
 
     private static int getScreenWidth() {
+        if (Minecraft.getInstance().getWindow() == null) {
+            return 0;
+        }
         return Minecraft.getInstance().getWindow().getGuiScaledWidth();
     }
 
     private static int getScreenHeight() {
+        if (Minecraft.getInstance().getWindow() == null) {
+            return 0;
+        }
         return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
