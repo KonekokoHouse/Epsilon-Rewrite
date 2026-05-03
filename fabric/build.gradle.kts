@@ -59,10 +59,3 @@ sourceSets.configureEach {
         }
     }
 }
-
-tasks.register<Copy>("copyZkmLibs") {
-    into("${rootProject.projectDir}/obf-workspace/zkmLibs")
-    from(configurations.runtimeClasspath)
-    from(configurations.compileClasspath)
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
