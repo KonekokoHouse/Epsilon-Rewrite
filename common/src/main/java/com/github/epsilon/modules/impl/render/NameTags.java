@@ -1,11 +1,11 @@
 package com.github.epsilon.modules.impl.render;
 
 import com.github.epsilon.events.bus.EventHandler;
+import com.github.epsilon.events.impl.Render2DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.managers.FriendManager;
-import com.github.epsilon.managers.RenderManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
@@ -40,16 +40,19 @@ public class NameTags extends Module {
         super("Name Tags", Category.RENDER);
     }
 
+    private final List<TagDrawData> drawList = new ArrayList<>();
+
     @EventHandler
     public void onRender3D(Render3DEvent event) {
         if (nullCheck()) return;
+
+        drawList.clear();
 
         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
         double maxDistanceSq = range.getValue() * range.getValue();
         float textScale = scale.getValue().floatValue();
 
         TextRenderer textRenderer = textRendererSupplier.get();
-        List<TagDrawData> drawList = new ArrayList<>();
 
         for (Player target : mc.level.players()) {
             if (!target.isAlive() || target.isSpectator()) continue;
@@ -107,12 +110,10 @@ public class NameTags extends Module {
             drawList.add(new TagDrawData(equipmentLines, nameText, isFriend, healthText, healthColor, x, y, boxWidth, boxHeight, renderScale, padding, lineGap));
         }
 
-        if (drawList.isEmpty()) return;
-
-        RenderManager.INSTANCE.applyRenderAfterWorld(() -> renderTagList(drawList));
     }
 
-    private void renderTagList(List<TagDrawData> drawList) {
+    @EventHandler
+    private void renderTagList(Render2DEvent event) {
         RectRenderer rectRenderer = rectRendererSupplier.get();
         TextRenderer textRenderer = textRendererSupplier.get();
 

@@ -1,10 +1,10 @@
 package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
+import com.github.epsilon.events.impl.Render2DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.managers.RenderManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.managers.TargetManager;
 import com.github.epsilon.modules.Category;
@@ -676,6 +676,18 @@ public class AutoCrystal extends Module {
         Render3DUtils.drawOutlineBox(event.getPoseStack(), box, outline.getRGB(), outlineWidth.getValue().floatValue());
 
         renderLastRenderedPos = renderPos;
+    }
+
+    @EventHandler
+    private void onRender2D(Render2DEvent event) {
+        if (nullCheck()) return;
+        if (renderPrevPos == null || renderCurrentPos == null) return;
+
+        float moveDelta = toDelta(renderMoveStartTime, movingLength.getValue());
+        float moveMultiplier = easeOutQuart(moveDelta);
+        Vec3 renderPos = renderPrevPos.add(
+                renderCurrentPos.subtract(renderPrevPos).scale(moveMultiplier)
+        );
 
         if (!targetDamage.getValue() && !selfDamage.getValue()) return;
 
@@ -703,11 +715,9 @@ public class AutoCrystal extends Module {
         }
         Color textColor = new Color(255, 255, 255, Math.max(0, Math.min(255, (int) (220 * renderScale))));
 
-        RenderManager.INSTANCE.applyRenderAfterWorld(() -> {
-            TextRenderer tr = this.textRenderer.get();
-            tr.addText(text, textX, textY, textScale, textColor);
-            tr.drawAndClear();
-        });
+        TextRenderer tr = this.textRenderer.get();
+        tr.addText(text, textX, textY, textScale, textColor);
+        tr.drawAndClear();
     }
 
     private Vector2f projectToScreen(Vec3 pos) {
