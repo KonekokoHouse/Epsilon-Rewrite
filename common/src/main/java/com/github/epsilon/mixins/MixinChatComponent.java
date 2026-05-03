@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class MixinChatComponent {
 
     @ModifyVariable(method = "handleMessage", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private FormattedCharSequence sakura$animateClientPrefix(FormattedCharSequence message) {
+    private FormattedCharSequence onHandleMessage(FormattedCharSequence message) {
         return ChatUtils.applyAnimatedPrefix(message);
     }
 
