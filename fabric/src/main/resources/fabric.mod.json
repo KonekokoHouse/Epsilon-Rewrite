@@ -1,24 +1,23 @@
 {
   "schemaVersion": 1,
-  "id": "offlinemodefix",
-  "version": "1.0.0",
-  "name": "Offline Mode Fix",
-  "description": "Fixes chat lag spikes, removes 'Not Secure' indicators, and suppresses unverified server warnings on offline-mode servers.",
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "Epsilon",
+  "description": "",
   "authors": [
-    "Louiszn"
+    "Chen Meng"
   ],
   "contact": {
-    "homepage": "https://github.com/louiszn/offline-mode-fix#readme",
-    "sources": "https://github.com/louiszn/offline-mode-fix",
-    "issues": "https://github.com/louiszn/offline-mode-fix/issues"
   },
   "entrypoints": {
+    "client": [
+      "com.github.epsilon.fabric.EpsilonFabric"
+    ],
     "epsilon:addon": [
       "com.github.epsilon.fabric.addon.FabricSelfAddonEntrypoint"
     ]
   },
   "license": "MIT",
-  "icon": "assets/offlinemodefix/icon.png",
   "environment": "*",
     "mixins": [
         "${mod_id}.mixins.json",
