@@ -1,27 +1,27 @@
 {
   "enable": {
     "sounds": [
-      "sakura:enable"
+      "epsilon:enable"
     ]
   },
   "disable": {
     "sounds": [
-      "sakura:disable"
+      "epsilon:disable"
     ]
   },
   "settings_open": {
     "sounds": [
-      "sakura:settings-open"
+      "epsilon:settings-open"
     ]
   },
   "settings_close": {
     "sounds": [
-      "sakura:settings-close"
+      "epsilon:settings-close"
     ]
   },
   "shutdown": {
     "sounds": [
-      "sakura:shutdown"
+      "epsilon:shutdown"
     ]
   }
 }
