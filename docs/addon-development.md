@@ -93,14 +93,14 @@ public class ExampleFabricAddonEntrypoint implements FabricEpsilonAddonEntrypoin
 ```json
 {
   "entrypoints": {
-    "open_epsilon:addon": [
+    "epsilon:addon": [
       "your.mod.fabric.ExampleFabricAddonEntrypoint"
     ]
   }
 }
 ```
 
-Epsilon Fabric 会在客户端初始化时自动读取 `open_epsilon:addon` 并注册 addon。
+Epsilon Fabric 会在客户端初始化时自动读取 `epsilon:addon` 并注册 addon。
 
 ## 4. NeoForge 接入 (Event Bus)
 

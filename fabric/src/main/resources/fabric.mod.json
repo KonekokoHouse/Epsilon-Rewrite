@@ -12,6 +12,11 @@
     "sources": "https://github.com/louiszn/offline-mode-fix",
     "issues": "https://github.com/louiszn/offline-mode-fix/issues"
   },
+  "entrypoints": {
+    "epsilon:addon": [
+      "com.github.epsilon.fabric.addon.FabricSelfAddonEntrypoint"
+    ]
+  },
   "license": "MIT",
   "icon": "assets/offlinemodefix/icon.png",
   "environment": "*",
