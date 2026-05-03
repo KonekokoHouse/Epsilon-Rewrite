@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- Copyright 2023 Zelix Pty Ltd (ABN 47 078 740 093) -->
+<head>
+<meta name="keywords" content="java,obfuscator,obfuscation,zelix,klassmaster,zkm" />
+<meta name="description" content="Zelix KlassMaster is the heavy duty Java obfuscator" />
+<meta name="classification" content="Zelix KlassMaster java obfuscator" />
+<title>Java Obfuscator - Zelix KlassMaster&#153; - Getting Started</title>
+<!--<link href="../ZKM.css" rel="stylesheet" type="text/css" />-->
+</head>
+
+<body>
+<table width="764px"  border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td><!-- #BeginLibraryItem "/Library/masthead0.lbi" --><a href="http://www.zelix.com/klassmaster/docs/index.html" title="Zelix KlassMaster - Documentation"><img src="images/masthead.jpg" alt="Zelix KlassMaster - Documentation" width="764" height="49" border="0" /></a><!-- #EndLibraryItem --></td>
+    </tr>
+	<tr>
+    <td>
+<h1>Getting Started</h1>
+<h3>Overview.</h3>
+This document consists of the following sections.
+<ol>
+	<li><a href="#intro">Introduction,</a></li>
+	<li><a href="#processingSequence">The Processing Sequence,</a></li>
+	<li><a href="#gui">Using the GUI,</a></li>
+	<li><a href="#firstZKMScript">Creating your first ZKM Script,</a></li>
+	<li><a href="#runScript">Executing your first ZKM Script and</a></li>
+	<li><a href="#options">Which obfuscation options to use.</a></li>
+
+</ol>
+<h3><a name="intro">Introduction.</a></h3>
+This document assumes that you have Zelix KlassMaster&#153; installed successfully.  If you do not yet have Zelix KlassMaster&#153; running then see the <a href="install.html">Installation</a> document.
+<p></p>
+Zelix KlassMaster&#153; has two interfaces - the <a href="http://www.zelix.com/klassmaster/docs/mainFrame.html">GUI interface</a> and the <a href="http://www.zelix.com/klassmaster/docs/runZKMScript.html">command line</a> <a href="http://www.zelix.com/klassmaster/docs/langZKMScript.html">ZKM Script</a> interface.  
+The GUI interface is provided as a way of quickly becoming familiar with the basic concepts of obfuscation and as a way of creating a simple ZKM Script.
+The ZKM Script interface is ultimately the preferred interface because it
+<ol>
+	<li>is more suited to the task of repeated obfuscation than is the GUI interface,</li>
+	<li>is less prone to human error,</li>
+	<li>provides extra functionality that is not available through the GUI interface,</li>
+	<li>allows you to integrate the obfuscation step into an <a href="http://www.zelix.com/klassmaster/docs/buildToolApi.html">automated build process</a> and</li>
+	<li>allows us to exchange ZKM Scripts with you which makes the support process much, much easier.</li>
+</ol>
+<h3><a name="processingSequence">The Processing Sequence.</a></h3>
+The basic Zelix KlassMaster&#153; processing sequence is as follows.
+<ol>
+	<li>Set the classpath that Zelix KlassMaster&#153; should use, (<a href="http://www.zelix.com/klassmaster/docs/optionsClasspath.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/classpathStatement.html">ZKM Script</a>)</li>
+	<li>Open the classes that you wish to obfuscate, (<a href="http://www.zelix.com/klassmaster/docs/fileOpen.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/openStatement.html">ZKM Script</a>)</li>
+	<li>Set your Trim exclusions, (<a href="http://www.zelix.com/klassmaster/docs/trimExclude.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/trimExcludeStatement.html">ZKM Script</a>)</li>
+	<li>Set your Trim options and perform the trimming, (<a href="http://www.zelix.com/klassmaster/docs/trimOptions.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/trimStatement.html">ZKM Script</a>)</li>
+	<li>Set your name obfuscation exclusions, (<a href="http://www.zelix.com/klassmaster/docs/advancedExclude.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/excludeStatement.html">ZKM Script</a>)</li>
+	<li>Set your obfuscation options and obfuscate, (<a href="http://www.zelix.com/klassmaster/docs/obfuscateOptions.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/obfuscateStatement.html">ZKM Script</a>)</li>
+	<li>Save your obfuscated classes. (<a href="http://www.zelix.com/klassmaster/docs/fileSaveAll.html">GUI</a> | <a href="http://www.zelix.com/klassmaster/docs/saveAllStatement.html">ZKM Script</a>)</li>
+</ol>
+
+<h3><a name="gui">Using the GUI.</a></h3>
+You start the Zelix KlassMaster&#153; GUI by executing the Zelix KlassMaster&#153; JAR file without specifying a ZKM Script as the final command line option.
+As mentioned above, the GUI interface is provided as a way of quickly becoming familiar with the basic concepts of obfuscation and as a way of creating a simple ZKM Script. 
+<p></p>
+When you are getting started, it is recommended that you use the <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a> tool which is in the &quot;Tools&quot; menu.  
+The <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a> will guide you through the basic steps of trimming and/or obfuscating your classes.
+<p></p>
+It is highly recommended that you do not use the <a href="http://www.zelix.com/klassmaster/docs/toolsTrim.html">Trim</a> function until you have your obfuscated application working.  
+The Trim function can be more difficult to understand than obfuscation so it can help if you use it only when everything else is working.
+In the <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a>, you can postpone the use of the Trim function by clicking on the <img src="images/skipBtn.gif" align="absmiddle" alt="&quot;Skip&quot;" width="78" height="26" /> button 
+on the <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html#trimExclude">Trim Exclusions</a> and <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html#trim">Trim Options</a> windows. 
+
+<h3><a name="firstZKMScript">Creating your first ZKM Script.</a></h3>
+You can create a basic ZKM Script by using the GUI <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a> or the <a href="http://www.zelix.com/klassmaster/docs/toolsZKMScriptHelper.html">ZKM Script Helper</a> tools. 
+(The difference between the two is that the <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a> <b>actually performs the class processing in the background</b> before giving you the opportunity to save the corresponding ZKM Script.)
+At the end of the <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html#zkmScript">Build Helper</a> process you will see the <img src="images/zkmScriptBtn.gif" align="absmiddle" alt="&quot;ZKM Script&quot;" width="88" height="25" /> button which 
+will allow you to view and then save the equivalent ZKM Script.
+<p></p>
+Once your ZKM Script is saved as a text file, you are free to then edit it using any simple text editor.  
+Note that you cannot open a saved ZKM Script within the GUI <a href="http://www.zelix.com/klassmaster/docs/toolsBuildHelper.html">Build Helper</a> or the <a href="http://www.zelix.com/klassmaster/docs/toolsZKMScriptHelper.html">ZKM Script Helper</a> tools.  
+This is because ZKM Scripts can become arbitrarily complex and because they can contain functionality which is not supported by the GUI.
+<p></p>
+First time users are sometimes initially puzzled by the ZKM Script exclusion syntax.  This is because ZKM Script gives you very fine control over what is or isn't excluded.  
+Therefore, it is highly recommended that you at least read the <a href="http://www.zelix.com/klassmaster/docs/tutorials/exclusionsTutorial.html#basic">basic exclusions</a> part of the <a href="http://www.zelix.com/klassmaster/docs/tutorials/exclusionsTutorial.html">ZKM Script Exclusions Tutorial</a>
+before modifying your first ZKM Scripts.  It actually isn't that complicated so it could save you a lot of trial and error.
+
+<h3><a name="runScript">Executing your first ZKM Script.</a></h3>
+You can execute your saved ZKM Script from the <a href="http://www.zelix.com/klassmaster/docs/runZKMScript.html">command line</a> or from within a <a href="http://www.zelix.com/klassmaster/docs/buildToolApi.html">build tool</a>.
+<p></p>
+If you find yourself needing to debug your ZKM Script then you may find it helpful to run Zelix KlassMaster&#153; using the &quot;-v&quot; (ie. verbose) <a href="http://www.zelix.com/klassmaster/docs/runZKMScript.html#basic">command line option</a>. 
+This will result in a great deal of extra information being written to the Zelix KlassMaster&#153; log file which is named <code>ZKM_log.txt</code> by default. This extra information will include
+<ul>
+	<li>the effective exclude parameters (including the default exclusions) and</li>
+	<li>which classes, fields or methods were directly matched by a particular exclusion parameter.</li>
+</ul>
+
+<h3><a name="options">Which obfuscation options to use.</a></h3>
+See the answer to <a href="http://www.zelix.com/klassmaster/FAQ.html#Q14">FAQ question 14</a>.
+<p></p>
+	</td>
+	</tr>
+</table>
+<hr />
+<!-- #BeginLibraryItem "/Library/footer1.lbi" --><div  class="pageFooter">
+<img src="images/spacer.gif" width="1" height="2" border="0" />
+<table width="764" border="0" class="footerTable">
+    <tr>
+	   <td align="center">Copyright &copy; 2023 Zelix Pty Ltd (A.B.N. 47 078 740 093) All rights reserved.</td>
+	</tr>
+	<tr>
+	   <td align="center">
+	   <!--
+	       <table width="50%" border="0">
+		   <tr>
+		     <td align="right" ><a class="pageFooterLink" target="_blank" href="../privacy.html">Privacy</a></td>
+		     <td align="left" ><a class="pageFooterLink" target="_blank" href="../legals.html">Terms of Use</a></td>
+		   </tr>
+		   </table>
+	   -->
+	   </td>
+	</tr>
+</table>
+</div><!-- #EndLibraryItem -->
+</body>
+</html>

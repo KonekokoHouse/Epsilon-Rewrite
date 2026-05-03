@@ -1,0 +1,108 @@
+classpath   "..\..\zkmLibsNeo\*.jar";
+
+ignoreMissingReferences com.github.epsilon.**;
+
+open        openNestedArchives=false
+            "..\..\..\neoforge\build\libs\epsilon-neoforge-26.1.2-2026.3.0.jar";
+
+
+exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
+            @org.spongepowered.asm.mixin.Mixin *.^*^ * and
+            @org.spongepowered.asm.mixin.Mixin *.^*^ *(*) and
+            com.github.epsilon.addon.^* and
+            com.github.epsilon.addon.^*^ * and
+            com.github.epsilon.addon.^*^ *(*) and
+            com.github.epsilon.managers.^* and
+            com.github.epsilon.managers.^*^ * and
+            com.github.epsilon.managers.^*^ *(*) and
+            com.github.epsilon.events.^* and
+            com.github.epsilon.events.^*^ * and
+            com.github.epsilon.events.^*^ *(*) and
+            com.github.epsilon.neoforge.^* and
+            com.github.epsilon.neoforge.^*^ * and
+            com.github.epsilon.neoforge.^*^ *(*) and
+            com.zelix.klassmaster.^* and
+            com.zelix.klassmaster.^*^ * and
+            com.zelix.klassmaster.^*^ *(*) and
+            jnic.^* and
+            jnic.^*^ * and
+            jnic.^*^ *(*);
+
+obfuscateFlowExclude
+            @org.spongepowered.asm.mixin.Mixin *.* and
+            com.github.epsilon.addon.^*^ and
+            com.github.epsilon.managers.^*^ and
+            com.github.epsilon.events.^*^ and
+            com.github.epsilon.neoforge.^*^;
+
+obfuscateReferencesExclude
+            @net.minecraftforge.fml.common.Mod *.* *(*) and
+            com.github.epsilon.^* and
+            com.github.epsilon.neoforge.^*;
+
+integerEncryptionExclude
+            *.mixin*.* and
+            *.mixins*.* and
+            com.github.epsilon.^*;
+
+longEncryptionExclude
+            *.mixin*.* and
+            *.mixins*.* and
+            com.github.epsilon.^*;
+
+fixedClasses
+    @net.minecraftforge.fml.common.Mod *.^*;
+
+methodParameterChangesExclude
+    @org.spongepowered.asm.mixin.Mixin *.* *(*) and
+    *.* @*.EventHandler *(*) and
+    *.* @net.neoforged.fml.common.Mod$EventHandler *(*) and
+    com.github.epsilon.^* and
+    com.github.epsilon.neoforge.^* and
+    **.mixins.^*^ *(*);
+
+methodParameterObfuscationExclude
+    @org.spongepowered.asm.mixin.Mixin *.* *(*) and
+    *.* @*.EventHandler *(*) and
+    *.* @net.neoforged.fml.common.Mod$EventHandler *(*) and
+    com.github.epsilon.events.bus.^* *(*) and
+    com.github.epsilon.managers.^* *(*) and
+    com.github.epsilon.^* and
+    com.github.epsilon.neoforge.^* and
+    **.mixins.^*^ *(*);
+
+stringEncryptionExclude
+    *.mixin*.* and
+    *.mixins*.* and
+    com.github.epsilon.events.^* and
+    com.github.epsilon.managers.^* and
+    com.github.epsilon.^*;
+
+obfuscate   changeLogFileIn=""
+            changeLogFileOut="ChangeLog.txt"
+            methodParameterChanges=flowObfuscate
+            obfuscateFlow=aggressive
+            exceptionObfuscation=heavy
+            encryptStringLiterals=aggressive
+            encryptIntegerConstants=aggressive
+            encryptLongConstants=normal
+            newClassNameFile="names.txt"
+            newMethodNameFile="names.txt"
+            newFieldNameFile="names.txt"
+            newPackageNameFile="names.txt"
+            mixedCaseClassNames=true
+            aggressiveMethodRenaming=true
+            randomize=true
+            localVariables=keep
+            lineNumbers=keep
+            obfuscateReferences=none
+            autoReflectionHandling=normal
+            obfuscateParameters=normal
+            collapsePackagesWithDefault="PROTECTED_BY_MARK_7601"
+            newNamesPrefix=""
+            preverify=true
+            legalIdentifiers=true
+            hideStaticMethodNames=true
+            hideFieldNames=true;
+
+saveAll     archiveCompression=all "epsilon-neoforge-26.1.2-2026.3.0-nrawobf.jar";

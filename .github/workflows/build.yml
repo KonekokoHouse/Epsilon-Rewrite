@@ -1,10 +1,10 @@
-name: Build
+name: Build and Obfuscate
 
 on: [ push, pull_request ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,15 +17,49 @@ jobs:
         with:
           java-version: '25'
           distribution: 'zulu'
+          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Copy Paths
+        run: .\gradlew copyZkmLibs
+
+      - name: Generate Names for Zkm
+        run: |
+          python obf-workspace/f2.py
+        shell: cmd
+
+      - name: Run ZKM Obfuscation For Fabric
+        run: |
+          cd "obf-workspace\ZKM-25.0.0-Cracked\ZKM 25.0.0"
+          .\Script.bat
+        shell: cmd
+
+      - name: Run ZKM Obfuscation For Neoforge
+        run: |
+          cd "obf-workspace\ZKM-25.0.0-Cracked\ZKM 25.0.0"
+          .\nScript.bat
+        shell: cmd
+
+      - name: Run MixinRename
+        run: |
+          cd obf-workspace\MixinRename
+          
+          REM Process Fabric
+          python MixinRename.py --jar "..\ZKM-25.0.0-Cracked\ZKM 25.0.0\epsilon-fabric-26.1.2-2026.3.0-rawobf.jar" --pkg com.github.epsilon.mixins com.github.epsilon.fabric.mixins --out epsilon-fabric-26.1.2-2026.3.0-obf.jar --configs fabric.mod.json epsilon-refmap.json epsilon.accesswidener epsilon.mixins.json epsilon.fabric.mixins.json --backup obf_backups
+          
+          REM Process Neoforge
+          python MixinRename.py --jar "..\ZKM-25.0.0-Cracked\ZKM 25.0.0\epsilon-neoforge-26.1.2-2026.3.0-nrawobf.jar" --pkg com.github.epsilon.mixins com.github.epsilon.neoforge.mixins --out epsilon-neoforge-26.1.2-2026.3.0-obf.jar --configs fabric.mod.json epsilon-refmap.json epsilon.accesswidener epsilon.mixins.json epsilon.neoforge.mixins.json --backup obf_backups
+        shell: cmd
 
       - name: Upload NeoForge Artifacts
         uses: actions/upload-artifact@v4
@@ -40,3 +74,10 @@ jobs:
           name: fabric-artifacts
           path: fabric/build/libs/*.jar
           if-no-files-found: warn
+
+      - name: Upload Obfuscated Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: epsilon-zkm-post
+          path: |
+            obf-workspace\MixinRename\*.jar

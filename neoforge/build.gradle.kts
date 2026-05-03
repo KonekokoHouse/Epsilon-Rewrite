@@ -67,3 +67,10 @@ sourceSets.configureEach {
         }
     }
 }
+
+tasks.register<Copy>("copyZkmLibs") {
+    into("${rootProject.projectDir}/obf-workspace/zkmLibsNeo")
+    from(configurations.runtimeClasspath)
+    from(configurations.compileClasspath)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
