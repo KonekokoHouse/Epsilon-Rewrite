@@ -1,4 +1,4 @@
-<h1 align="center">Open Epsilon</h1>
+<h1 align="center">Epsilon</h1>
 <h4 align="center">
     <p>
         <b>English</b> |

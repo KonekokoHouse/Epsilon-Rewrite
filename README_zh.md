@@ -1,4 +1,4 @@
-<h1 align="center">Open Epsilon</h1>
+<h1 align="center">Epsilon</h1>
 <h4 align="center">
     <p>
         <a href="https://github.com/KonekokoHouse/Epsilon-Rewrite/blob/main/README.md">English</a> |
