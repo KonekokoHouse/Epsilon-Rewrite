@@ -47,7 +47,7 @@ public class WatermarkHud extends HudModule {
 
     private static final float INNER_PADDING_X = 8.0f;
     private static final float INNER_PADDING_Y = 5.0f;
-    private static final float SEPARATOR_GAP = 6.0f;
+    private static final float SEPARATOR_GAP = 4.0f;
     private static final float ACCENT_LINE_HEIGHT = 1.5f;
 
     private float animTimer = 0f;
@@ -71,7 +71,6 @@ public class WatermarkHud extends HudModule {
         animTimer += frameTime;
 
         String fullBrand = "Epsilon";
-        String userText = "跨圈皇帝萌萌刻";
         String separator = "|";
 
         String brandText = computeBrand(fullBrand, animSpeed.getValue().floatValue());
@@ -80,12 +79,11 @@ public class WatermarkHud extends HudModule {
         String versionText = Epsilon.VERSION;
 
         float brandW = textRenderer.getWidth(fullBrand, s);
-        float userW = textRenderer.getWidth(userText, s);
         float fpsW = textRenderer.getWidth(fpsText, s);
         float verW = textRenderer.getWidth(versionText, s);
         float sepW = textRenderer.getWidth(separator, s);
 
-        float contentWidth = brandW + userW + fpsW + verW + sepW * 3f + sepGap * 6f;
+        float contentWidth = brandW + fpsW + verW + sepW * 3f + sepGap * 6f;
         float totalWidth = padX * 2f + contentWidth;
         float textH = textRenderer.getHeight(s);
         float totalHeight = padY * 2f + textH;
@@ -110,11 +108,6 @@ public class WatermarkHud extends HudModule {
 
         textRenderer.addText(brandText, cursX, textY, s, brandColor.getValue());
         cursX += brandW + sepGap;
-        textRenderer.addText(separator, cursX, textY, s, sepColor);
-        cursX += sepW + sepGap;
-
-        textRenderer.addText(userText, cursX, textY, s, txtColor);
-        cursX += userW + sepGap;
         textRenderer.addText(separator, cursX, textY, s, sepColor);
         cursX += sepW + sepGap;
 

@@ -16,6 +16,7 @@ import net.minecraft.client.gui.screens.multiplayer.SafetyScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -158,7 +159,7 @@ public class MainMenuScreen extends Screen {
         float titleY = layout.panelY + layout.padding + 2.0f * layout.scale;
         float subtitleY = titleY + textRenderer.getLineHeight(titleScale, StaticFontLoader.DUCKSANS) + 2.0f * layout.scale;
 
-        textRenderer.addText("Open Epsilon", layout.panelX + layout.padding, titleY, titleScale, titleColor, StaticFontLoader.DUCKSANS);
+        textRenderer.addText("Epsilon", layout.panelX + layout.padding, titleY, titleScale, titleColor, StaticFontLoader.DUCKSANS);
         textRenderer.addText("Minecraft 26.1.2  |  " + Epsilon.VERSION, layout.panelX + layout.padding, subtitleY, versionScale, subtitleColor);
 
         for (int i = 0; i < entries.size(); i++) {
@@ -235,7 +236,15 @@ public class MainMenuScreen extends Screen {
         float titleY = cardY + 8.0f * layout.scale;
         float subtitleY = titleY + textRenderer.getLineHeight(titleScale, StaticFontLoader.DUCKSANS) + 3.5f * layout.scale;
 
-        textRenderer.addText(entry.title, textX, titleY, titleScale, titleColor, StaticFontLoader.DUCKSANS);
+        String title = switch (entry.title) {
+            case "Singleplayer" -> I18n.get("menu.singleplayer");
+            case "Multiplayer" -> I18n.get("menu.multiplayer");
+            case "Options" -> I18n.get("menu.options");
+            case "Quit" -> I18n.get("menu.quit");
+            default -> entry.title;
+        };
+
+        textRenderer.addText(title, textX, titleY, titleScale, titleColor, StaticFontLoader.DUCKSANS);
         textRenderer.addText(entry.subtitle, textX, subtitleY, subtitleScale, subColor);
 
         String tip = entry.title.equals("Quit") ? "Close" : "Open";

@@ -55,6 +55,7 @@ public class ModuleManager {
                 AutoHitCrystal.INSTANCE,
                 AutoMend.INSTANCE,
                 AutoTotem.INSTANCE,
+                AutoCrystal.INSTANCE,
                 CrystalAura.INSTANCE,
                 CrystalBlocker.INSTANCE,
                 HoverTotem.INSTANCE,
