@@ -4,17 +4,12 @@ import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.*;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -60,33 +55,6 @@ public class BlurShader {
         }
     }
 
-    private RenderTarget createRenderTarget() {
-        return new RenderTarget("Lumin Blur Input", false) {
-            @Override
-            public void createBuffers(int width, int height) {
-                RenderSystem.assertOnRenderThread();
-                this.width = width;
-                this.height = height;
-                if (useDepth) {
-                    this.depthTexture = RenderSystem.getDevice().createTexture(
-                            () -> this.label + " / Depth",
-                            GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
-                            TextureFormat.DEPTH32,
-                            width, height, 1, 1
-                    );
-                    this.depthTextureView = RenderSystem.getDevice().createTextureView(this.depthTexture);
-                }
-                this.colorTexture = RenderSystem.getDevice().createTexture(
-                        () -> this.label + " / Color",
-                        GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_COPY_DST,
-                        TextureFormat.RGBA8,
-                        width, height, 1, 1
-                );
-                this.colorTextureView = RenderSystem.getDevice().createTextureView(this.colorTexture);
-            }
-        };
-    }
-
     public void render(float x, float y, float width, float height, float rTL, float rTR, float rBR, float rBL, Color color, float blurStrength) {
         this.ensureProgram();
 
@@ -98,15 +66,12 @@ public class BlurShader {
         int fbWidth = mc.getWindow().getWidth();
         int fbHeight = mc.getWindow().getHeight();
 
-        if (this.input == null) {
-            this.input = createRenderTarget();
-            this.input.resize(fbWidth, fbHeight);
-        } else if (this.input.width != fbWidth || this.input.height != fbHeight) {
-            this.input.resize(fbWidth, fbHeight);
+        if (input == null) {
+            input = new TextureTarget("Lumin Blur Input", fbWidth, fbHeight, false);
         }
 
-        if (this.input.getColorTexture() == null || this.input.getColorTextureView() == null) {
-            return;
+        if (this.input.width != fbWidth || this.input.height != fbHeight) {
+            this.input.resize(fbWidth, fbHeight);
         }
 
         float scale = (float) mc.getWindow().getGuiScale();
@@ -141,10 +106,8 @@ public class BlurShader {
         try (RenderPass renderPass = encoder.createRenderPass(
                 () -> "Lumin Blur",
                 fb.getColorTextureView(),
-                OptionalInt.empty(),
-                fb.useDepth ? fb.getDepthTextureView() : null,
-                OptionalDouble.empty())
-        ) {
+                OptionalInt.empty()
+        )) {
             renderPass.setPipeline(pipeline);
             renderPass.enableScissor((int) pxX, (int) pxY, Math.max(0, (int) pxW), Math.max(0, (int) pxH));
             RenderSystem.bindDefaultUniforms(renderPass);
