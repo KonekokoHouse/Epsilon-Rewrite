@@ -16,7 +16,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 import java.awt.*;
-import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 public class BlurShader {
@@ -38,6 +37,10 @@ public class BlurShader {
     private MappableRingBuffer uniforms;
     private RenderTarget input;
 
+    private boolean prepared;
+    private int preparedWidth = -1;
+    private int preparedHeight = -1;
+
     private void ensureProgram() {
         if (this.uniforms == null) {
             this.uniforms = new MappableRingBuffer(() -> "LuminBlurUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
@@ -55,6 +58,39 @@ public class BlurShader {
         }
     }
 
+    public void beginFrame() {
+        this.prepared = false;
+    }
+
+    private void ensureInput(RenderTarget framebuffer) {
+        int fbWidth = framebuffer.width;
+        int fbHeight = framebuffer.height;
+
+        if (input == null) {
+            input = new TextureTarget("Lumin Blur Input", fbWidth, fbHeight, false);
+        }
+
+        if (input.width != fbWidth || input.height != fbHeight) {
+            input.resize(fbWidth, fbHeight);
+            prepared = false;
+        }
+
+        if (prepared && preparedWidth == fbWidth && preparedHeight == fbHeight) {
+            return;
+        }
+
+        RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(
+                framebuffer.getColorTexture(),
+                input.getColorTexture(),
+                0, 0, 0, 0, 0,
+                fbWidth, fbHeight
+        );
+
+        prepared = true;
+        preparedWidth = fbWidth;
+        preparedHeight = fbHeight;
+    }
+
     public void render(float x, float y, float width, float height, float rTL, float rTR, float rBR, float rBL, Color color, float blurStrength) {
         this.ensureProgram();
 
@@ -63,16 +99,7 @@ public class BlurShader {
             return;
         }
 
-        int fbWidth = mc.getWindow().getWidth();
-        int fbHeight = mc.getWindow().getHeight();
-
-        if (input == null) {
-            input = new TextureTarget("Lumin Blur Input", fbWidth, fbHeight, false);
-        }
-
-        if (this.input.width != fbWidth || this.input.height != fbHeight) {
-            this.input.resize(fbWidth, fbHeight);
-        }
+        this.ensureInput(fb);
 
         float scale = (float) mc.getWindow().getGuiScale();
         float pxX = x * scale;
@@ -88,12 +115,6 @@ public class BlurShader {
         float quality = Math.max(0.0f, blurStrength);
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        encoder.copyTextureToTexture(
-                fb.getColorTexture(),
-                input.getColorTexture(),
-                0, 0, 0, 0, 0,
-                fb.width, fb.height
-        );
 
         try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.currentBuffer(), false, true)) {
             Std140Builder builder = Std140Builder.intoBuffer(view.data());

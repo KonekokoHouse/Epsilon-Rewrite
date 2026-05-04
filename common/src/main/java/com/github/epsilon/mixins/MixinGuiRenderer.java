@@ -2,6 +2,7 @@ package com.github.epsilon.mixins;
 
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.impl.Render2DEvent;
+import com.github.epsilon.graphics.shaders.BlurShader;
 import com.github.epsilon.utils.render.EpsilonGuiRenderer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import net.minecraft.client.Minecraft;
@@ -42,7 +43,7 @@ public class MixinGuiRenderer {
 
     @Inject(method = "draw", at = @At("HEAD"))
     private void onDrawHead(GpuBufferSlice fogBuffer, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
+        BlurShader.INSTANCE.beginFrame();
 
         if (epsilon$renderState == null || epsilon$guiRenderer == null) {
             this.epsilon$renderState = new GuiRenderState();
@@ -54,6 +55,8 @@ public class MixinGuiRenderer {
                     this.featureRenderDispatcher
             );
         }
+
+        Minecraft mc = Minecraft.getInstance();
 
         GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(mc, epsilon$renderState, (int) mc.mouseHandler.getScaledXPos(mc.getWindow()), (int) mc.mouseHandler.getScaledYPos(mc.getWindow()));
 

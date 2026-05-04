@@ -3,7 +3,6 @@ package com.github.epsilon.gui.screen;
 import com.github.epsilon.Epsilon;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.renderers.RectRenderer;
-import com.github.epsilon.graphics.renderers.ShadowRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.graphics.shaders.GlslSandBox;
 import com.github.epsilon.graphics.text.StaticFontLoader;
@@ -29,14 +28,12 @@ public class MainMenuScreen extends Screen {
 
     public static final MainMenuScreen INSTANCE = new MainMenuScreen();
 
-    private final ShadowRenderer shadowRenderer = new ShadowRenderer();
     private final RectRenderer rectRenderer = new RectRenderer();
     private final TextRenderer textRenderer = new TextRenderer();
 
     private final List<MenuEntry> entries = new ArrayList<>();
 
     private LuminRenderSystem.LuminRenderTarget backgroundRenderTarget;
-
     private LuminRenderSystem.LuminRenderTarget uiRenderTarget;
 
     private long introStartMs;
@@ -105,8 +102,7 @@ public class MainMenuScreen extends Screen {
     }
 
     private void drawMenu(int mouseX, int mouseY) {
-        long now = Util.getMillis();
-        float introProgress = easeOutCubic(Mth.clamp((now - introStartMs) / 650.0f, 0.0f, 1.0f));
+        float introProgress = easeOutCubic(Mth.clamp((Util.getMillis() - introStartMs) / 650.0f, 0.0f, 1.0f));
         Layout layout = Layout.resolve(width, height, entries.size());
 
         Color titleColor = applyAlpha(MD3Theme.TEXT_PRIMARY, 0.96f);
@@ -116,20 +112,7 @@ public class MainMenuScreen extends Screen {
         String title = "EPSILON";
         String subtitle = Epsilon.VERSION;
 
-        float titleWidth = textRenderer.getWidth(title, layout.titleScale, StaticFontLoader.JURA);
         float titleHeight = textRenderer.getHeight(layout.titleScale, StaticFontLoader.JURA);
-        float subtitleWidth = textRenderer.getWidth(subtitle, layout.subtitleScale);
-        float subtitleHeight = textRenderer.getHeight(layout.subtitleScale);
-
-        shadowRenderer.addShadow(
-                layout.titleX - 10.0f * layout.scale,
-                layout.titleY - 7.0f * layout.scale,
-                Math.max(titleWidth, subtitleWidth) + 24.0f * layout.scale,
-                titleHeight + subtitleHeight + layout.titleAccentGap + 16.0f * layout.scale,
-                14.0f * layout.scale,
-                26.0f * layout.scale,
-                applyAlpha(MD3Theme.SHADOW, 0.48f)
-        );
 
         rectRenderer.addRect(layout.titleX, layout.titleY + titleHeight + layout.titleAccentGap, layout.titleAccentWidth, layout.titleAccentHeight, accentColor);
 
@@ -143,7 +126,6 @@ public class MainMenuScreen extends Screen {
         }
 
         rectRenderer.drawAndClear();
-        shadowRenderer.drawAndClear();
         textRenderer.drawAndClear();
     }
 
@@ -175,7 +157,6 @@ public class MainMenuScreen extends Screen {
 
         Color lineBase = applyAlpha(MD3Theme.TEXT_MUTED, 0.70f * appear);
         Color lineHover = applyAlpha(entry.title.equals("Quit") ? MD3Theme.ERROR : MD3Theme.PRIMARY, 0.98f * appear);
-        Color lineShadow = applyAlpha(MD3Theme.SHADOW, (0.28f + hover * 0.14f) * appear);
 
         Color labelColor = MD3Theme.lerp(
                 applyAlpha(MD3Theme.TEXT_PRIMARY, 0.94f * appear),
@@ -183,21 +164,10 @@ public class MainMenuScreen extends Screen {
                 hover * 0.68f
         );
 
-        shadowRenderer.addShadow(
-                drawX,
-                buttonY,
-                layout.buttonWidth,
-                layout.buttonLineHeight,
-                layout.buttonLineHeight * 0.5f,
-                (6.0f + hover * 4.0f) * layout.scale,
-                lineShadow
-        );
-
         rectRenderer.addRect(drawX + layout.scale, buttonY + layout.scale, layout.buttonWidth + layout.scale * 0.5f, layout.buttonLineHeight + layout.scale, applyAlpha(MD3Theme.SURFACE, 0.70f * appear));
         rectRenderer.addRect(drawX, buttonY, layout.buttonWidth, layout.buttonLineHeight, MD3Theme.lerp(lineBase, lineHover, hover));
 
         float textY = buttonY + layout.buttonTextOffsetY;
-
         textRenderer.addText(localizedTitle(entry.title), drawX, textY, layout.buttonTextScale, labelColor, StaticFontLoader.DUCKSANS);
     }
 

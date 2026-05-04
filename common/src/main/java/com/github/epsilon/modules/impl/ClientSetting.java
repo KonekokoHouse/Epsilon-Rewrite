@@ -63,8 +63,7 @@ public class ClientSetting extends Module {
 
     public final BoolSetting useMainMenu = boolSetting("Use MainMenu", true);
 
-    public final EnumSetting<MainMenuScreen.Background> mainMenuBackground =
-            enumSetting("MainMenu Background", MainMenuScreen.Background.BLACK_HOLE, useMainMenu::getValue);
+    public final EnumSetting<MainMenuScreen.Background> mainMenuBackground = enumSetting("MainMenu Background", MainMenuScreen.Background.PLANET, useMainMenu::getValue);
 
     public final BoolSetting soundNotify = boolSetting("Sound Notify", true);
 
