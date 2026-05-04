@@ -11,6 +11,7 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.MoveUtils;
+import com.github.epsilon.utils.player.PlayerUtils;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
@@ -53,6 +54,7 @@ public class Velocity extends Module {
     private final EnumSetting<Mode> mode = enumSetting("Mode", Mode.Cancel);
     private final BoolSetting serverMotion = boolSetting("Server Motion", true, () -> mode.is(Mode.Cancel));
     private final BoolSetting explosion = boolSetting("Explosion", true, () -> mode.is(Mode.Cancel));
+    private final BoolSetting explosionOnlyBlock = boolSetting("Explosion Only Block", false, () -> mode.is(Mode.Cancel) && explosion.getValue());
     public final BoolSetting waterPush = boolSetting("No Water Push", true, () -> mode.is(Mode.Cancel));
     public final BoolSetting entityPush = boolSetting("No Entity Push", true, () -> mode.is(Mode.Cancel));
     public final BoolSetting blockPush = boolSetting("No Block Push", true, () -> mode.is(Mode.Cancel));
@@ -105,6 +107,10 @@ public class Velocity extends Module {
                 }
 
                 if (explosion.getValue() && event.getPacket() instanceof ClientboundExplodePacket packet) {
+                    if (explosionOnlyBlock.getValue()) {
+                        if (!PlayerUtils.isInBlock()) return;
+                    }
+
                     event.setPacket(new ClientboundExplodePacket(
                             packet.center(),
                             packet.radius(),

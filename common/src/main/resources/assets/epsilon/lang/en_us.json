@@ -410,6 +410,7 @@
   "epsilon.modules.velocity.mode.noxz": "No XZ",
   "epsilon.modules.velocity.server motion": "Server Motion",
   "epsilon.modules.velocity.explosion": "Explosion",
+  "epsilon.modules.velocity.explosion only block": "Explosion Only Block",
   "epsilon.modules.velocity.no water push": "No Water Push",
   "epsilon.modules.velocity.no entity push": "No Entity Push",
   "epsilon.modules.velocity.no block push": "No Block Push",

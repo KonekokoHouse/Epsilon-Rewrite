@@ -396,6 +396,7 @@
   "epsilon.modules.velocity.mode.noxz": "无水平",
   "epsilon.modules.velocity.server motion": "服务端移动",
   "epsilon.modules.velocity.explosion": "爆炸",
+  "epsilon.modules.velocity.explosion only block": "仅方块内无爆炸",
   "epsilon.modules.velocity.no water push": "无水流推动",
   "epsilon.modules.velocity.no entity push": "无实体推动",
   "epsilon.modules.velocity.no block push": "无方块推动",
