@@ -1,6 +1,7 @@
 package com.github.epsilon.modules.impl;
 
 import com.github.epsilon.gui.hudeditor.HudEditorScreen;
+import com.github.epsilon.gui.screen.MainMenuScreen;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
 import com.mojang.blaze3d.platform.IconSet;
@@ -59,6 +60,9 @@ public class ClientSetting extends Module {
     public final BoolSetting customTitle = boolSetting("Custom Title", true, _ -> mc.updateTitle());
 
     public final BoolSetting useMainMenu = boolSetting("Use MainMenu", true);
+
+    public final EnumSetting<MainMenuScreen.Background> mainMenuBackground =
+            enumSetting("MainMenu Background", MainMenuScreen.Background.BLACK_HOLE, useMainMenu::getValue);
 
     public final BoolSetting soundNotify = boolSetting("Sound Notify", true);
 
