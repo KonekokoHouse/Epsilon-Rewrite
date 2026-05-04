@@ -9,16 +9,10 @@ val fabricVersion = project.property("fabric_version").toString()
 val modId = project.property("mod_id").toString()
 
 dependencies {
-    "minecraft"("com.mojang:minecraft:${minecraftVersion}")
+    minecraft("com.mojang:minecraft:${minecraftVersion}")
     implementation("net.fabricmc:fabric-loader:${fabricLoaderVersion}")
     implementation("net.fabricmc.fabric-api:fabric-api:${fabricVersion}")
     compileOnly(group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2")
-
-    implementation(include("org.bytedeco:javacpp:1.5.10")!!)
-    implementation(include("org.bytedeco:javacv:1.5.10")!!)
-    implementation(include("org.bytedeco:ffmpeg:6.1.1-1.5.10")!!)
-    runtimeOnly(include("org.bytedeco:javacpp:1.5.10:windows-x86_64")!!)
-    runtimeOnly(include("org.bytedeco:ffmpeg:6.1.1-1.5.10:windows-x86_64")!!)
 }
 
 loom {
