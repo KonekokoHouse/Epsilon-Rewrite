@@ -30,7 +30,7 @@ public class Epsilon {
         ConfigManager.INSTANCE.initConfig();
 
         // 生成空的 i18n 文件
-        I18NFileGenerator.generate("Epsilon/empty-i18n.json");
+        I18NFileGenerator.generate("epsilon-empty-i18n.json");
 
         // 添加一个退出游戏时候的钩子
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

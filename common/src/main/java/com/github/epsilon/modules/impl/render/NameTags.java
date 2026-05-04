@@ -141,6 +141,8 @@ public class NameTags extends Module {
 
         rectRenderer.drawAndClear();
         textRenderer.drawAndClear();
+
+        drawList.clear();
     }
 
     private List<String> buildEquipmentLines(Player player) {

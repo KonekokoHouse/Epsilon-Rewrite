@@ -1,23 +1,28 @@
 package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
-import com.github.epsilon.events.impl.*;
-import com.github.epsilon.managers.RotationManager;
+import com.github.epsilon.events.impl.AttackBlockEvent;
+import com.github.epsilon.events.impl.Render2DEvent;
+import com.github.epsilon.events.impl.Render3DEvent;
+import com.github.epsilon.events.impl.TickEvent;
+import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
-import com.github.epsilon.settings.impl.*;
+import com.github.epsilon.settings.impl.BoolSetting;
+import com.github.epsilon.settings.impl.ColorSetting;
+import com.github.epsilon.settings.impl.DoubleSetting;
+import com.github.epsilon.settings.impl.EnumSetting;
+import com.github.epsilon.settings.impl.IntSetting;
+import com.github.epsilon.utils.network.PacketUtils;
 import com.github.epsilon.utils.player.EnchantmentUtils;
-import com.github.epsilon.utils.player.InvUtils;
-import com.github.epsilon.utils.player.PlayerUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
-import com.github.epsilon.utils.render.animation.Easing;
-import com.github.epsilon.utils.rotation.Priority;
-import com.github.epsilon.utils.rotation.RaytraceUtils;
+import com.github.epsilon.utils.render.WorldToScreen;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.tags.FluidTags;
@@ -28,11 +33,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.block.AirBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -47,475 +50,669 @@ public class PacketMine extends Module {
         super("Packet Mine", Category.COMBAT);
     }
 
-    private enum Mode {
-        Packet,
-        Instant,
-        Damage
-    }
-
-    private enum RenderMode {
-        Block,
-        Shrink,
-        Grow
-    }
-
     private enum SwitchMode {
+        None,
         Silent,
         Normal,
         Alternative
     }
 
-    private enum StartMode {
-        StartAbort,
-        StartStop
-    }
+    private final BoolSetting usingPause = boolSetting("Using Pause", true);
+    private final BoolSetting onlyMain = boolSetting("Only Main", true, usingPause::getValue);
+    private final EnumSetting<SwitchMode> autoSwitch = enumSetting("Auto Switch", SwitchMode.Silent);
+    private final DoubleSetting range = doubleSetting("Range", 6.0, 0.0, 12.0, 0.1);
+    private final IntSetting maxBreaks = intSetting("Try Break Time", 6, 1, 20, 1);
+    private final BoolSetting farCancel = boolSetting("Far Cancel", true);
+    private final BoolSetting swing = boolSetting("Swing Hand", true);
+    private final BoolSetting instantMine = boolSetting("Instant Mine", true);
+    private final IntSetting instantDelay = intSetting("Instant Delay", 10, 0, 1000, 1);
+    private final BoolSetting fastBypass = boolSetting("Fast Bypass", true);
+    private final BoolSetting doubleBreak = boolSetting("Double Break", false);
+    private final BoolSetting checkGround = boolSetting("Check Ground", true);
+    private final BoolSetting bypassGround = boolSetting("Bypass Ground", false);
+    private final IntSetting switchDamage = intSetting("Switch Damage", 95, 0, 100, 1, () -> autoSwitch.getValue() != SwitchMode.None, true);
+    private final IntSetting switchTime = intSetting("Switch Time", 100, 0, 1000, 1, () -> autoSwitch.getValue() != SwitchMode.None);
+    private final IntSetting mineDelay = intSetting("Mine Delay", 300, 0, 1000, 1);
+    private final IntSetting packetDelay = intSetting("Packet Delay", 200, 0, 1000, 1);
+    private final DoubleSetting mineDamage = doubleSetting("Damage", 0.8, 0.1, 2.0, 0.05);
+    private final BoolSetting clientRemove = boolSetting("Client Remove", false);
 
-    // General
-    private final EnumSetting<Mode> mode = enumSetting("Mode", Mode.Packet);
-    private final BoolSetting doubleMine = boolSetting("Double Mine", false);
-    private final EnumSetting<StartMode> startMode = enumSetting("Start Mode", StartMode.StartAbort, () -> mode.is(Mode.Packet) && !doubleMine.getValue());
-    private final EnumSetting<SwitchMode> switchMode = enumSetting("Switch Mode", SwitchMode.Alternative, () -> mode.getValue() != Mode.Damage);
-    private final IntSetting swapDelay = intSetting("Swap Delay", 50, 0, 1000, 1, () -> mode.getValue() != Mode.Damage);
-    private final DoubleSetting factor = doubleSetting("Factor", 1.0, 0.5, 2.0, 0.1, () -> mode.getValue() != Mode.Damage);
-    private final DoubleSetting speed = doubleSetting("Speed", 0.5, 0.0, 1.0, 0.1, () -> mode.is(Mode.Damage));
-    private final DoubleSetting range = doubleSetting("Range", 4.2, 3.0, 10.0, 0.1, () -> mode.getValue() != Mode.Damage);
-    private final BoolSetting rotate = boolSetting("Rotate", false, () -> mode.getValue() != Mode.Damage);
-    private final DoubleSetting rotationSpeed = doubleSetting("Rotation Speed", 10.0, 1.0, 10.0, 0.5, () -> rotate.getValue() && mode.getValue() != Mode.Damage);
-    private final BoolSetting placeCrystal = boolSetting("Place Crystal", true);
-    private final BoolSetting resetOnSwitch = boolSetting("Reset On Switch", true, () -> mode.getValue() != Mode.Damage);
-    private final IntSetting breakAttempts = intSetting("Break Attempts", 10, 1, 50, 1, () -> mode.is(Mode.Packet));
-    private final BoolSetting pauseEat = boolSetting("Pause On Eat", false);
-    private final BoolSetting clientRemove = boolSetting("Client Remove", true);
+    private final BoolSetting render = boolSetting("Render", true);
+    private final DoubleSetting animationExp = doubleSetting("Animation Exponent", 3.0, 0.0, 10.0, 0.1, render::getValue);
+    private final BoolSetting renderProgress = boolSetting("Render Progress", true);
+    private final ColorSetting targetColor = colorSetting("Target Color", new Color(255, 255, 255, 255), renderProgress::getValue);
+    private final ColorSetting secondColor = colorSetting("Second Color", new Color(255, 255, 255, 255), renderProgress::getValue);
+    private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting sideEndColor = colorSetting("Side End", new Color(255, 255, 255, 50), render::getValue);
+    private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting lineEndColor = colorSetting("Line End", new Color(255, 255, 255, 255), render::getValue);
+    private final ColorSetting secondSideStartColor = colorSetting("Second Side Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting secondSideEndColor = colorSetting("Second Side End", new Color(255, 255, 255, 50), render::getValue);
+    private final ColorSetting secondLineStartColor = colorSetting("Second Line Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting secondLineEndColor = colorSetting("Second Line End", new Color(255, 255, 255, 255), render::getValue);
 
-    // Packet
-    private final BoolSetting stop = boolSetting("Stop", true, () -> mode.is(Mode.Packet) && !doubleMine.getValue());
-    private final BoolSetting abort = boolSetting("Abort", true, () -> mode.is(Mode.Packet) && !doubleMine.getValue());
-    private final BoolSetting start = boolSetting("Start", true, () -> mode.is(Mode.Packet) && !doubleMine.getValue());
-    private final BoolSetting stop2 = boolSetting("Stop 2", true, () -> mode.is(Mode.Packet) && !doubleMine.getValue());
-
-    // Render
-    private final BoolSetting render = boolSetting("Render", false, () -> mode.getValue() != Mode.Damage);
-    private final BoolSetting smooth = boolSetting("Smooth", true, () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final EnumSetting<RenderMode> renderMode = enumSetting("Render Mode", RenderMode.Shrink, () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final ColorSetting startLineColor = colorSetting("Start Line Color", new Color(255, 0, 0, 200), () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final ColorSetting endLineColor = colorSetting("End Line Color", new Color(47, 255, 0, 200), () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final IntSetting lineWidth = intSetting("Line Width", 2, 1, 10, 1, () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final ColorSetting startFillColor = colorSetting("Start Fill Color", new Color(255, 0, 0, 120), () -> mode.getValue() != Mode.Damage && render.getValue());
-    private final ColorSetting endFillColor = colorSetting("End Fill Color", new Color(47, 255, 0, 120), () -> mode.getValue() != Mode.Damage && render.getValue());
-
-    public ArrayList<MineAction> actions = new ArrayList<>();
+    private final List<MineAction> actions = new ArrayList<>();
     private final List<DelayedAction> delayedActions = new ArrayList<>();
+    private final TimerUtils mineTimer = new TimerUtils();
+    private final TextRenderer textRenderer = new TextRenderer();
 
-    @Override
-    protected void onDisable() {
-        actions.forEach(MineAction::reset);
-        actions.clear();
-        delayedActions.clear();
-    }
+    private SwapState swapState;
 
     @Override
     protected void onEnable() {
-        actions.forEach(MineAction::reset);
-        actions.clear();
-        delayedActions.clear();
+        resetState(false);
+        mineTimer.setMs(mineDelay.getValue().longValue());
     }
 
-    @EventHandler
-    private void onClientTick(TickEvent.Pre event) {
-        if (nullCheck() || mc.player.getAbilities().instabuild) return;
-
-        runDelayedActions();
-
-        if (PlayerUtils.isEating() && pauseEat.getValue()) return;
-
-        if (mode.getValue() == Mode.Damage) {
-            float cSpeed = speed.getValue().floatValue();
-            if (mc.gameMode.destroyProgress < cSpeed) {
-                mc.gameMode.destroyProgress = cSpeed;
-            }
-        }
-
-        actions.removeIf(MineAction::update);
+    @Override
+    protected void onDisable() {
+        resetState(true);
+        textRenderer.clear();
     }
 
     @EventHandler
     private void onAttackBlock(AttackBlockEvent event) {
-        if (!canBreak(event.getBlockPos()) || mc.player.getAbilities().instabuild || mode.is(Mode.Damage))
-            return;
+        if (nullCheck()) return;
 
-        if (!alreadyActing(event.getBlockPos())) {
-            if (!doubleMine.getValue() || actions.size() >= 2) {
-                if (!actions.isEmpty()) {
-                    actions.removeFirst().cancel();
-                }
-            }
-
-            actions.add(new MineAction(event.getBlockPos(), event.getDirection()));
-        }
+        var player = mc.player;
+        if (player == null || player.getAbilities().instabuild) return;
+        if (!canMine(event.getBlockPos())) return;
 
         event.setCancelled(true);
+
+        if (!mineTimer.passedMillise(mineDelay.getValue())) return;
+
+        mineTimer.reset();
+        beginMining(event.getBlockPos(), event.getDirection());
     }
 
     @EventHandler
-    private void onPacketSend(PacketEvent.Send event) {
-        if (event.getPacket() instanceof ServerboundSetCarriedItemPacket && resetOnSwitch.getValue() && !switchMode.is(SwitchMode.Silent) && !mode.is(Mode.Instant)) {
-            actions.forEach(MineAction::reset);
+    private void onTick(TickEvent.Pre event) {
+        if (nullCheck()) {
+            resetState(false);
+            return;
+        }
+
+        var player = mc.player;
+        if (player == null || player.getAbilities().instabuild) {
+            resetState(false);
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        runDelayedActions(now);
+        handleSwapRestore(now);
+
+        for (int i = actions.size() - 1; i >= 0; i--) {
+            MineAction action = actions.get(i);
+            if (updateAction(action, now)) {
+                actions.remove(i);
+            }
         }
     }
 
     @EventHandler
-    private void onMotion(SendPositionEvent event) {
-        actions.forEach(MineAction::onRotationSync);
-    }
-
-    @EventHandler
-    private void onRenderLevel(Render3DEvent event) {
-        if (!render.getValue() || actions.isEmpty() || mode.is(Mode.Damage)) return;
+    private void onRender3D(Render3DEvent event) {
+        if (nullCheck() || !render.getValue() || actions.isEmpty()) return;
 
         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
-        for (MineAction action : actions) {
-            float progress = smooth.getValue() ? Mth.lerp(partialTick, action.getPrevProgress(), action.getProgress()) : action.getProgress();
+        for (int i = 0; i < actions.size(); i++) {
+            MineAction action = actions.get(i);
+            float progress = Mth.lerp(partialTick, action.prevRenderProgress, action.renderProgress);
             progress = Mth.clamp(progress, 0.0f, 1.0f);
+            double eased = 1.0 - Math.pow(1.0 - progress, animationExp.getValue());
+            double size = Mth.clamp((float) eased, 0.0f, 1.0f) * 0.5;
 
-            Color lineColor = lerpColor(startLineColor.getValue(), endLineColor.getValue(), progress);
-            Color fillColor = lerpColor(startFillColor.getValue(), endFillColor.getValue(), progress);
-            AABB box = getRenderBox(action.pos, progress);
+            AABB box = new AABB(
+                    action.pos.getX() + 0.5 - size,
+                    action.pos.getY() + 0.5 - size,
+                    action.pos.getZ() + 0.5 - size,
+                    action.pos.getX() + 0.5 + size,
+                    action.pos.getY() + 0.5 + size,
+                    action.pos.getZ() + 0.5 + size
+            );
 
-            Render3DUtils.drawFilledBox(box, fillColor);
-            Render3DUtils.drawOutlineBox(event.getPoseStack(), box, lineColor.getRGB(), lineWidth.getValue().floatValue());
+            boolean secondary = i > 0;
+            Color side = secondary
+                    ? lerpColor(secondSideStartColor.getValue(), secondSideEndColor.getValue(), progress)
+                    : lerpColor(sideStartColor.getValue(), sideEndColor.getValue(), progress);
+            Color line = secondary
+                    ? lerpColor(secondLineStartColor.getValue(), secondLineEndColor.getValue(), progress)
+                    : lerpColor(lineStartColor.getValue(), lineEndColor.getValue(), progress);
+
+            Render3DUtils.drawFilledBox(box, side);
+            Render3DUtils.drawOutlineBox(event.getPoseStack(), box, line.getRGB(), 2.0f);
         }
     }
 
-    private AABB getRenderBox(BlockPos pos, float progress) {
-        AABB box = new AABB(pos);
-        return switch (renderMode.getValue()) {
-            case Block -> box;
-            case Shrink -> scaleBox(box, 1.0 - Easing.EASE_OUT_QUAD.getFunction().apply(progress));
-            case Grow -> scaleBox(box, Easing.EASE_OUT_QUAD.getFunction().apply(progress));
-        };
+    @EventHandler
+    private void onRender2D(Render2DEvent event) {
+        if (nullCheck() || !renderProgress.getValue() || actions.isEmpty()) return;
+
+        boolean hasText = false;
+
+        for (int i = 0; i < actions.size(); i++) {
+            MineAction action = actions.get(i);
+            String text = action.completed ? "Done" : action.publicProgress + "%";
+            Vector3f projected = WorldToScreen.getWorldPositionToScreen(action.pos.getCenter());
+            if (projected.z < 0.0f || projected.z > 1.0f) continue;
+
+            float guiScale = mc.getWindow().getGuiScale();
+            float x = projected.x / guiScale;
+            float y = projected.y / guiScale;
+            float screenWidth = mc.getWindow().getGuiScaledWidth();
+            float screenHeight = mc.getWindow().getGuiScaledHeight();
+            if (x < 0.0f || y < 0.0f || x > screenWidth || y > screenHeight) continue;
+
+            Color color = i > 0 ? secondColor.getValue() : targetColor.getValue();
+            float scale = 1.0f;
+            float width = textRenderer.getWidth(text, scale);
+            float height = textRenderer.getHeight(scale);
+            textRenderer.addText(text, x - width / 2.0f, y - height / 2.0f, scale, color);
+            hasText = true;
+        }
+
+        if (hasText) {
+            textRenderer.drawAndClear();
+        } else {
+            textRenderer.clear();
+        }
     }
 
-    private AABB scaleBox(AABB box, double scale) {
-        double clampedScale = Mth.clamp(scale, 0.0, 1.0);
-        Vec3 center = box.getCenter();
-        double halfX = box.getXsize() * 0.5 * clampedScale;
-        double halfY = box.getYsize() * 0.5 * clampedScale;
-        double halfZ = box.getZsize() * 0.5 * clampedScale;
-        return new AABB(center.x - halfX, center.y - halfY, center.z - halfZ, center.x + halfX, center.y + halfY, center.z + halfZ);
-    }
-
-    private Color lerpColor(Color start, Color end, float progress) {
-        float clamped = Mth.clamp(progress, 0.0f, 1.0f);
-        int red = Mth.lerpInt(clamped, start.getRed(), end.getRed());
-        int green = Mth.lerpInt(clamped, start.getGreen(), end.getGreen());
-        int blue = Mth.lerpInt(clamped, start.getBlue(), end.getBlue());
-        int alpha = Mth.lerpInt(clamped, start.getAlpha(), end.getAlpha());
-        return new Color(red, green, blue, alpha);
-    }
-
-    public boolean alreadyActing(BlockPos blockPos) {
-        return actions.stream().anyMatch(a -> a.pos.equals(blockPos));
-    }
-
-    private void schedule(int delayMs, Runnable runnable) {
-        if (delayMs <= 0) {
-            runnable.run();
+    private void beginMining(BlockPos pos, Direction direction) {
+        MineAction existing = findAction(pos);
+        if (existing != null) {
+            existing.direction = direction;
+            actions.remove(existing);
+            actions.addFirst(existing);
             return;
         }
-        delayedActions.add(new DelayedAction(System.currentTimeMillis() + delayMs, runnable));
+
+        if (!doubleBreak.getValue()) {
+            clearActions(true);
+        } else {
+            while (actions.size() >= 2) {
+                MineAction removed = actions.removeLast();
+                removed.cancel();
+            }
+        }
+
+        actions.addFirst(new MineAction(pos, direction));
     }
 
-    private void runDelayedActions() {
-        long now = System.currentTimeMillis();
-        delayedActions.removeIf(action -> {
-            if (action.runAt > now) {
-                return false;
-            }
+    private boolean updateAction(MineAction action, long now) {
+        var player = mc.player;
+        var level = mc.level;
+        if (player == null || level == null) return true;
 
-            action.runnable.run();
+        if (action.removed) return true;
+        if (farCancel.getValue() && !withinRange(action.pos)) {
+            action.cancel();
             return true;
-        });
-    }
+        }
 
-    public int getTool(final BlockPos pos) {
-        int index = -1;
-        float currentFastest = 1.f;
+        BlockState state = level.getBlockState(action.pos);
+        boolean blockPresent = !state.isAir() && !state.canBeReplaced();
+        if (!blockPresent && !action.completed) {
+            return true;
+        }
 
-        if (mc.level == null
-                || mc.player == null
-                || mc.level.getBlockState(pos).getBlock() instanceof AirBlock)
-            return -1;
+        if (!action.started) {
+            queueStart(action);
+            return false;
+        }
 
-        for (int i = 9; i < 45; ++i) {
-            final ItemStack stack = mc.player.getInventory().getItem(i >= 36 ? i - 36 : i);
+        if (action.startScheduled) return false;
 
-            if (!stack.isEmpty()) {
-                if (!(stack.getMaxDamage() - stack.getDamageValue() > 10))
-                    continue;
+        float maxTicks = getMineTicks(action.pos);
+        if (!Float.isFinite(maxTicks) || maxTicks <= 0.0f) {
+            action.cancel();
+            return true;
+        }
 
-                final float digSpeed = EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.EFFICIENCY);
-                final float destroySpeed = stack.getDestroySpeed(mc.level.getBlockState(pos));
+        float threshold = Math.max(1.0f, maxTicks * mineDamage.getValue().floatValue());
 
-                if (digSpeed + destroySpeed > currentFastest) {
-                    currentFastest = digSpeed + destroySpeed;
-                    index = i;
-                }
+        action.prevRenderProgress = action.renderProgress;
+
+        if (action.completed) {
+            action.renderProgress = 1.0f;
+            action.publicProgress = 100;
+
+            if (!blockPresent) {
+                action.breakAttempts = 0;
+                return !instantMine.getValue();
             }
-        }
 
-        return index >= 36 ? index - 36 : index;
-    }
-
-    private float getDestroySpeed(BlockPos position, BlockState state) {
-        float destroySpeed = 1;
-        int slot = getTool(position);
-
-        if (slot != -1) {
-            if (!mc.player.getInventory().getItem(slot).isEmpty()) {
-                destroySpeed *= mc.player.getInventory().getItem(slot).getDestroySpeed(state);
-            }
-        }
-
-        return destroySpeed;
-    }
-
-    public float getDigSpeed(BlockState state, BlockPos position) {
-        if (mc.player == null) return 0;
-        float digSpeed = getDestroySpeed(position, state);
-
-        if (digSpeed > 1) {
-            int slot = getTool(position);
-            if (slot != -1) {
-                ItemStack itemstack = mc.player.getInventory().getItem(slot);
-                int efficiencyModifier = EnchantmentUtils.getEnchantmentLevel(itemstack, Enchantments.EFFICIENCY);
-                if (efficiencyModifier > 0 && !itemstack.isEmpty()) {
-                    digSpeed += (float) (StrictMath.pow(efficiencyModifier, 2) + 1);
-                }
-            }
-        }
-
-        if (mc.player.hasEffect(MobEffects.HASTE)) {
-            digSpeed *= 1 + (Objects.requireNonNull(mc.player.getEffect(MobEffects.HASTE)).getAmplifier() + 1) * 0.2F;
-        }
-
-        if (mc.player.hasEffect(MobEffects.MINING_FATIGUE)) {
-            digSpeed *= (float) Math.pow(0.3f, Objects.requireNonNull(mc.player.getEffect(MobEffects.MINING_FATIGUE)).getAmplifier() + 1);
-        }
-
-        if (mc.player.isEyeInFluid(FluidTags.WATER)) {
-            digSpeed *= (float) mc.player.getAttributeValue(Attributes.SUBMERGED_MINING_SPEED);
-        }
-
-        if (!mc.player.onGround()/* && ModuleManager.freeCam.isDisabled()*/) {
-            digSpeed /= 5;
-        }
-
-        return digSpeed < 0.0f ? 0.0f : digSpeed * factor.getValue().floatValue();
-    }
-
-    private boolean canBreak(BlockPos pos) {
-        if (mc.player.distanceToSqr(pos.getCenter()) > range.getValue() * range.getValue()) return false;
-
-        final BlockState blockState = mc.level.getBlockState(pos);
-        return blockState.getDestroySpeed(mc.level, pos) != -1.0F;
-    }
-
-    public float getBlockStrength(BlockState state, BlockPos position) {
-        if (state.isAir())
-            return 0.02f;
-
-        float hardness = state.getDestroySpeed(mc.level, position);
-
-        if (hardness < 0)
-            return 0;
-
-        return getDigSpeed(state, position) / hardness / (canBreak(position) ? 30f : 100f);
-    }
-
-    public void placeCrystal() {
-//        if (AutoCrystal.target == null) return;
-//
-//        AutoCrystal.PlaceData data = getCevData();
-//
-//        if (data == null)
-//            data = getBestData();
-//
-//        if (data != null) {
-//            ModuleManager.autoCrystal.placeCrystal(data.bhr(), true, false);
-//            debug("placing..");
-//            ModuleManager.autoTrap.pause();
-//            ModuleManager.breaker.pause();
-//        }
-    }
-
-    public class MineAction {
-        private final BlockPos pos;
-        private float progress, prevProgress;
-
-        private int mineBreaks;
-
-        private final TimerUtils attackTimer = new TimerUtils();
-
-        public MineAction(BlockPos pos, Direction direction) {
-            this.pos = pos;
-            progress = 0;
-            mineBreaks = 0;
-            start(direction);
-        }
-
-        public void start(Direction direction) {
-            Direction startDirection = RotationUtils.getDirection(pos, direction);
-            if (doubleMine.getValue()) {
-                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, startDirection));
-                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, startDirection));
-                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, startDirection));
-            } else {
-                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, startDirection));
-                mc.getConnection().send(new ServerboundPlayerActionPacket(startMode.getValue() == StartMode.StartAbort ? ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK : ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, startDirection));
-            }
-        }
-
-        public boolean update() {
-            Direction dir = RotationUtils.getDirection(pos, null);
-
-            if (mineBreaks >= breakAttempts.getValue() && !mode.is(Mode.Instant))
-                return true;
-
-            if (mc.player.distanceToSqr(pos.getCenter()) > range.getValue() * range.getValue()) {
-                cancel();
+            if (action.breakAttempts >= maxBreaks.getValue()) {
                 return true;
             }
 
-            if (mc.level.getBlockState(pos).isAir()) {
-                progress = 0;
-                prevProgress = -1;
-                return false;
-            }
-
-            if (progress == 0 && prevProgress == -1 && mode.is(Mode.Packet) && attackTimer.every(800)) {
-                start(dir);
-                mc.player.swing(InteractionHand.MAIN_HAND);
-            }
-
-            int pickSlot = getTool(pos);
-            int prevSlot = mc.player.getInventory().getSelectedSlot();
-
-            if (pickSlot == -1)
-                return false;
-
-            boolean instant = mineBreaks > 0 && mode.is(Mode.Instant);
-
-            if (progress >= 1 || instant) {
-                if (placeCrystal.getValue())
-                    placeCrystal();
-
-                switchTo(pickSlot, -1);
-
-                if (mode.getValue() == Mode.Instant || doubleMine.getValue()) {
-                    mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, dir));
-                } else {
-                    if (stop.getValue()) {
-                        mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, dir));
-                    }
-                    if (abort.getValue()) {
-                        mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, pos, dir));
-                    }
-                    if (start.getValue()) {
-                        mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, dir));
-                    }
-                    if (stop2.getValue()) {
-                        mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, dir));
-                    }
-                }
-
-                if (clientRemove.getValue()) {
-                    mc.gameMode.destroyBlock(pos);
-                }
-
-                int delay = doubleMine.getValue() ? 100 : swapDelay.getValue();
-                schedule(delay, () -> switchTo(prevSlot, pickSlot));
-
-                mineBreaks++;
-
-                progress = prevProgress = 0;
-
-                if (doubleMine.getValue() && mode.is(Mode.Instant) && actions.size() >= 2)
-                    return true;
-            } else {
-                prevProgress = progress;
-                progress += getBlockStrength(mc.level.getBlockState(pos), pos);
+            boolean readyForInstant = !instantMine.getValue() || action.instantRetryTimer.passedMillise(instantDelay.getValue());
+            if (readyForInstant && action.retryTimer.passedMillise(packetDelay.getValue()) && !shouldPause()) {
+                performBreak(action);
             }
 
             return false;
         }
 
-        private void switchTo(int slot, int from) {
-            // 我真急哭了这个会卡背包
-            if (switchMode.getValue() == SwitchMode.Alternative || slot >= 9) {
-                if (from == -1) {
-                    mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, slot < 9 ? slot + 36 : slot, mc.player.getInventory().getSelectedSlot(), ContainerInput.SWAP, mc.player);
-                } else {
-                    mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, from < 9 ? from + 36 : from, mc.player.getInventory().getSelectedSlot(), ContainerInput.SWAP, mc.player);
-                }
-                mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
-            } else if (switchMode.is(SwitchMode.Silent)) {
-                // 2b2t.site 亲测稳定可用
-                mc.getConnection().send(new ServerboundSetCarriedItemPacket(slot));
-            } else {
-                InvUtils.swap(slot, false);
+        if (action.lastUpdate <= 0L) {
+            action.lastUpdate = now;
+            return false;
+        }
+
+        double delta = (now - action.lastUpdate) / 1000.0;
+        action.lastUpdate = now;
+
+        double increment = (!checkGround.getValue() || player.onGround()) ? delta * 20.0 : delta * 4.0;
+        action.progressTicks += (float) increment;
+        action.renderProgress = Mth.clamp(action.progressTicks / threshold, 0.0f, 1.0f);
+        action.publicProgress = Mth.clamp((int) (action.renderProgress * 100.0f), 0, 100);
+
+        if (autoSwitch.getValue() != SwitchMode.None && action.publicProgress >= switchDamage.getValue()) {
+            int bestSlot = getBestTool(action.pos);
+            if (bestSlot != -1) {
+                switchTo(bestSlot);
             }
         }
 
-        public BlockPos getPos() {
-            return pos;
+        if (action.progressTicks < threshold) {
+            return false;
         }
 
-        public float getPrevProgress() {
-            return prevProgress;
+        action.progressTicks = threshold;
+        action.renderProgress = 1.0f;
+        action.publicProgress = 100;
+
+        if (!shouldPause()) {
+            performBreak(action);
+            action.completed = true;
         }
 
-        public float getProgress() {
-            return progress;
-        }
+        return false;
+    }
 
-        public void onRotationSync() {
-            if (!rotate.getValue() || progress <= 0.95) return;
+    private void queueStart(MineAction action) {
+        if (action.startScheduled || action.removed) return;
 
-            Direction direction = RotationUtils.getDirection(pos, null);
-            Vector2f targetRotation = RotationUtils.calculate(pos, direction);
+        action.startScheduled = true;
+        Runnable startTask = () -> {
+            action.startScheduled = false;
+            if (action.removed || !actions.contains(action) || nullCheck()) return;
 
-            RotationManager.INSTANCE.applyRotation(targetRotation, rotationSpeed.getValue(), Priority.Medium, record -> {
-                // 检查是否对准方块
-                if (RaytraceUtils.overBlock(record.currentRotation(), pos, direction, false)) {
-                    // 旋转已完成，方块挖掘将在update中继续处理
-                }
-            });
-        }
+            var player = mc.player;
+            if (player == null) return;
 
-        public void reset() {
-            if (progress == 0) {
-                return;
+            sendStartPackets(action.pos, action.getDirection());
+            if (swing.getValue()) {
+                player.swing(InteractionHand.MAIN_HAND);
             }
 
-            prevProgress = progress = 0;
-            Direction dir = RotationUtils.getDirection(pos, null);
-            mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, pos, dir));
-            start(dir);
-        }
+            action.started = true;
+            action.completed = false;
+            action.progressTicks = 0.0f;
+            action.prevRenderProgress = 0.0f;
+            action.renderProgress = 0.0f;
+            action.publicProgress = 0;
+            action.breakAttempts = 0;
+            action.lastUpdate = System.currentTimeMillis();
+            action.retryTimer.reset();
+            action.instantRetryTimer.setMs(instantDelay.getValue().longValue());
+        };
 
-        public void cancel() {
-            if (progress != 0) {
-                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, pos, RotationUtils.getDirection(pos, Direction.DOWN)));
+        boolean hasOther = false;
+        for (MineAction other : actions) {
+            if (other != action && other.started && !other.removed) {
+                hasOther = true;
+                sendStopPacket(other.pos, other.getDirection());
             }
         }
 
-        public boolean instantBreaking() {
-            return mineBreaks > 0 && mode.is(Mode.Instant);
+        if (hasOther && packetDelay.getValue() > 0) {
+            schedule(packetDelay.getValue(), startTask);
+        } else {
+            startTask.run();
         }
     }
 
-    private record DelayedAction(long runAt, Runnable runnable) {
+    private void performBreak(MineAction action) {
+        if (action.removed || nullCheck() || mc.player == null || mc.gameMode == null) return;
+
+        var player = mc.player;
+        var gameMode = mc.gameMode;
+
+        int bestSlot = getBestTool(action.pos);
+        if (bestSlot != -1) {
+            switchTo(bestSlot);
+        }
+
+        if (bypassGround.getValue() && !player.isFallFlying() && !player.onGround()) {
+            PacketUtils.sendSilently(new ServerboundMovePlayerPacket.Pos(player.getX(), player.getY() + 1.0E-9, player.getZ(), true, false));
+        }
+
+        if (swing.getValue()) {
+            player.swing(InteractionHand.MAIN_HAND);
+        }
+
+        sendStopPacket(action.pos, action.getDirection());
+
+        if (clientRemove.getValue()) {
+            gameMode.destroyBlock(action.pos);
+        }
+
+        action.breakAttempts++;
+        action.retryTimer.reset();
+        action.instantRetryTimer.reset();
     }
 
+    private void sendStartPackets(BlockPos pos, Direction direction) {
+        sendAction(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, direction);
+        sendFastBypassPackets();
+        sendAction(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, direction);
+        sendFastBypassPackets();
+    }
+
+    private void sendStopPacket(BlockPos pos, Direction direction) {
+        sendAction(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, direction);
+    }
+
+    private void sendAction(ServerboundPlayerActionPacket.Action action, BlockPos pos, Direction direction) {
+        if (mc.getConnection() == null) return;
+        mc.getConnection().send(new ServerboundPlayerActionPacket(action, pos, direction));
+    }
+
+    private void sendFastBypassPackets() {
+        if (!fastBypass.getValue() || mc.player == null) return;
+
+        BlockPos bypassPos = mc.player.blockPosition().offset(0, 7891, 0);
+        for (int i = 0; i < 5; i++) {
+            sendAction(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, bypassPos, Direction.DOWN);
+        }
+    }
+
+    private void switchTo(int slot) {
+        if (autoSwitch.getValue() == SwitchMode.None || mc.player == null || mc.gameMode == null || mc.getConnection() == null) return;
+
+        var player = mc.player;
+        var gameMode = mc.gameMode;
+        var connection = mc.getConnection();
+
+        int selectedSlot = player.getInventory().getSelectedSlot();
+        if (autoSwitch.getValue() != SwitchMode.Alternative && slot == selectedSlot) return;
+        if (swapState != null && swapState.matches(slot, autoSwitch.getValue())) {
+            swapState.restoreAt = System.currentTimeMillis() + switchTime.getValue();
+            return;
+        }
+
+        restoreSwap();
+
+        switch (autoSwitch.getValue()) {
+            case None -> {
+            }
+            case Silent -> {
+                if (slot > 8) return;
+                PacketUtils.sendSilently(new ServerboundSetCarriedItemPacket(slot));
+                swapState = new SwapState(SwitchMode.Silent, selectedSlot, slot, -1, System.currentTimeMillis() + switchTime.getValue());
+            }
+            case Normal -> {
+                if (slot > 8) return;
+                player.getInventory().setSelectedSlot(slot);
+                swapState = new SwapState(SwitchMode.Normal, selectedSlot, slot, -1, System.currentTimeMillis() + switchTime.getValue());
+            }
+            case Alternative -> {
+                if (slot == selectedSlot) return;
+                int containerSlot = toContainerSlot(slot);
+                gameMode.handleContainerInput(player.containerMenu.containerId, containerSlot, selectedSlot, ContainerInput.SWAP, player);
+                connection.send(new ServerboundContainerClosePacket(player.containerMenu.containerId));
+                swapState = new SwapState(SwitchMode.Alternative, selectedSlot, slot, containerSlot, System.currentTimeMillis() + switchTime.getValue());
+            }
+        }
+    }
+
+    private void handleSwapRestore(long now) {
+        if (swapState != null && now >= swapState.restoreAt) {
+            restoreSwap();
+        }
+    }
+
+    private void restoreSwap() {
+        if (swapState == null || nullCheck() || mc.player == null || mc.gameMode == null || mc.getConnection() == null) return;
+
+        var player = mc.player;
+        var gameMode = mc.gameMode;
+        var connection = mc.getConnection();
+
+        switch (swapState.mode) {
+            case Silent -> PacketUtils.sendSilently(new ServerboundSetCarriedItemPacket(swapState.originalSlot));
+            case Normal -> player.getInventory().setSelectedSlot(swapState.originalSlot);
+            case Alternative -> {
+                gameMode.handleContainerInput(player.containerMenu.containerId, swapState.containerSlot, swapState.originalSlot, ContainerInput.SWAP, player);
+                connection.send(new ServerboundContainerClosePacket(player.containerMenu.containerId));
+            }
+            case None -> {
+            }
+        }
+
+        swapState = null;
+    }
+
+    private int toContainerSlot(int slot) {
+        if (slot < 9) return slot + 36;
+        return slot;
+    }
+
+    private MineAction findAction(BlockPos pos) {
+        for (MineAction action : actions) {
+            if (action.pos.equals(pos)) {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    private void clearActions(boolean cancelPackets) {
+        if (cancelPackets) {
+            for (MineAction action : actions) {
+                action.cancel();
+            }
+        }
+        actions.clear();
+    }
+
+    private void resetState(boolean cancelPackets) {
+        clearActions(cancelPackets);
+        delayedActions.clear();
+        restoreSwap();
+    }
+
+    private void schedule(int delayMs, Runnable runnable) {
+        long runAt = System.currentTimeMillis() + Math.max(0, delayMs);
+        delayedActions.add(new DelayedAction(runAt, runnable));
+    }
+
+    private void runDelayedActions(long now) {
+        delayedActions.removeIf(action -> {
+            if (action.runAt > now) return false;
+            action.runnable.run();
+            return true;
+        });
+    }
+
+    private boolean shouldPause() {
+        if (!usingPause.getValue() || mc.player == null) return false;
+        if (!mc.options.keyUse.isDown()) return false;
+        if (!onlyMain.getValue() || !mc.player.isUsingItem()) return true;
+        return mc.player.getUseItem() == mc.player.getMainHandItem();
+    }
+
+    private boolean withinRange(BlockPos pos) {
+        return mc.player != null && mc.player.getEyePosition().distanceToSqr(pos.getCenter()) <= range.getValue() * range.getValue();
+    }
+
+    private boolean canMine(BlockPos pos) {
+        if (nullCheck() || mc.level == null) return false;
+        if (!withinRange(pos)) return false;
+
+        var level = mc.level;
+        return level.getBlockState(pos).getDestroySpeed(level, pos) >= 0.0f;
+    }
+
+    private int getBestTool(BlockPos pos) {
+        if (nullCheck() || mc.player == null || mc.level == null) return -1;
+
+        var player = mc.player;
+        var level = mc.level;
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir()) return -1;
+
+        int end = autoSwitch.getValue() == SwitchMode.Alternative ? 35 : 8;
+        int bestSlot = -1;
+        float bestScore = 1.0f;
+
+        for (int i = 0; i <= end; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.isEmpty()) continue;
+
+            float destroySpeed = stack.getDestroySpeed(state);
+            int efficiency = EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.EFFICIENCY);
+            float score = destroySpeed + efficiency;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestSlot = i;
+            }
+        }
+
+        return bestSlot;
+    }
+
+    private float getMineTicks(BlockPos pos) {
+        int bestSlot = getBestTool(pos);
+        return getMineTicks(pos, bestSlot);
+    }
+
+    private float getMineTicks(BlockPos pos, int slot) {
+        if (nullCheck() || mc.player == null || mc.level == null) return 20.0f;
+
+        var player = mc.player;
+        var level = mc.level;
+        BlockState state = level.getBlockState(pos);
+        float hardness = state.getDestroySpeed(level, pos);
+        if (hardness < 0.0f) return Float.MAX_VALUE;
+        if (hardness == 0.0f) return 1.0f;
+
+        ItemStack stack = slot >= 0 ? player.getInventory().getItem(slot) : ItemStack.EMPTY;
+        boolean canHarvest = !stack.isEmpty() && stack.isCorrectToolForDrops(state);
+        float speed = getDigSpeed(state, slot);
+        float damage = speed / hardness / (canHarvest ? 30.0f : 100.0f);
+
+        if (damage <= 0.0f) return Float.MAX_VALUE;
+        return 1.0f / damage;
+    }
+
+    private float getDigSpeed(BlockState state, int slot) {
+        if (mc.player == null) return 1.0f;
+
+        var player = mc.player;
+        ItemStack stack = slot >= 0 ? player.getInventory().getItem(slot) : ItemStack.EMPTY;
+        float speed = stack.isEmpty() ? 1.0f : stack.getDestroySpeed(state);
+
+        int efficiency = EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.EFFICIENCY);
+        if (efficiency > 0 && speed > 1.0f) {
+            speed += (float) (StrictMath.pow(efficiency, 2) + 1);
+        }
+
+        if (player.hasEffect(MobEffects.HASTE)) {
+            speed *= 1.0f + (Objects.requireNonNull(player.getEffect(MobEffects.HASTE)).getAmplifier() + 1) * 0.2f;
+        }
+
+        if (player.hasEffect(MobEffects.MINING_FATIGUE)) {
+            speed *= switch (Objects.requireNonNull(player.getEffect(MobEffects.MINING_FATIGUE)).getAmplifier()) {
+                case 0 -> 0.3f;
+                case 1 -> 0.09f;
+                case 2 -> 0.0027f;
+                default -> 0.00081f;
+            };
+        }
+
+        if (player.isEyeInFluid(FluidTags.WATER)) {
+            speed *= (float) player.getAttributeValue(Attributes.SUBMERGED_MINING_SPEED);
+        }
+
+        return Math.max(speed, 0.0f);
+    }
+
+    private Color lerpColor(Color start, Color end, float progress) {
+        float clamped = Mth.clamp(progress, 0.0f, 1.0f);
+        return new Color(
+                Mth.lerpInt(clamped, start.getRed(), end.getRed()),
+                Mth.lerpInt(clamped, start.getGreen(), end.getGreen()),
+                Mth.lerpInt(clamped, start.getBlue(), end.getBlue()),
+                Mth.lerpInt(clamped, start.getAlpha(), end.getAlpha())
+        );
+    }
+
+    private final class MineAction {
+        private final BlockPos pos;
+        private Direction direction;
+        private boolean started;
+        private boolean startScheduled;
+        private boolean completed;
+        private boolean removed;
+        private float progressTicks;
+        private float prevRenderProgress;
+        private float renderProgress;
+        private int publicProgress;
+        private int breakAttempts;
+        private long lastUpdate;
+        private final TimerUtils retryTimer = new TimerUtils();
+        private final TimerUtils instantRetryTimer = new TimerUtils();
+
+        private MineAction(BlockPos pos, Direction direction) {
+            this.pos = pos;
+            this.direction = direction;
+            this.instantRetryTimer.setMs(instantDelay.getValue().longValue());
+        }
+
+        private Direction getDirection() {
+            return RotationUtils.getDirection(pos, direction);
+        }
+
+        private void cancel() {
+            removed = true;
+            if (mc.getConnection() != null && (started || progressTicks > 0.0f || completed)) {
+                sendAction(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, pos, getDirection());
+            }
+        }
+    }
+
+    private static final class DelayedAction {
+        private final long runAt;
+        private final Runnable runnable;
+
+        private DelayedAction(long runAt, Runnable runnable) {
+            this.runAt = runAt;
+            this.runnable = runnable;
+        }
+    }
+
+    private static final class SwapState {
+        private final SwitchMode mode;
+        private final int originalSlot;
+        private final int targetSlot;
+        private final int containerSlot;
+        private long restoreAt;
+
+        private SwapState(SwitchMode mode, int originalSlot, int targetSlot, int containerSlot, long restoreAt) {
+            this.mode = mode;
+            this.originalSlot = originalSlot;
+            this.targetSlot = targetSlot;
+            this.containerSlot = containerSlot;
+            this.restoreAt = restoreAt;
+        }
+
+        private boolean matches(int slot, SwitchMode mode) {
+            return this.mode == mode && this.targetSlot == slot;
+        }
+    }
 }

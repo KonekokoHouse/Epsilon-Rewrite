@@ -88,6 +88,9 @@ public class NotificationManager {
     }
 
     private float getScreenHeight() {
+        if (Minecraft.getInstance().getWindow() == null) {
+            return 0;
+        }
         return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
