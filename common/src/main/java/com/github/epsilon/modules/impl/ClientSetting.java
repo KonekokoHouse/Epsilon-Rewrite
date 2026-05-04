@@ -46,6 +46,8 @@ public class ClientSetting extends Module {
 
     public final BoolSetting closeOnOutside = boolSetting("Close Gui On Outside", false);
 
+    public final DoubleSetting rotateBackSpeed = doubleSetting("Rotate Back Speed", 5.0f, 1.0f, 10.0f, 0.5f);
+
     public final EnumSetting<ThemeMode> themeMode = enumSetting("Theme Mode", ThemeMode.Dark);
 
     public final EnumSetting<ThemePreset> themePreset = enumSetting("Theme Preset", ThemePreset.Expressive);

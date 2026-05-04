@@ -167,16 +167,40 @@ public class AutoCrystal extends Module {
         }
 
         Vec3 predictedPos = getPredictedTargetPos(target);
+        BreakCandidate bestBreak = selectBreakCandidate();
+        FindItemResult crystalItem = findCrystalItem();
+        PlaceCandidate bestPlace = crystalItem.found() ? selectPlaceCandidate(predictedPos) : null;
 
-        // 在一个 tick 内先敲击后放置
-        if (!tryBreakCrystal()) {
-            if (!tryPlaceCrystal(predictedPos)) {
-                deactivateRenderTarget();
+        if (bestBreak != null) {
+            RotationManager.INSTANCE.applyRotation(
+                    bestBreak.targetRotation(),
+                    breakRotationSpeed.getValue(),
+                    Priority.Medium.priority
+            );
+
+            if (breakTimer.passedMillise(breakDelay.getValue())) {
+                doBreakCrystal(bestBreak.crystal());
             }
+            return;
         }
+
+        if (bestPlace != null) {
+            RotationManager.INSTANCE.applyRotation(
+                    bestPlace.targetRotation(),
+                    placeRotationSpeed.getValue(),
+                    Priority.Medium.priority
+            );
+
+            if (placeTimer.passedMillise(placeDelay.getValue())) {
+                doPlaceCrystal(bestPlace, crystalItem);
+            }
+            return;
+        }
+
+        deactivateRenderTarget();
     }
 
-    private boolean tryBreakCrystal() {
+    private BreakCandidate selectBreakCandidate() {
         List<BreakCandidate> candidates = new ArrayList<>();
 
         final var breakRangeSq = breakRange.getValue() * breakRange.getValue();
@@ -204,14 +228,7 @@ public class AutoCrystal extends Module {
             candidates.add(new BreakCandidate(crystal, targetDmg, selfDmg, targetRotation));
         }
 
-        EndCrystal bestCrystal = selectBestBreakCandidate(candidates);
-        if (bestCrystal == null) return false;
-
-        // 有有效目标：计时器就绪才实际执行，但无论如何都返回 true 以保持渲染
-        if (breakTimer.passedMillise(breakDelay.getValue())) {
-            doBreakCrystal(bestCrystal);
-        }
-        return true;
+        return selectBestBreakCandidate(candidates);
     }
 
     private void doBreakCrystal(EndCrystal crystal) {
@@ -260,10 +277,7 @@ public class AutoCrystal extends Module {
         });
     }
 
-    private boolean tryPlaceCrystal(Vec3 predictedTargetPos) {
-        FindItemResult crystalItem = findCrystalItem();
-        if (!crystalItem.found()) return false;
-
+    private PlaceCandidate selectPlaceCandidate(Vec3 predictedTargetPos) {
         List<PlaceCandidate> candidates = collectPlaceCandidates(predictedTargetPos);
 
         PlaceCandidate bestPlacement = findBestCandidate(candidates,
@@ -278,36 +292,7 @@ public class AutoCrystal extends Module {
                     forcePlaceBalance.getValue().floatValue());
         }
 
-        if (bestPlacement == null) return false;
-
-        // 有有效放置点：计时器就绪才实际执行，但无论如何都返回 true 以保持渲染
-        if (!placeTimer.passedMillise(placeDelay.getValue())) return true;
-
-        Vector2f smoothedRotation = RotationUtils.smooth(bestPlacement.targetRotation, placeRotationSpeed.getValue() * 18);
-        if (!RaytraceUtils.overBlock(smoothedRotation, bestPlacement.supportPos, null, false, placeRange.getValue())) {
-
-            BlockHitResult hitResult = RaytraceUtils.rayCast(smoothedRotation, placeRange.getValue());
-            BlockPos placePos = hitResult.getBlockPos();
-
-            // smooth 旋转未能对准最佳目标，检查当前实际命中位置是否在满足常规 place 限制的候选列表中
-            for (PlaceCandidate candidate :
-                    getValidCandidates(
-                            candidates,
-                            placeMinDmg.getValue().floatValue(),
-                            placeMaxSelfDmg.getValue().floatValue(),
-                            placeBalance.getValue().floatValue()
-                    )
-            ) {
-                if (candidate.supportPos.equals(placePos)) {
-                    doPlaceCrystal(candidate, crystalItem);
-                    return true;
-                }
-            }
-        }
-
-        // smooth 旋转能对准最佳目标或者实际命中位置不在候选列表中，直接放置
-        doPlaceCrystal(bestPlacement, crystalItem);
-        return true;
+        return bestPlacement;
     }
 
     private boolean shouldForcePlace() {
@@ -747,7 +732,7 @@ public class AutoCrystal extends Module {
     ) {
     }
 
-    private EndCrystal selectBestBreakCandidate(List<BreakCandidate> candidates) {
+    private BreakCandidate selectBestBreakCandidate(List<BreakCandidate> candidates) {
         if (candidates.isEmpty()) return null;
 
         float targetHealth = target.getHealth() + target.getAbsorptionAmount();
@@ -807,9 +792,8 @@ public class AutoCrystal extends Module {
             }
         }
 
-        BreakCandidate result = lethalCandidate != null ? lethalCandidate
+        return lethalCandidate != null ? lethalCandidate
                 : (safeCandidate != null ? safeCandidate : maxCandidate);
-        return result != null ? result.crystal : null;
     }
 
     private float getRotationDelta(Vector2f from, Vector2f to) {

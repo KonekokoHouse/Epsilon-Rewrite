@@ -4,6 +4,7 @@ import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.bus.EventPriority;
 import com.github.epsilon.events.impl.*;
+import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.player.MovementFix;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
@@ -86,6 +87,13 @@ public class RotationManager {
         if (priority >= Priority.Medium.priority) return Priority.Medium;
         if (priority >= Priority.Low.priority) return Priority.Low;
         return Priority.Lowest;
+    }
+
+    private void prepareRotateBack() {
+        targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+        rotationSpeed = ClientSetting.INSTANCE.rotateBackSpeed.getValue() * 18;
+        raycast = null;
+        smoothed = false;
     }
 
     private void smooth() {
@@ -249,6 +257,8 @@ public class RotationManager {
             }
 
             tickRequests.clear();
+        } else if (active) {
+            prepareRotateBack();
         }
 
         if (active) {
