@@ -2,47 +2,33 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.AttackBlockEvent;
-import com.github.epsilon.events.impl.Render2DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
-import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
-import com.github.epsilon.utils.network.PacketUtils;
 import com.github.epsilon.utils.player.EnchantmentUtils;
 import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
-import com.github.epsilon.utils.render.WorldToScreen;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
-import com.github.epsilon.utils.world.BlockUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
-import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.TimerTask;
 
 public class PacketMine extends Module {
@@ -96,9 +82,9 @@ public class PacketMine extends Module {
     public static int maxBreaksCount;
     public static int publicProgress = 0, secondPublicProgress = 0;
     public static boolean completed = false;
-    public static BlockPos targetPos,secondPos;
-    private static float progress,secondProgress;
-    private long lastTime,secondLastTime;
+    public static BlockPos targetPos, secondPos;
+    private static float progress, secondProgress;
+    private long lastTime, secondLastTime;
     private static boolean started, secondStarted;
     private double render = 1, secondRender = 1;
     private int oldSlot = -1;
@@ -139,7 +125,7 @@ public class PacketMine extends Module {
             hasSwitch = false;
         }
         if (secondHasSwitch) {
-            InvUtils.swap(oldSlot,false);
+            InvUtils.swap(oldSlot, false);
             secondHasSwitch = false;
         }
     }
@@ -152,6 +138,7 @@ public class PacketMine extends Module {
         selfClickPos = event.getBlockPos();
         mine(event.getBlockPos());
     }
+
     public void mine(BlockPos pos) {
         mineTimer.reset();
         maxBreaksCount = 0;
@@ -174,7 +161,7 @@ public class PacketMine extends Module {
                     secondPublicProgress = 0;
                     started = false;
                 }
-            } else if (targetPos == null || !targetPos.equals(pos)){
+            } else if (targetPos == null || !targetPos.equals(pos)) {
                 publicProgress = 0;
                 targetPos = pos;
                 started = false;
@@ -203,7 +190,8 @@ public class PacketMine extends Module {
         }
         if (timer.passedMillise(switchTime.getValue()) && hasSwitch && autoSwitch.getValue() != MineSwitchMode.None) {
             if (autoSwitch.getValue() == MineSwitchMode.Delay) InvUtils.swap(oldSlot, false);
-            if (autoSwitch.getValue() == MineSwitchMode.Silent) mc.getConnection().send(new ServerboundSetCarriedItemPacket(oldSlot));
+            if (autoSwitch.getValue() == MineSwitchMode.Silent)
+                mc.getConnection().send(new ServerboundSetCarriedItemPacket(oldSlot));
             hasSwitch = false;
         }
         if (maxBreaksCount >= maxBreaks.getValue() * 10) {
@@ -211,7 +199,7 @@ public class PacketMine extends Module {
             targetPos = null;
         }
         if (secondPos != null && doubleBreak.getValue()) {
-            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(secondPos.getCenter())) > range.getValue()){
+            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(secondPos.getCenter())) > range.getValue()) {
                 secondPos = null;
                 return;
             }
@@ -228,7 +216,7 @@ public class PacketMine extends Module {
             Double secondDamage = mineDamage.getValue();
             if (!checkGround.getValue() || mc.player.onGround()) {
                 secondProgress += (float) (secondDelta * 20);
-            } else if (checkGround.getValue() && !mc.player.onGround()){
+            } else if (checkGround.getValue() && !mc.player.onGround()) {
                 secondProgress += (float) (secondDelta * 4);
             }
             renderSecondAnimation(event, secondDelta, secondDamage);
@@ -238,12 +226,13 @@ public class PacketMine extends Module {
         }
         if (doubleBreak.getValue()) {
             if (!usingPause.getValue() || !checkPause(onlyMain.getValue())) {
-                if ((secondPublicProgress >= switchDamage.getValue() || publicProgress >= switchDamage.getValue())&& !hasSwitch && secondPos != null) {
+                if ((secondPublicProgress >= switchDamage.getValue() || publicProgress >= switchDamage.getValue()) && !hasSwitch && secondPos != null) {
                     int bestSlot = getTool(secondPos);
                     if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
                     if (!autoSwitch.is(MineSwitchMode.None) && bestSlot != -1) {
-                        if (autoSwitch.getValue() == MineSwitchMode.Delay) InvUtils.swap(bestSlot,false);
-                        if (autoSwitch.getValue() == MineSwitchMode.Silent) mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
+                        if (autoSwitch.getValue() == MineSwitchMode.Delay) InvUtils.swap(bestSlot, false);
+                        if (autoSwitch.getValue() == MineSwitchMode.Silent)
+                            mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
                         timer.reset();
                         hasSwitch = true;
                     }
@@ -251,7 +240,7 @@ public class PacketMine extends Module {
             }
         }
         if (targetPos != null) {
-            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(targetPos.getCenter())) > range.getValue()){
+            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(targetPos.getCenter())) > range.getValue()) {
                 targetPos = null;
                 return;
             }
@@ -340,18 +329,19 @@ public class PacketMine extends Module {
                 hasSwitch = true;
             }
         }
-        if (bypassGround.getValue() && !mc.player.isFallFlying() && targetPos != null && !isAir(targetPos) && !mc.player.onGround()){
+        if (bypassGround.getValue() && !mc.player.isFallFlying() && targetPos != null && !isAir(targetPos) && !mc.player.onGround()) {
             mc.getConnection().send(new ServerboundMovePlayerPacket.PosRot(mc.player.getX(), mc.player.getY() + 1.0e-9, mc.player.getZ(), mc.player.getYRot(), mc.player.getXRot(), true, mc.player.horizontalCollision));
             mc.player.respawn();
         }
         if (swing.getValue()) mc.player.swing(InteractionHand.MAIN_HAND);
-        mc.getConnection().send( new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, targetPos, RotationUtils.getClickSide(targetPos), mc.level.getBlockStatePredictionHandler().startPredicting().currentSequence()));
+        mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, targetPos, RotationUtils.getClickSide(targetPos), mc.level.getBlockStatePredictionHandler().startPredicting().currentSequence()));
         if (clientRemove.getValue() && targetPos != null && !isAir(targetPos)) {
             mc.gameMode.destroyBlock(targetPos);
         }
     }
+
     private void sendStopSecond() {
-        if (bypassGround.getValue() && !mc.player.isFallFlying() && secondPos != null && !isAir(secondPos) && !mc.player.onGround()){
+        if (bypassGround.getValue() && !mc.player.isFallFlying() && secondPos != null && !isAir(secondPos) && !mc.player.onGround()) {
             mc.getConnection().send(new ServerboundMovePlayerPacket.PosRot(mc.player.getX(), mc.player.getY() + 1.0e-9, mc.player.getZ(), mc.player.getYRot(), mc.player.getXRot(), true, mc.player.horizontalCollision));
             mc.player.resetFallDistance();
         }
@@ -362,6 +352,7 @@ public class PacketMine extends Module {
             mc.gameMode.destroyBlock(secondPos);
         }
     }
+
     private boolean isAir(BlockPos breakPos) {
         return mc.level.getBlockState(breakPos).isAir() || mc.level.getBlockState(breakPos).getBlock() == Blocks.FIRE && hasCrystal(breakPos);
     }
@@ -407,6 +398,7 @@ public class PacketMine extends Module {
         if (damage <= 0) return Float.MAX_VALUE;
         return 1f / damage;
     }
+
     private float getMineTicks2(int slot) {
         if (secondPos == null) return 20;
         BlockState state = mc.level.getBlockState(secondPos);
@@ -461,6 +453,7 @@ public class PacketMine extends Module {
 
         Render3DUtils.drawFilledBox(box, side);
     }
+
     private void renderSecondAnimation(Render3DEvent event, double delta, double damage) {
         secondRender = Mth.clamp(secondRender + delta * 2, -2, 2);
         double max = getMineTicks2(getTool(secondPos));
