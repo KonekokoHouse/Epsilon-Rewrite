@@ -72,6 +72,7 @@ public class PacketMine extends Module {
     private final BoolSetting doubleBreak = boolSetting("Double Break", false);
     private final BoolSetting checkGround = boolSetting("Check Ground", true);
     private final BoolSetting bypassGround = boolSetting("Bypass Ground", false);
+    private final BoolSetting clientRemove = boolSetting("Client Remove", true);
     private final IntSetting switchDamage = intSetting("Switch Damage", 95, 0, 100, 1);
     private final IntSetting switchTime = intSetting("Switch Time", 100, 0, 1000, 10);
     private final IntSetting mineDelay = intSetting("Mine Delay", 300, 0, 1000, 10);
@@ -345,6 +346,9 @@ public class PacketMine extends Module {
         }
         if (swing.getValue()) mc.player.swing(InteractionHand.MAIN_HAND);
         mc.getConnection().send( new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, targetPos, RotationUtils.getClickSide(targetPos), mc.level.getBlockStatePredictionHandler().startPredicting().currentSequence()));
+        if (clientRemove.getValue() && targetPos != null && !isAir(targetPos)) {
+            mc.gameMode.destroyBlock(targetPos);
+        }
     }
     private void sendStopSecond() {
         if (bypassGround.getValue() && !mc.player.isFallFlying() && secondPos != null && !isAir(secondPos) && !mc.player.onGround()){
@@ -353,6 +357,9 @@ public class PacketMine extends Module {
         }
         if (swing.getValue()) {
             mc.player.swing(InteractionHand.MAIN_HAND);
+        }
+        if (clientRemove.getValue() && secondPos != null && !isAir(secondPos)) {
+            mc.gameMode.destroyBlock(secondPos);
         }
     }
     private boolean isAir(BlockPos breakPos) {
