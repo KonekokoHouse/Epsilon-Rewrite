@@ -658,7 +658,7 @@ public class AutoCrystal extends Module {
                 Math.clamp((int) (oc.getAlpha() * renderScale), 0, 255));
 
         Render3DUtils.drawFilledBox(box, filled);
-        Render3DUtils.drawOutlineBox(event.getPoseStack(), box, outline.getRGB(), outlineWidth.getValue().floatValue());
+        Render3DUtils.drawOutlineBox(event.getPoseStack(), box, outline, outlineWidth.getValue().floatValue());
 
         renderLastRenderedPos = renderPos;
     }

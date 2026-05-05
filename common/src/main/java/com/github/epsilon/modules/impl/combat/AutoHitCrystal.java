@@ -60,7 +60,7 @@ public class AutoHitCrystal extends Module {
                         Color line = new Color(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), (int) (lineColor.getAlpha() * alphaFactor));
 
                         Render3DUtils.drawFilledBox(box.aabb, side);
-                        Render3DUtils.drawOutlineBox(event.getPoseStack(), box.aabb, line.getRGB(), 2f);
+                        Render3DUtils.drawOutlineBox(event.getPoseStack(), box.aabb, line);
                     }
                 }
         ));

@@ -39,15 +39,22 @@ public class PacketMine extends Module {
         super("Packet Mine", Category.COMBAT);
     }
 
-    private enum MineSwitchMode {
+    private enum SwitchMode {
         None,
         Delay,
         Silent
     }
 
+    public enum RenderMode {
+        Box,
+        Normal,
+        Shrink,
+        Grow,
+    }
+
     private final BoolSetting usingPause = boolSetting("Pause On Use", true);
     private final BoolSetting onlyMain = boolSetting("Only Main", true, usingPause::getValue);
-    private final EnumSetting<MineSwitchMode> autoSwitch = enumSetting("Auto Switch", MineSwitchMode.Silent);
+    private final EnumSetting<SwitchMode> switchMode = enumSetting("Switch Mode", SwitchMode.Silent);
     private final IntSetting range = intSetting("Range", 6, 0, 12, 1);
     private final IntSetting maxBreaks = intSetting("Try Break Time", 6, 0, 10, 1);
     private final BoolSetting farCancel = boolSetting("Far Cancel", true);
@@ -65,18 +72,21 @@ public class PacketMine extends Module {
     private final IntSetting packetDelay = intSetting("Packet Delay", 200, 0, 1000, 10);
     private final DoubleSetting mineDamage = doubleSetting("Damage", 0.8, 0.0, 2.0, 0.05);
 
-    private final DoubleSetting animationExp = doubleSetting("Animation Exponent", 3.0, 0.0, 10.0, 1.0);
-    private final BoolSetting renderProgress = boolSetting("Render Progress", true);
-    private final ColorSetting targetColor = colorSetting("Target Color", new Color(255, 255, 255, 50));
+    private final BoolSetting render = boolSetting("Render", true);
+    private final EnumSetting<RenderMode> renderMode = enumSetting("Render Mode", RenderMode.Shrink, render::getValue);
+    private final BoolSetting fading = boolSetting("Fading", true, render::getValue);
+    private final DoubleSetting renderTime = doubleSetting("Render Time", 0.1, 0.0, 5, 0.1, () -> render.getValue() && fading.getValue());
+    private final DoubleSetting fadeTime = doubleSetting("Fade Time", 0.2, 0.0, 5, 0.1, () -> render.getValue() && fading.getValue());
+    private final ColorSetting mainColor = colorSetting("Main Color", new Color(255, 255, 255, 50));
     private final ColorSetting secondColor = colorSetting("Second Color", new Color(255, 255, 255, 50));
-    private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 255, 255, 0));
-    private final ColorSetting sideEndColor = colorSetting("Side End", new Color(255, 255, 255, 50));
-    private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 255, 255, 0));
-    private final ColorSetting lineEndColor = colorSetting("Line End", new Color(255, 255, 255, 255));
-    private final ColorSetting secondSideStartColor = colorSetting("Second Side Start", new Color(255, 255, 255, 0));
-    private final ColorSetting secondSideEndColor = colorSetting("Second Side End", new Color(255, 255, 255, 50));
-    private final ColorSetting secondLineStartColor = colorSetting("Second Line Start", new Color(255, 255, 255, 0));
-    private final ColorSetting secondLineEndColor = colorSetting("Second Line End", new Color(255, 255, 255, 255));
+    private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting sideEndColor = colorSetting("Side End", new Color(255, 255, 255, 50), render::getValue);
+    private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting lineEndColor = colorSetting("Line End", new Color(255, 255, 255, 255), render::getValue);
+    private final ColorSetting secondSideStartColor = colorSetting("Second Side Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting secondSideEndColor = colorSetting("Second Side End", new Color(255, 255, 255, 50), render::getValue);
+    private final ColorSetting secondLineStartColor = colorSetting("Second Line Start", new Color(255, 255, 255, 0), render::getValue);
+    private final ColorSetting secondLineEndColor = colorSetting("Second Line End", new Color(255, 255, 255, 255), render::getValue);
 
     public static BlockPos selfClickPos = null;
     public static int maxBreaksCount;
@@ -86,7 +96,6 @@ public class PacketMine extends Module {
     private static float progress, secondProgress;
     private long lastTime, secondLastTime;
     private static boolean started, secondStarted;
-    private double render = 1, secondRender = 1;
     private int oldSlot = -1;
     private final TimerUtils bypassTimer = new TimerUtils();
     private final TimerUtils timer = new TimerUtils();
@@ -100,11 +109,11 @@ public class PacketMine extends Module {
         maxBreaksCount = 0;
         hasSwitch = false;
         secondHasSwitch = false;
-        bypassTimer.setMs(999999);
-        mineTimer.setMs(999999);
-        instantTimer.setMs(999999);
-        timer.setMs(999999);
-        secondTimer.setMs(999999);
+        bypassTimer.setMs(917813L);
+        mineTimer.setMs(917813L);
+        instantTimer.setMs(917813L);
+        timer.setMs(917813L);
+        secondTimer.setMs(917813L);
         targetPos = null;
         secondPos = null;
         started = false;
@@ -115,7 +124,6 @@ public class PacketMine extends Module {
         secondProgress = 0;
         lastTime = System.currentTimeMillis();
         secondLastTime = System.currentTimeMillis();
-        render = 1;
     }
 
     @Override
@@ -188,10 +196,12 @@ public class PacketMine extends Module {
         if (secondPublicProgress >= 100) {
             secondPos = null;
         }
-        if (timer.passedMillise(switchTime.getValue()) && hasSwitch && autoSwitch.getValue() != MineSwitchMode.None) {
-            if (autoSwitch.is(MineSwitchMode.Delay)) InvUtils.swap(oldSlot, false);
-            if (autoSwitch.is(MineSwitchMode.Silent))
+        if (timer.passedMillise(switchTime.getValue()) && hasSwitch && switchMode.getValue() != SwitchMode.None) {
+            if (switchMode.is(SwitchMode.Delay)) {
+                InvUtils.swap(oldSlot, false);
+            } else if (switchMode.is(SwitchMode.Silent)) {
                 mc.getConnection().send(new ServerboundSetCarriedItemPacket(oldSlot));
+            }
             hasSwitch = false;
         }
         if (maxBreaksCount >= maxBreaks.getValue() * 10) {
@@ -219,7 +229,7 @@ public class PacketMine extends Module {
             } else if (checkGround.getValue() && !mc.player.onGround()) {
                 secondProgress += (float) (secondDelta * 4);
             }
-            renderSecondAnimation(event, secondDelta, secondDamage);
+            secondBlockRender(event, secondDamage);
             if (secondProgress >= secondMax * secondDamage) {
                 sendStopSecond();
             }
@@ -229,10 +239,12 @@ public class PacketMine extends Module {
                 if ((secondPublicProgress >= switchDamage.getValue() || publicProgress >= switchDamage.getValue()) && !hasSwitch && secondPos != null) {
                     int bestSlot = getTool(secondPos);
                     if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
-                    if (!autoSwitch.is(MineSwitchMode.None) && bestSlot != -1) {
-                        if (autoSwitch.is(MineSwitchMode.Delay)) InvUtils.swap(bestSlot, false);
-                        if (autoSwitch.is(MineSwitchMode.Silent))
+                    if (!switchMode.is(SwitchMode.None) && bestSlot != -1) {
+                        if (switchMode.is(SwitchMode.Delay)) {
+                            InvUtils.swap(bestSlot, false);
+                        } else if (switchMode.is(SwitchMode.Silent)) {
                             mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
+                        }
                         timer.reset();
                         hasSwitch = true;
                     }
@@ -269,15 +281,17 @@ public class PacketMine extends Module {
             }
             Double damage = mineDamage.getValue();
             if (!checkGround.getValue() || mc.player.onGround()) {
-                progress += delta * 20;
+                progress += (float) (delta * 20);
             } else if (checkGround.getValue() && !mc.player.onGround()) {
-                progress += delta * 4;
+                progress += (float) (delta * 4);
             }
-            renderAnimation(event, delta, damage);
+            mainBlockRender(event, damage);
             if (progress >= max * damage) {
                 sendStop();
                 completed = true;
-                if (!instantMine.getValue() && secondPos == null) targetPos = null;
+                if (!instantMine.getValue() && secondPos == null) {
+                    targetPos = null;
+                }
             }
         }
     }
@@ -318,11 +332,11 @@ public class PacketMine extends Module {
         if (!doubleBreak.getValue() || secondPos == null) {
             int bestSlot = getTool(targetPos);
             if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
-            if (autoSwitch.getValue() != MineSwitchMode.None && bestSlot != -1) {
-                if (autoSwitch.is(MineSwitchMode.Delay)) {
+            if (switchMode.getValue() != SwitchMode.None && bestSlot != -1) {
+                if (switchMode.is(SwitchMode.Delay)) {
                     InvUtils.swap(bestSlot, false);
                 }
-                if (autoSwitch.is(MineSwitchMode.Silent)) {
+                if (switchMode.is(SwitchMode.Silent)) {
                     mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
                 }
                 timer.reset();
@@ -351,19 +365,6 @@ public class PacketMine extends Module {
         if (clientRemove.getValue() && secondPos != null && !isAir(secondPos)) {
             mc.gameMode.destroyBlock(secondPos);
         }
-    }
-
-    private boolean isAir(BlockPos breakPos) {
-        return mc.level.getBlockState(breakPos).isAir() || mc.level.getBlockState(breakPos).getBlock() == Blocks.FIRE && hasCrystal(breakPos);
-    }
-
-    private boolean hasCrystal(BlockPos pos) {
-        for (Entity entity : mc.level.getEntities(null, new AABB(pos))) {
-            if (entity instanceof EndCrystal endCrystal && endCrystal.isAlive()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private float getMineTicks(int slot) {
@@ -432,62 +433,17 @@ public class PacketMine extends Module {
         return 1f / damage;
     }
 
-    private void renderAnimation(Render3DEvent event, double delta, double damage) {
-        render = Mth.clamp(render + delta * 2, -2, 2);
-        double max = getMineTicks(getTool(targetPos));
-        double p = 1 - Mth.clamp(progress / (max * damage), 0, 1);
-        p = Math.pow(p, animationExp.getValue());
-        p = 1 - p;
-        double size = p / 2;
-        AABB box = new AABB(
-                targetPos.getX() + 0.5 - size,
-                targetPos.getY() + 0.5 - size,
-                targetPos.getZ() + 0.5 - size,
-                targetPos.getX() + 0.5 + size,
-                targetPos.getY() + 0.5 + size,
-                targetPos.getZ() + 0.5 + size
-        );
-
-        Color side = getColor(sideStartColor.getValue(), sideEndColor.getValue(), p);
-        Color line = getColor(lineStartColor.getValue(), lineEndColor.getValue(), p);
-
-        Render3DUtils.drawFilledBox(box, side);
+    private boolean isAir(BlockPos breakPos) {
+        return mc.level.getBlockState(breakPos).isAir() || mc.level.getBlockState(breakPos).getBlock() == Blocks.FIRE && hasCrystal(breakPos);
     }
 
-    private void renderSecondAnimation(Render3DEvent event, double delta, double damage) {
-        secondRender = Mth.clamp(secondRender + delta * 2, -2, 2);
-        double max = getMineTicks2(getTool(secondPos));
-        double p = 1 - Mth.clamp(secondProgress / (max * damage), 0, 1);
-        p = Math.pow(p, animationExp.getValue());
-        p = 1 - p;
-
-        double size = p / 2;
-        AABB box = new AABB(
-                secondPos.getX() + 0.5 - size,
-                secondPos.getY() + 0.5 - size,
-                secondPos.getZ() + 0.5 - size,
-                secondPos.getX() + 0.5 + size,
-                secondPos.getY() + 0.5 + size,
-                secondPos.getZ() + 0.5 + size
-        );
-
-        Color side = getColor(secondSideStartColor.getValue(), secondSideEndColor.getValue(), p);
-        Color line = getColor(secondLineStartColor.getValue(), secondLineEndColor.getValue(), p);
-
-        Render3DUtils.drawFilledBox(box, side);
-    }
-
-    private Color getColor(Color start, Color end, double progress) {
-        return new Color(
-                lerp(start.getRed(), end.getRed(), progress),
-                lerp(start.getGreen(), end.getGreen(), progress),
-                lerp(start.getBlue(), end.getBlue(), progress),
-                lerp(start.getAlpha(), end.getAlpha(), progress)
-        );
-    }
-
-    private int lerp(double start, double end, double d) {
-        return (int) Math.round(start + (end - start) * d);
+    private boolean hasCrystal(BlockPos pos) {
+        for (Entity entity : mc.level.getEntities(null, new AABB(pos))) {
+            if (entity instanceof EndCrystal endCrystal && endCrystal.isAlive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int getTool(BlockPos pos) {
@@ -515,6 +471,63 @@ public class PacketMine extends Module {
         BlockState state = mc.level.getBlockState(blockPos);
         if (!mc.player.isCreative() && state.getDestroySpeed(mc.level, blockPos) < 0) return false;
         return state.getCollisionShape(mc.level, blockPos) != Shapes.empty();
+    }
+
+    private void mainBlockRender(Render3DEvent event, double damage) {
+        double max = getMineTicks(getTool(targetPos));
+        double p = 1 - Mth.clamp(progress / (max * damage), 0, 1);
+        p = Math.pow(p, 1);
+        p = 1 - p;
+        double size = p / 2;
+        AABB box = new AABB(
+                targetPos.getX() + 0.5 - size,
+                targetPos.getY() + 0.5 - size,
+                targetPos.getZ() + 0.5 - size,
+                targetPos.getX() + 0.5 + size,
+                targetPos.getY() + 0.5 + size,
+                targetPos.getZ() + 0.5 + size
+        );
+
+        Color side = getColor(sideStartColor.getValue(), sideEndColor.getValue(), p);
+        Color line = getColor(lineStartColor.getValue(), lineEndColor.getValue(), p);
+
+        Render3DUtils.drawFilledBox(box, side);
+    }
+
+    private void secondBlockRender(Render3DEvent event, double damage) {
+        double max = getMineTicks2(getTool(secondPos));
+        double p = 1 - Mth.clamp(secondProgress / (max * damage), 0, 1);
+        p = Math.pow(p, 1);
+        p = 1 - p;
+
+        double size = p / 2;
+        AABB box = new AABB(
+                secondPos.getX() + 0.5 - size,
+                secondPos.getY() + 0.5 - size,
+                secondPos.getZ() + 0.5 - size,
+                secondPos.getX() + 0.5 + size,
+                secondPos.getY() + 0.5 + size,
+                secondPos.getZ() + 0.5 + size
+        );
+
+        Color side = getColor(secondSideStartColor.getValue(), secondSideEndColor.getValue(), p);
+        Color line = getColor(secondLineStartColor.getValue(), secondLineEndColor.getValue(), p);
+
+        Render3DUtils.drawFilledBox(box, side);
+    }
+
+    private Color getColor(Color start, Color end, double progress) {
+        return new Color(
+
+                lerp(start.getRed(), end.getRed(), progress),
+                lerp(start.getGreen(), end.getGreen(), progress),
+                lerp(start.getBlue(), end.getBlue(), progress),
+                lerp(start.getAlpha(), end.getAlpha(), progress)
+        );
+    }
+
+    private int lerp(double start, double end, double d) {
+        return (int) Math.round(start + (end - start) * d);
     }
 
 }
