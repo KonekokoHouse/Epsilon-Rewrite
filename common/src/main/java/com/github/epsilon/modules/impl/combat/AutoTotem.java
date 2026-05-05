@@ -88,5 +88,4 @@ public class AutoTotem extends Module {
         }
     }
 
-
 }

@@ -3,19 +3,127 @@ package com.github.epsilon.utils.rotation;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.utils.math.MathUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Vector2f;
 
 public class RotationUtils {
 
     private static final Minecraft mc = Minecraft.getInstance();
+
+    public static Direction getClickSide(BlockPos pos) {
+        // 第一阶段：尝试找到玩家视线可见且距离最近的面
+        Direction bestSide = findBestDirection(pos, true);
+
+        if (bestSide != null) {
+            return bestSide;
+        }
+
+        // 第二阶段：如果找不到可见面，则尝试符合 Grim AC 规则的面（作为 fallback）
+        // 注意：这里重置 range 为最大值，以便在 Grim 规则下重新寻找最近的面
+        bestSide = findBestDirection(pos, false);
+
+        // 如果连 Grim 规则下的面都找不到，默认返回 UP (或其他安全默认值)
+        return bestSide != null ? bestSide : Direction.UP;
+    }
+
+    /**
+     * 寻找最佳点击方向
+     *
+     * @param pos          目标方块位置
+     * @param useGrimCheck 如果为 true，使用 canSee 检查；如果为 false，使用 isGrimDirection 检查
+     * @return 最佳方向，如果没有符合条件的方向则返回 null
+     */
+    private static Direction findBestDirection(BlockPos pos, boolean useGrimCheck) {
+        Direction bestSide = null;
+        double minDistSqr = Double.MAX_VALUE; // 使用平方距离进行比较，避免开方运算
+
+        Vec3 eyePos = mc.player.getEyePosition();
+
+        for (Direction side : Direction.values()) {
+            // 根据模式选择检查条件
+            if (useGrimCheck) {
+                if (!canSee(pos, side)) {
+                    continue;
+                }
+            } else {
+                if (!isGrimDirection(pos, side)) {
+                    continue;
+                }
+            }
+
+            // 计算当前面中心点到眼睛的平方距离
+            double distSqr = eyePos.distanceToSqr(Vec3.atCenterOf(pos.relative(side)));
+
+            // 如果当前距离更近，则更新最佳方向
+            if (distSqr < minDistSqr) {
+                minDistSqr = distSqr;
+                bestSide = side;
+            }
+        }
+
+        return bestSide;
+    }
+
+    public static boolean canSee(BlockPos pos, Direction side) {
+        Vec3 testVec = pos.getCenter().add(side.getUnitVec3i().getX() * 0.5, side.getUnitVec3i().getY() * 0.5, side.getUnitVec3i().getZ() * 0.5);
+        HitResult result = mc.level.clip(new ClipContext(mc.player.getEyePosition(), testVec, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
+        return result.getType() == HitResult.Type.MISS;
+    }
+
+    private static boolean isIntersected(AABB bb, AABB other) {
+        return other.maxX - Shapes.EPSILON > bb.minX
+                && other.minX + Shapes.EPSILON < bb.maxX
+                && other.maxY - Shapes.EPSILON > bb.minY
+                && other.minY + Shapes.EPSILON < bb.maxY
+                && other.maxZ - Shapes.EPSILON > bb.minZ
+                && other.minZ + Shapes.EPSILON < bb.maxZ;
+    }
+
+    private static AABB getCombinedBox(BlockPos pos, Level level) {
+        VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos).move(pos);
+        AABB combined = new AABB(pos);
+        for (AABB box : shape.toAabbs()) {
+            double minX = Math.max(box.minX, combined.minX);
+            double minY = Math.max(box.minY, combined.minY);
+            double minZ = Math.max(box.minZ, combined.minZ);
+            double maxX = Math.min(box.maxX, combined.maxX);
+            double maxY = Math.min(box.maxY, combined.maxY);
+            double maxZ = Math.min(box.maxZ, combined.maxZ);
+            combined = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+        }
+
+        return combined;
+    }
+
+    public static boolean isGrimDirection(BlockPos pos, Direction direction) {
+        // see ac.grim.grimac.checks.impl.scaffolding.PositionPlace
+        AABB combined = getCombinedBox(pos, mc.level);
+        LocalPlayer player = mc.player;
+        AABB eyePositions = new AABB(player.getX(), player.getY() + 0.4, player.getZ(), player.getX(), player.getY() + 1.62, player.getZ()).inflate(0.0002);
+        if (isIntersected(eyePositions, combined)) {
+            return true;
+        }
+        return !switch (direction) {
+            case NORTH -> eyePositions.minZ > combined.minZ;
+            case SOUTH -> eyePositions.maxZ < combined.maxZ;
+            case EAST -> eyePositions.maxX < combined.maxX;
+            case WEST -> eyePositions.minX > combined.minX;
+            case UP -> eyePositions.maxY < combined.maxY;
+            case DOWN -> eyePositions.minY > combined.minY;
+        };
+    }
 
     public static Direction getDirection(BlockPos blockPos) {
         double eyePos = mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose());
