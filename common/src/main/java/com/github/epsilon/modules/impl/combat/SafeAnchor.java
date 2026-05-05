@@ -508,7 +508,7 @@ public class SafeAnchor extends Module {
     private BlockPos findPlacePos() {
         isSidePlacement = false;
         isDiagonalPlacement = false;
-        if (placeModeis() PlaceMode.AnchorSide){
+        if (placeMode.is(PlaceMode.AnchorSide)) {
             double dx = mc.player.getX() - (currentAnchorPos.getX() + 0.5);
             double dz = mc.player.getZ() - (currentAnchorPos.getZ() + 0.5);
 
