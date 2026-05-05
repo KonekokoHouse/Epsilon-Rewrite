@@ -130,11 +130,11 @@ public class MaceAura extends Module {
             candidates.add(entity);
         }
 
-        if (priority.getValue() == TargetPriority.Distance) {
+        if (priorityis(TargetPriority.Distance)) {
             candidates.sort((a, b) -> Double.compare(RotationUtils.getEyeDistanceToEntity(a), RotationUtils.getEyeDistanceToEntity(b)));
-        } else if (priority.getValue() == TargetPriority.Angle) {
+        } else if (priorityis(TargetPriority.Angle)) {
             candidates.sort((a, b) -> Double.compare(getAngleScore(a), getAngleScore(b)));
-        } else if (priority.getValue() == TargetPriority.Health) {
+        } else if (priorityis(TargetPriority.Health)) {
             candidates.sort((a, b) -> Float.compare(a.getHealth(), b.getHealth()));
         }
 

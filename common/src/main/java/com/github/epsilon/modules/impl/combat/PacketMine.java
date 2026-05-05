@@ -189,8 +189,8 @@ public class PacketMine extends Module {
             secondPos = null;
         }
         if (timer.passedMillise(switchTime.getValue()) && hasSwitch && autoSwitch.getValue() != MineSwitchMode.None) {
-            if (autoSwitch.getValue() == MineSwitchMode.Delay) InvUtils.swap(oldSlot, false);
-            if (autoSwitch.getValue() == MineSwitchMode.Silent)
+            if (autoSwitch.is(MineSwitchMode.Delay)) InvUtils.swap(oldSlot, false);
+            if (autoSwitch.is(MineSwitchMode.Silent))
                 mc.getConnection().send(new ServerboundSetCarriedItemPacket(oldSlot));
             hasSwitch = false;
         }
@@ -230,8 +230,8 @@ public class PacketMine extends Module {
                     int bestSlot = getTool(secondPos);
                     if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
                     if (!autoSwitch.is(MineSwitchMode.None) && bestSlot != -1) {
-                        if (autoSwitch.getValue() == MineSwitchMode.Delay) InvUtils.swap(bestSlot, false);
-                        if (autoSwitch.getValue() == MineSwitchMode.Silent)
+                        if (autoSwitch.is(MineSwitchMode.Delay)) InvUtils.swap(bestSlot, false);
+                        if (autoSwitch.is(MineSwitchMode.Silent))
                             mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
                         timer.reset();
                         hasSwitch = true;

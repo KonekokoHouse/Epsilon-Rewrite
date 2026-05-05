@@ -347,7 +347,7 @@ public class SafeAnchor extends Module {
 
     private void handleCharge() {
         int charges = mc.level.getBlockState(currentAnchorPos).getValue(RespawnAnchorBlock.CHARGE);
-        if (placeMode.getValue() == PlaceMode.AnchorSide && isTooCloseToAnchor()) {
+        if (placeMode.is(PlaceMode.AnchorSide) && isTooCloseToAnchor()) {
             BlockPos placePos = findPlacePos();
             if (placePos == null) {
                 if (charges <= 0) {
@@ -367,7 +367,7 @@ public class SafeAnchor extends Module {
                 }
             }
         }
-        if (placeMode.getValue() == PlaceMode.Smart && isTooCloseToAnchor()) {
+        if (placeMode.is(PlaceMode.Smart) && isTooCloseToAnchor()) {
             BlockPos placePos = findPlacePos();
             if (placePos == null) {
                 if (charges <= 0) {
@@ -401,7 +401,7 @@ public class SafeAnchor extends Module {
             }
         }
 
-        if (autoPlace.getValue() && placeMode.getValue() == PlaceMode.AnchorSide) {
+        if (autoPlace.getValue() && placeMode.is(PlaceMode.AnchorSide)) {
             BlockPos placePos = findPlacePos();
 
             if (isDiagonalPlacement) {
@@ -508,7 +508,7 @@ public class SafeAnchor extends Module {
     private BlockPos findPlacePos() {
         isSidePlacement = false;
         isDiagonalPlacement = false;
-        if (placeMode.getValue() == PlaceMode.AnchorSide) {
+        if (placeModeis()PlaceMode.AnchorSide) {
             double dx = mc.player.getX() - (currentAnchorPos.getX() + 0.5);
             double dz = mc.player.getZ() - (currentAnchorPos.getZ() + 0.5);
 
