@@ -100,11 +100,12 @@ public class NotificationsHud extends HudModule {
                 rectRenderer.addRect(renderX + boxWidth - w, y, w, boxHeight, new Color(118, 185, 0, 255));
             }
 
-            rectRenderer.drawAndClear();
-            textRenderer.drawAndClear();
             index++;
             visibleCount++;
         }
+
+        rectRenderer.drawAndClear();
+        textRenderer.drawAndClear();
 
         float totalHeight = Math.max(boxHeight, visibleCount * (boxHeight + 4.0f * s));
         setBounds(maxBoxWidth > 0f ? maxBoxWidth : 150f * s, totalHeight);
