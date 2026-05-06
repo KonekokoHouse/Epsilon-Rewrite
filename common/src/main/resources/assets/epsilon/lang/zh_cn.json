@@ -192,6 +192,7 @@
   "epsilon.modules.auto crystal.outline width": "边框宽度",
   "epsilon.modules.auto crystal.moving length": "移动动画时长",
   "epsilon.modules.auto crystal.fade length": "渐隐时长",
+  "epsilon.modules.zealot crystal+": "Zealot Crystal+",
   "epsilon.modules.crystal aura": "水晶光环",
   "epsilon.modules.crystal aura.activate key": "激活按键",
   "epsilon.modules.crystal aura.place delay": "放置延迟",

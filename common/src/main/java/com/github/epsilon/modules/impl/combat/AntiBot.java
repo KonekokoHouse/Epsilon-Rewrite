@@ -32,6 +32,7 @@ public class AntiBot extends Module {
 
 
     public boolean isBot(Entity entity) {
+        if (!isEnabled()) return false;
         return (ids.contains(entity.getId()) || !mc.getConnection().getOnlinePlayerIds().contains(entity.getUUID())) && isEnabled();
     }
 
