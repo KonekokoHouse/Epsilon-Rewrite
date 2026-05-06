@@ -113,7 +113,7 @@ public class ZealotCrystalPlus extends Module {
 
     // Place
     private final EnumSetting<PlaceMode> placeMode = enumSetting("Place Mode", PlaceMode.Single);
-    private final EnumSetting<PacketPlaceMode> packetPlace = enumSetting("Packet Place", PacketPlaceMode.Weak);
+    private final EnumSetting<PacketPlaceMode> packetPlace = enumSetting("Packet Place", PacketPlaceMode.Off);
     private final BoolSetting spamPlace = boolSetting("Spam Place", false);
     private final EnumSetting<SwitchMode> placeSwitchMode = enumSetting("Place Switch Mode", SwitchMode.Off);
     private final BoolSetting placeSwing = boolSetting("Place Swing", false);
@@ -235,28 +235,32 @@ public class ZealotCrystalPlus extends Module {
 
         SnapshotData snapshot = captureSnapshotIfNeeded();
         AsyncResult result = asyncResult;
-        target = result.primaryTarget() != null ? result.primaryTarget().entity() : null;
-
         BreakPlan preBreak = getValidBreakPlan(cachedBreakPlan);
-        PlaceInfo prePlace = getValidPlaceInfo(cachedPlaceInfo);
-        if (preBreak != null) {
+        PlaceInfo prePlace = getValidPlaceInfo(cachedPlaceInfo, false);
+        target = resolveCurrentTarget(result, prePlace);
+
+        Vector2f currentRotation = RotationManager.INSTANCE.getRotation();
+        float breakDelta = preBreak != null ? getRotationDelta(currentRotation, RotationUtils.calculate(preBreak.pos())) : Float.MAX_VALUE;
+        float placeDelta = prePlace != null ? getRotationDelta(currentRotation, prePlace.rotation()) : Float.MAX_VALUE;
+
+        if (preBreak != null && (prePlace == null || breakDelta <= placeDelta)) {
             RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Medium.priority);
         } else if (prePlace != null) {
             RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Medium.priority);
         }
 
         boolean acted = false;
-        BreakPlan actionBreak = getValidBreakPlan(cachedBreakPlan);
+        BreakPlan actionBreak = getActionBreakPlan();
         if (breakMode.getValue() != BreakMode.Off && breakTimer.passedMillise(breakDelay.getValue()) && actionBreak != null) {
             acted = breakDirect(actionBreak);
         }
 
-        PlaceInfo actionPlace = getValidPlaceInfo(cachedPlaceInfo);
+        PlaceInfo actionPlace = getActionPlaceInfo();
         if (!acted && placeMode.getValue() != PlaceMode.Off && placeTimer.passedMillise(placeDelay.getValue()) && actionPlace != null) {
             acted = placeDirect(actionPlace, false);
         }
 
-        if (!acted && (snapshot == null || actionPlace == null)) {
+        if (!acted && (snapshot == null || (preBreak == null && prePlace == null && actionBreak == null && actionPlace == null))) {
             deactivateRenderTarget();
         }
     }
@@ -864,12 +868,26 @@ public class ZealotCrystalPlus extends Module {
         return new PlaceInfo(choice.target, choice.blockPos, choice.selfDamage, choice.targetDamage, side, hitVec, RotationUtils.calculate(hitVec));
     }
 
+    private LivingEntity resolveCurrentTarget(AsyncResult result, PlaceInfo prePlace) {
+        if (prePlace != null) {
+            return prePlace.target();
+        }
+        return result.primaryTarget() != null ? result.primaryTarget().entity() : null;
+    }
+
     private PlaceInfo getValidPlaceInfo(PlaceInfo placeInfo) {
+        return getValidPlaceInfo(placeInfo, true);
+    }
+
+    private PlaceInfo getValidPlaceInfo(PlaceInfo placeInfo, boolean requirePlaceable) {
         if (placeInfo == null || nullCheck() || mc.player == null || mc.level == null) return null;
         if (placeDistanceSq(mc.player, placeInfo.hitVec().x, placeInfo.hitVec().y, placeInfo.hitVec().z) > placeRange.getValue() * placeRange.getValue()) {
             return null;
         }
-        return isPlaceable(placeInfo.blockPos()) ? placeInfo : null;
+        if (!isCrystalSupport(placeInfo.blockPos())) {
+            return null;
+        }
+        return !requirePlaceable || isPlaceable(placeInfo.blockPos()) ? placeInfo : null;
     }
 
     private BreakPlan getValidBreakPlan(BreakPlan breakPlan) {
@@ -879,6 +897,30 @@ public class ZealotCrystalPlus extends Module {
             return null;
         }
         return checkBreakRange(crystal.position()) ? new BreakPlan(crystal, crystal.getId(), crystal.position(), breakPlan.selfDamage(), breakPlan.targetDamage()) : null;
+    }
+
+    private PlaceInfo getActionPlaceInfo() {
+        PlaceInfo action = getValidPlaceInfo(cachedPlaceInfo, true);
+        if (action != null) return action;
+
+        PlaceInfo fallback = getValidPlaceInfo(cachedRotationPlaceInfo, true);
+        if (fallback != null && checkPlaceRotation(fallback.blockPos())) {
+            return fallback;
+        }
+
+        return null;
+    }
+
+    private BreakPlan getActionBreakPlan() {
+        BreakPlan action = getValidBreakPlan(cachedBreakPlan);
+        if (action != null) return action;
+
+        BreakPlan fallback = getValidBreakPlan(cachedRotationBreakPlan);
+        if (fallback != null && checkCrystalRotation(fallback.pos(), breakRotationRange.getValue())) {
+            return fallback;
+        }
+
+        return null;
     }
 
     private boolean placeDirect(PlaceInfo placeInfo, boolean ignoreTimer) {
@@ -976,7 +1018,7 @@ public class ZealotCrystalPlus extends Module {
             attackedCrystalMap.put(currentCrystal.getId(), System.currentTimeMillis() + 1000L);
             updateRenderTarget(currentCrystal.blockPosition().below(), breakPlan.targetDamage(), breakPlan.selfDamage());
 
-            PlaceInfo placeInfo = getValidPlaceInfo(cachedPlaceInfo);
+            PlaceInfo placeInfo = getActionPlaceInfo();
             if (packetPlace.getValue().onBreak && placeInfo != null && crystalPlaceBoxIntersects(placeInfo.blockPos(), currentCrystal.getBoundingBox())) {
                 placeDirect(placeInfo, true);
             }
@@ -989,12 +1031,14 @@ public class ZealotCrystalPlus extends Module {
     private void handleSpawnPacket(ClientboundAddEntityPacket packet) {
         crystalSpawnMap.put(packet.getId(), System.currentTimeMillis());
         SnapshotData snapshot = latestSnapshot;
-        AsyncResult result = asyncResult;
         if (snapshot == null || snapshot.targets().isEmpty() || bbtt.getValue()) return;
 
         Vec3 crystalPos = new Vec3(packet.getX(), packet.getY(), packet.getZ());
         if (!checkBreakRange(crystalPos) || !checkCrystalRotation(crystalPos, breakRotationRange.getValue())) return;
-        PlaceInfo placeInfo = result.placeInfo();
+        PlaceInfo placeInfo = getActionPlaceInfo();
+        if (placeInfo == null) {
+            placeInfo = getValidPlaceInfo(cachedRotationPlaceInfo, false);
+        }
         if (placeInfo == null) return;
 
         boolean shouldBreak = switch (packetBreak.getValue()) {
@@ -1338,13 +1382,17 @@ public class ZealotCrystalPlus extends Module {
     }
 
     private boolean isPlaceable(BlockPos pos) {
-        BlockState state = mc.level.getBlockState(pos);
-        if (!state.is(Blocks.OBSIDIAN) && !state.is(Blocks.BEDROCK)) return false;
+        if (!isCrystalSupport(pos)) return false;
 
         BlockPos crystalPos = pos.above();
         if (!mc.level.getBlockState(crystalPos).canBeReplaced()) return false;
         if (!mc.level.getBlockState(crystalPos.above()).canBeReplaced()) return false;
         return mc.level.getEntities(null, getCrystalPlaceBox(pos)).isEmpty();
+    }
+
+    private boolean isCrystalSupport(BlockPos pos) {
+        BlockState state = mc.level.getBlockState(pos);
+        return state.is(Blocks.OBSIDIAN) || state.is(Blocks.BEDROCK);
     }
 
     private boolean rayTraceVisible(Vec3 from, Vec3 to) {
