@@ -1,6 +1,7 @@
 {
   "epsilon.categories.combat": "Combat",
   "epsilon.categories.player": "Player",
+  "epsilon.categories.movement": "Movement",
   "epsilon.categories.render": "Render",
   "epsilon.categories.world": "World",
   "epsilon.categories.hud": "HUD",

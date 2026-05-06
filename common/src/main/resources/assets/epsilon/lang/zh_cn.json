@@ -1,6 +1,7 @@
 {
   "epsilon.categories.combat": "战斗",
   "epsilon.categories.player": "玩家",
+  "epsilon.categories.movement": "移动",
   "epsilon.categories.render": "渲染",
   "epsilon.categories.world": "世界",
   "epsilon.categories.hud": "HUD",

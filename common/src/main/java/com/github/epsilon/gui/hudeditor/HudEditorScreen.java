@@ -176,14 +176,12 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (inspector.mouseReleased(event)) {
-            ConfigManager.INSTANCE.saveNow();
             return true;
         }
 
         if (dragging != null && event.button() == 0) {
             dragging = null;
             clearSnapPreview();
-            ConfigManager.INSTANCE.saveNow();
             return true;
         }
 
@@ -207,7 +205,6 @@ public class HudEditorScreen extends Screen {
             if (dragging != null) {
                 dragging = null;
                 clearSnapPreview();
-                ConfigManager.INSTANCE.saveNow();
                 return true;
             }
             if (selected != null) {
@@ -247,7 +244,6 @@ public class HudEditorScreen extends Screen {
         dragging = null;
         clearSnapPreview();
         IMEFocusHelper.deactivate();
-        ConfigManager.INSTANCE.saveNow();
         super.onClose();
         minecraft.setScreen(PanelScreen.INSTANCE);
     }
