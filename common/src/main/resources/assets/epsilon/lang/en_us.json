@@ -58,6 +58,8 @@
   "epsilon.modules.client setting.font anti aliasing": "Font Anti-Aliasing",
   "epsilon.modules.client setting.close gui on outside": "Close Gui On Outside",
   "epsilon.modules.client setting.rotate back speed": "Rotate Back Speed",
+  "epsilon.modules.client setting.rotate jitter": "Rotate Jitter",
+  "epsilon.modules.client setting.rotate jitter size": "Rotate Jitter Size",
   "epsilon.modules.client setting.theme mode": "Theme Mode",
   "epsilon.modules.client setting.theme mode.dark": "Dark",
   "epsilon.modules.client setting.theme mode.light": "Light",

@@ -6,6 +6,7 @@ import com.github.epsilon.events.bus.EventPriority;
 import com.github.epsilon.events.impl.*;
 import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.movement.MovementFix;
+import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import net.minecraft.client.Minecraft;
@@ -69,7 +70,7 @@ public class RotationManager {
         }
 
         final Priority safePriority = priority == null ? Priority.Lowest : priority;
-        tickRequests.add(new RotationRequest(new Vector2f(rotations.x, rotations.y), rotationSpeed * 18, raycast, safePriority, safePriority.priority, callback));
+        tickRequests.add(new RotationRequest(applyRotationJitter(rotations), rotationSpeed * 18, raycast, safePriority, safePriority.priority, callback));
     }
 
     public void applyRotation(final Vector2f rotations, final double rotationSpeed, final Function<Vector2f, Boolean> raycast, final int priority, final Consumer<RotationApplyRecord> callback) {
@@ -78,7 +79,33 @@ public class RotationManager {
         }
 
         final int safePriority = Math.max(Priority.Lowest.priority, priority);
-        tickRequests.add(new RotationRequest(new Vector2f(rotations.x, rotations.y), rotationSpeed * 18, raycast, resolvePriority(safePriority), safePriority, callback));
+        tickRequests.add(new RotationRequest(applyRotationJitter(rotations), rotationSpeed * 18, raycast, resolvePriority(safePriority), safePriority, callback));
+    }
+
+    private Vector2f applyRotationJitter(final Vector2f requestedRotations) {
+        final Vector2f jitteredRotations = new Vector2f(requestedRotations.x, requestedRotations.y);
+
+        if (!ClientSetting.INSTANCE.rotateJitter.getValue()) {
+            return jitteredRotations;
+        }
+
+        final double jitterSize = ClientSetting.INSTANCE.rotateJitterSize.getValue();
+        if (jitterSize <= 0.0) {
+            return jitteredRotations;
+        }
+
+        jitteredRotations.x = Mth.wrapDegrees(jitteredRotations.x + (float) MathUtils.getRandom(-jitterSize, jitterSize));
+        jitteredRotations.y = Mth.clamp(jitteredRotations.y + (float) MathUtils.getRandom(-jitterSize, jitterSize), -90.0f, 90.0f);
+
+        if (Float.isNaN(jitteredRotations.x) || Float.isInfinite(jitteredRotations.x)) {
+            jitteredRotations.x = requestedRotations.x;
+        }
+
+        if (Float.isNaN(jitteredRotations.y) || Float.isInfinite(jitteredRotations.y)) {
+            jitteredRotations.y = requestedRotations.y;
+        }
+
+        return jitteredRotations;
     }
 
     private Priority resolvePriority(int priority) {

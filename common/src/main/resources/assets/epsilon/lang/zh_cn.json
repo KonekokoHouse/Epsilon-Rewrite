@@ -58,6 +58,8 @@
   "epsilon.modules.client setting.font anti aliasing": "字体抗锯齿",
   "epsilon.modules.client setting.close gui on outside": "点击空白关闭 GUI",
   "epsilon.modules.client setting.rotate back speed": "转头回原位速度",
+  "epsilon.modules.client setting.rotate jitter": "转头抖动",
+  "epsilon.modules.client setting.rotate jitter size": "转头抖动幅度",
   "epsilon.modules.client setting.theme mode": "主题模式",
   "epsilon.modules.client setting.theme mode.dark": "深色",
   "epsilon.modules.client setting.theme mode.light": "浅色",
