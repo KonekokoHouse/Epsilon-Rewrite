@@ -6,8 +6,8 @@ import com.github.epsilon.events.impl.Render2DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.managers.FriendManager;
 import com.github.epsilon.managers.RotationManager;
+import com.github.epsilon.managers.TargetManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
@@ -17,6 +17,7 @@ import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.render.WorldToScreen;
 import com.github.epsilon.utils.rotation.Priority;
+import com.github.epsilon.utils.rotation.RaytraceUtils;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
 import com.google.common.base.Supplier;
@@ -39,26 +40,24 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,7 +112,7 @@ public class ZealotCrystalPlus extends Module {
 
     // Place
     private final EnumSetting<PlaceMode> placeMode = enumSetting("Place Mode", PlaceMode.Single);
-    private final EnumSetting<PacketPlaceMode> packetPlace = enumSetting("Packet Place", PacketPlaceMode.Off);
+    private final EnumSetting<PacketPlaceMode> packetPlace = enumSetting("Packet Place", PacketPlaceMode.Weak);
     private final BoolSetting spamPlace = boolSetting("Spam Place", false);
     private final EnumSetting<SwitchMode> placeSwitchMode = enumSetting("Place Switch Mode", SwitchMode.Off);
     private final BoolSetting placeSwing = boolSetting("Place Swing", false);
@@ -144,6 +143,8 @@ public class ZealotCrystalPlus extends Module {
     // Render
     private final EnumSetting<SwingMode> swingMode = enumSetting("Swing Mode", SwingMode.Client);
     private final EnumSetting<SwingHand> swingHand = enumSetting("Swing Hand", SwingHand.Auto);
+    private final EnumSetting<RenderPredictMode> renderPredict = enumSetting("Render Predict", RenderPredictMode.Off);
+    private final EnumSetting<HudInfo> hudInfo = enumSetting("Hud Info", HudInfo.Speed);
     private final IntSetting filledAlpha = intSetting("Filled Alpha", 63, 0, 255, 1);
     private final IntSetting outlineAlpha = intSetting("Outline Alpha", 200, 0, 255, 1);
     private final BoolSetting renderTargetDamage = boolSetting("Target Damage", true);
@@ -156,10 +157,12 @@ public class ZealotCrystalPlus extends Module {
     private final TimerUtils placeTimer = new TimerUtils();
     private final TimerUtils breakTimer = new TimerUtils();
     private final TimerUtils snapshotTimer = new TimerUtils();
+    private final TimerUtils explosionSampleTimer = new TimerUtils();
 
     private final Map<Long, Long> placedPosMap = new HashMap<>();
     private final Map<Integer, Long> crystalSpawnMap = new HashMap<>();
     private final Map<Integer, Long> attackedCrystalMap = new HashMap<>();
+    private final Map<Long, Long> attackedPosMap = new HashMap<>();
     private long lastSwapTime;
     private long lastActiveTime;
     private LivingEntity target;
@@ -186,15 +189,23 @@ public class ZealotCrystalPlus extends Module {
     private boolean renderHasTarget;
 
     private final Supplier<TextRenderer> textRenderer = Suppliers.memoize(() -> new TextRenderer(128 * 1024));
+    private final Deque<Integer> explosionSamples = new ArrayDeque<>();
+    private int explosionsThisWindow;
+
+    private static final int EXPLOSION_SAMPLE_SIZE = 8;
 
     @Override
     protected void onEnable() {
         placeTimer.reset();
         breakTimer.reset();
         snapshotTimer.setMs(updateDelay.getValue().longValue());
+        explosionSampleTimer.reset();
         placedPosMap.clear();
         crystalSpawnMap.clear();
         attackedCrystalMap.clear();
+        attackedPosMap.clear();
+        explosionSamples.clear();
+        explosionsThisWindow = 0;
         lastSwapTime = 0L;
         lastActiveTime = 0L;
         target = null;
@@ -214,6 +225,7 @@ public class ZealotCrystalPlus extends Module {
         placedPosMap.clear();
         crystalSpawnMap.clear();
         attackedCrystalMap.clear();
+        attackedPosMap.clear();
         pendingSnapshot = null;
         latestSnapshot = null;
         asyncResult = AsyncResult.EMPTY;
@@ -222,6 +234,8 @@ public class ZealotCrystalPlus extends Module {
         cachedRotationBreakPlan = null;
         cachedBreakPlan = null;
         target = null;
+        explosionSamples.clear();
+        explosionsThisWindow = 0;
         resetRenderState();
         signalWorker();
     }
@@ -231,19 +245,16 @@ public class ZealotCrystalPlus extends Module {
         if (nullCheck()) return;
 
         updateTimeouts();
-        if (eatingPause.getValue() && mc.player.isUsingItem()) return;
+        updateExplosionSamples();
+        if (isEatingPaused()) return;
 
         SnapshotData snapshot = captureSnapshotIfNeeded();
         AsyncResult result = asyncResult;
-        BreakPlan preBreak = getValidBreakPlan(cachedBreakPlan);
-        PlaceInfo prePlace = getValidPlaceInfo(cachedPlaceInfo, false);
+        BreakPlan preBreak = getValidBreakPlan(cachedRotationBreakPlan);
+        PlaceInfo prePlace = getValidPlaceInfo(cachedRotationPlaceInfo, false);
         target = resolveCurrentTarget(result, prePlace);
 
-        Vector2f currentRotation = RotationManager.INSTANCE.getRotation();
-        float breakDelta = preBreak != null ? getRotationDelta(currentRotation, RotationUtils.calculate(preBreak.pos())) : Float.MAX_VALUE;
-        float placeDelta = prePlace != null ? getRotationDelta(currentRotation, prePlace.rotation()) : Float.MAX_VALUE;
-
-        if (preBreak != null && (prePlace == null || breakDelta <= placeDelta)) {
+        if (preBreak != null) {
             RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Medium.priority);
         } else if (prePlace != null) {
             RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Medium.priority);
@@ -256,12 +267,14 @@ public class ZealotCrystalPlus extends Module {
         }
 
         PlaceInfo actionPlace = getActionPlaceInfo();
-        if (!acted && placeMode.getValue() != PlaceMode.Off && placeTimer.passedMillise(placeDelay.getValue()) && actionPlace != null) {
+        if (!acted && placeMode.getValue() != PlaceMode.Off && placeTimer.passedMillise(placeDelay.getValue()) && actionPlace != null && shouldAttemptPlace(actionPlace)) {
             acted = placeDirect(actionPlace, false);
         }
 
         if (!acted && (snapshot == null || (preBreak == null && prePlace == null && actionBreak == null && actionPlace == null))) {
-            deactivateRenderTarget();
+            if (System.currentTimeMillis() - lastActiveTime > 250L) {
+                deactivateRenderTarget();
+            }
         }
     }
 
@@ -279,7 +292,11 @@ public class ZealotCrystalPlus extends Module {
 
     @EventHandler
     private void onRender3D(Render3DEvent event) {
-        if (nullCheck() || renderPrevPos == null || renderCurrentPos == null) return;
+        if (nullCheck()) return;
+
+        renderTargetPredictions(event);
+
+        if (renderPrevPos == null || renderCurrentPos == null) return;
 
         float moveDelta = toDelta(renderMoveStartTime, movingLength.getValue());
         float moveMultiplier = easeOutQuart(moveDelta);
@@ -340,11 +357,27 @@ public class ZealotCrystalPlus extends Module {
     }
 
     public String getInfo() {
-        AsyncResult result = asyncResult;
-        if (result.primaryTarget() != null) {
-            return result.primaryTarget().entity().getName().getString();
-        }
-        return "None";
+        return switch (hudInfo.getValue()) {
+            case Off -> "";
+            case Speed -> String.format(Locale.ROOT, "%.1f", getExplosionSpeed());
+            case Target -> {
+                LivingEntity currentTarget = target;
+                if (currentTarget == null && asyncResult.primaryTarget() != null) {
+                    currentTarget = asyncResult.primaryTarget().entity();
+                }
+                yield currentTarget != null ? currentTarget.getName().getString() : "None";
+            }
+            case Damage -> {
+                PlaceInfo info = getValidPlaceInfo(cachedPlaceInfo, false);
+                if (info == null) {
+                    info = getValidPlaceInfo(cachedRotationPlaceInfo, false);
+                }
+                yield info != null
+                        ? String.format(Locale.ROOT, "%.1f/%.1f", info.targetDamage(), info.selfDamage())
+                        : "0.0/0.0";
+            }
+            case CalculationTime -> String.format(Locale.ROOT, "%.2f ms", asyncResult.calculationNanos() / 1_000_000.0);
+        };
     }
 
     private void workerLoop() {
@@ -491,37 +524,32 @@ public class ZealotCrystalPlus extends Module {
     }
 
     private List<TargetSnapshot> captureTargets() {
-        Player player = mc.player;
-        if (player == null || mc.level == null) return List.of();
+        if (mc.player == null || mc.level == null) return List.of();
 
-        double rangeSq = targetRange.getValue() * targetRange.getValue();
         int ticks = motionPredict.getValue() ? predictTicks.getValue() : 0;
-        Vec3 eyePos = player.getEyePosition();
-        List<TargetSnapshot> list = new ArrayList<>();
+        List<LivingEntity> targets = TargetManager.INSTANCE.acquireTargets(
+                TargetManager.TargetRequest.of(
+                        targetRange.getValue(),
+                        360.0f,
+                        players.getValue(),
+                        mobs.getValue(),
+                        animals.getValue(),
+                        false,
+                        true,
+                        living -> living.position().y > -64.0,
+                        maxTargets.getValue()
+                )
+        );
 
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (!(entity instanceof LivingEntity living)) continue;
-            if (living == player) continue;
-            if (!living.isAlive() || living.isDeadOrDying()) continue;
-            if (AntiBot.INSTANCE.isBot(living)) continue;
-            if (living.position().y <= -64.0) continue;
-            if (eyePos.distanceToSqr(living.getBoundingBox().getCenter()) > rangeSq) continue;
+        if (targets.isEmpty()) {
+            return List.of();
+        }
 
-            boolean allowed = switch (living) {
-                case Player targetPlayer -> players.getValue() && !FriendManager.INSTANCE.isFriend(targetPlayer);
-                case Monster ignored -> mobs.getValue();
-                case Animal ignored -> animals.getValue();
-                default -> false;
-            };
-            if (!allowed) continue;
-
+        List<TargetSnapshot> list = new ArrayList<>(targets.size());
+        for (LivingEntity living : targets) {
             list.add(buildTargetSnapshot(living, ticks));
         }
 
-        list.sort(Comparator.comparingDouble(info -> player.distanceToSqr(info.entity())));
-        if (list.size() > maxTargets.getValue()) {
-            return List.copyOf(list.subList(0, maxTargets.getValue()));
-        }
         return List.copyOf(list);
     }
 
@@ -964,6 +992,7 @@ public class ZealotCrystalPlus extends Module {
                 placedPosMap.put(placeInfo.blockPos().asLong(), System.currentTimeMillis() + ownTimeout.getValue());
                 placeTimer.reset();
                 lastActiveTime = System.currentTimeMillis();
+                target = placeInfo.target();
                 updateRenderTarget(placeInfo.blockPos(), placeInfo.targetDamage(), placeInfo.selfDamage());
             }
             InvUtils.swapBack();
@@ -1016,6 +1045,7 @@ public class ZealotCrystalPlus extends Module {
             breakTimer.reset();
             lastActiveTime = System.currentTimeMillis();
             attackedCrystalMap.put(currentCrystal.getId(), System.currentTimeMillis() + 1000L);
+            attackedPosMap.put(BlockPos.containing(currentCrystal.position()).asLong(), System.currentTimeMillis() + 1000L);
             updateRenderTarget(currentCrystal.blockPosition().below(), breakPlan.targetDamage(), breakPlan.selfDamage());
 
             PlaceInfo placeInfo = getActionPlaceInfo();
@@ -1061,6 +1091,10 @@ public class ZealotCrystalPlus extends Module {
         if (packet.getSound() != SoundEvents.GENERIC_EXPLODE) return;
 
         Vec3 soundPos = new Vec3(packet.getX(), packet.getY(), packet.getZ());
+        if (attackedPosMap.containsKey(BlockPos.containing(soundPos).asLong())) {
+            explosionsThisWindow++;
+        }
+
         PlaceInfo placeInfo = getValidPlaceInfo(cachedPlaceInfo);
         if (placeInfo != null) {
             Vec3 placePos = getCrystalPos(placeInfo.blockPos());
@@ -1068,6 +1102,7 @@ public class ZealotCrystalPlus extends Module {
                 placedPosMap.clear();
                 crystalSpawnMap.clear();
                 attackedCrystalMap.clear();
+                attackedPosMap.clear();
                 if (packetPlace.getValue().onRemove) {
                     placeDirect(placeInfo, true);
                 }
@@ -1079,6 +1114,7 @@ public class ZealotCrystalPlus extends Module {
             placedPosMap.clear();
             crystalSpawnMap.clear();
             attackedCrystalMap.clear();
+            attackedPosMap.clear();
         }
     }
 
@@ -1291,7 +1327,7 @@ public class ZealotCrystalPlus extends Module {
                     if (!isPlaceable(pos)) continue;
 
                     double feetDistSq = feetPos.distanceToSqr(crystalX, crystalY, crystalZ);
-                    if (feetDistSq > wallRangeSq && !rayTraceVisible(eyePos, new Vec3(crystalX, crystalY + 1.7, crystalZ))) {
+                    if (feetDistSq > wallRangeSq && !RaytraceUtils.canSeePointFrom(eyePos, new Vec3(crystalX, crystalY + 1.7, crystalZ))) {
                         continue;
                     }
 
@@ -1373,7 +1409,7 @@ public class ZealotCrystalPlus extends Module {
 
         Vec3 eyePos = mc.player.getEyePosition();
         return eyePos.distanceToSqr(crystalPos) <= wallRange.getValue() * wallRange.getValue()
-                || rayTraceVisible(eyePos, new Vec3(crystalPos.x, crystalPos.y + 1.7, crystalPos.z));
+                || RaytraceUtils.canSeePointFrom(eyePos, new Vec3(crystalPos.x, crystalPos.y + 1.7, crystalPos.z));
     }
 
     private AABB canMove(Entity entity, AABB box, double motionX, double motionY, double motionZ) {
@@ -1393,11 +1429,6 @@ public class ZealotCrystalPlus extends Module {
     private boolean isCrystalSupport(BlockPos pos) {
         BlockState state = mc.level.getBlockState(pos);
         return state.is(Blocks.OBSIDIAN) || state.is(Blocks.BEDROCK);
-    }
-
-    private boolean rayTraceVisible(Vec3 from, Vec3 to) {
-        HitResult result = mc.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
-        return result.getType() == HitResult.Type.MISS;
     }
 
     private double placeDistanceSq(Entity entity, double x, double y, double z) {
@@ -1526,6 +1557,83 @@ public class ZealotCrystalPlus extends Module {
         placedPosMap.values().removeIf(time -> time < current);
         crystalSpawnMap.values().removeIf(time -> time + 5000L < current);
         attackedCrystalMap.values().removeIf(time -> time < current);
+        attackedPosMap.values().removeIf(time -> time < current);
+    }
+
+    private boolean isEatingPaused() {
+        if (!eatingPause.getValue() || mc.player == null) {
+            return false;
+        }
+
+        return mc.player.isUsingItem();
+    }
+
+    private void updateExplosionSamples() {
+        if (!explosionSampleTimer.passedMillise(250)) {
+            return;
+        }
+
+        explosionSampleTimer.reset();
+        explosionSamples.addLast(explosionsThisWindow);
+        while (explosionSamples.size() > EXPLOSION_SAMPLE_SIZE) {
+            explosionSamples.removeFirst();
+        }
+        explosionsThisWindow = 0;
+    }
+
+    private double getExplosionSpeed() {
+        if (explosionSamples.isEmpty()) {
+            return 0.0;
+        }
+
+        int total = 0;
+        for (int value : explosionSamples) {
+            total += value;
+        }
+        return total / (double) explosionSamples.size() * 4.0;
+    }
+
+    private boolean shouldAttemptPlace(PlaceInfo placeInfo) {
+        if (spamPlace.getValue()) {
+            return true;
+        }
+        if (nullCheck()) {
+            return false;
+        }
+
+        AABB placeBox = getCrystalPlaceBox(placeInfo.blockPos());
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (!(entity instanceof EndCrystal crystal) || !crystal.isAlive()) continue;
+            if (!placeBox.intersects(crystal.getBoundingBox())) continue;
+            if (attackedCrystalMap.containsKey(crystal.getId())) continue;
+            return false;
+        }
+
+        return true;
+    }
+
+    private void renderTargetPredictions(Render3DEvent event) {
+        if (renderPredict.getValue() == RenderPredictMode.Off) return;
+
+        SnapshotData snapshot = latestSnapshot;
+        if (snapshot == null || snapshot.targets().isEmpty()) return;
+
+        LivingEntity focus = target;
+        if (focus == null && asyncResult.primaryTarget() != null) {
+            focus = asyncResult.primaryTarget().entity();
+        }
+
+        Color outline = new Color(100, 255, 100, 150);
+        Color filled = new Color(100, 255, 100, 28);
+
+        for (TargetSnapshot targetInfo : snapshot.targets()) {
+            if (renderPredict.getValue() == RenderPredictMode.Single && targetInfo.entity() != focus) {
+                continue;
+            }
+
+            Render3DUtils.drawFilledBox(targetInfo.box(), filled);
+            Render3DUtils.drawOutlineBox(event.getPoseStack(), targetInfo.box(), outline.getRGB(), 1.5f);
+        }
     }
 
     private void updateRenderTarget(BlockPos pos, float damage, float selfDamage) {
@@ -1704,6 +1812,20 @@ public class ZealotCrystalPlus extends Module {
         None,
         Client,
         Packet
+    }
+
+    private enum RenderPredictMode {
+        Off,
+        Single,
+        Multi
+    }
+
+    private enum HudInfo {
+        Off,
+        Speed,
+        Target,
+        Damage,
+        CalculationTime
     }
 
     private static final float DOUBLE_SIZE = 12.0f;
