@@ -11,6 +11,7 @@ import com.github.epsilon.managers.TargetManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
+import com.github.epsilon.utils.combat.DamageUtils;
 import com.github.epsilon.utils.player.EnchantmentUtils;
 import com.github.epsilon.utils.player.FindItemResult;
 import com.github.epsilon.utils.player.InvUtils;
@@ -103,6 +104,7 @@ public class ZealotCrystalPlus extends Module {
     private final BoolSetting motionPredict = boolSetting("Motion Predict", true);
     private final IntSetting predictTicks = intSetting("Predict Ticks", 8, 0, 20, 1, motionPredict::getValue);
     private final EnumSetting<DamagePriority> damagePriority = enumSetting("Damage Priority", DamagePriority.Efficient);
+    private final EnumSetting<DamageUtils.ArmorEnchantmentMode> armorMode = enumSetting("Armor Mode", DamageUtils.ArmorEnchantmentMode.None);
     private final BoolSetting lethalOverride = boolSetting("Lethal Override", true);
     private final DoubleSetting lethalThresholdAddition = doubleSetting("Lethal Threshold Addition", 0.5, -5.0, 5.0, 0.1, lethalOverride::getValue);
     private final DoubleSetting lethalMaxSelfDamage = doubleSetting("Lethal Max Self Damage", 16.0, 0.0, 20.0, 0.25, lethalOverride::getValue);
@@ -176,6 +178,8 @@ public class ZealotCrystalPlus extends Module {
     private volatile PlaceInfo cachedPlaceInfo;
     private volatile BreakPlan cachedRotationBreakPlan;
     private volatile BreakPlan cachedBreakPlan;
+    private volatile Vector2f fallbackRotation;
+    private volatile long fallbackRotationExpireAt;
 
     private BlockPos renderBlockPos;
     private Vec3 renderPrevPos;
@@ -193,6 +197,7 @@ public class ZealotCrystalPlus extends Module {
     private int explosionsThisWindow;
 
     private static final int EXPLOSION_SAMPLE_SIZE = 8;
+    private static final long FALLBACK_ROTATION_DURATION_MS = 100L;
 
     @Override
     protected void onEnable() {
@@ -216,6 +221,8 @@ public class ZealotCrystalPlus extends Module {
         cachedPlaceInfo = null;
         cachedRotationBreakPlan = null;
         cachedBreakPlan = null;
+        fallbackRotation = null;
+        fallbackRotationExpireAt = 0L;
         resetRenderState();
         signalWorker();
     }
@@ -233,6 +240,8 @@ public class ZealotCrystalPlus extends Module {
         cachedPlaceInfo = null;
         cachedRotationBreakPlan = null;
         cachedBreakPlan = null;
+        fallbackRotation = null;
+        fallbackRotationExpireAt = 0L;
         target = null;
         explosionSamples.clear();
         explosionsThisWindow = 0;
@@ -258,6 +267,11 @@ public class ZealotCrystalPlus extends Module {
             RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Medium.priority);
         } else if (prePlace != null) {
             RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Medium.priority);
+        } else {
+            Vector2f rotation = getFallbackRotation();
+            if (rotation != null) {
+                RotationManager.INSTANCE.applyRotation(rotation, getRotationSpeed(), Priority.Medium.priority);
+            }
         }
 
         boolean acted = false;
@@ -477,14 +491,15 @@ public class ZealotCrystalPlus extends Module {
                 safeMinSelfDamageReduction.getValue().floatValue(),
                 collidingCrystalExtraSelfDamageThreshold.getValue().floatValue(),
                 damagePriority.getValue(),
+                armorMode.getValue(),
                 placeSideBypass.getValue(),
                 packetPlace.getValue(),
                 breakMode.getValue(),
                 packetBreak.getValue()
         );
 
-        SelfSnapshot self = captureSelfSnapshot(player);
-        List<TargetSnapshot> targets = captureTargets();
+        SelfSnapshot self = captureSelfSnapshot(player, settings.armorMode());
+        List<TargetSnapshot> targets = captureTargets(settings.armorMode());
         if (targets.isEmpty()) {
             return new SnapshotData(System.nanoTime(), settings, self, List.of(), List.of(), List.of(), Set.of(), System.currentTimeMillis());
         }
@@ -505,7 +520,7 @@ public class ZealotCrystalPlus extends Module {
         );
     }
 
-    private SelfSnapshot captureSelfSnapshot(Player player) {
+    private SelfSnapshot captureSelfSnapshot(Player player, DamageUtils.ArmorEnchantmentMode armorMode) {
         Vector2f currentRotation = RotationManager.INSTANCE.getRotation();
         return new SelfSnapshot(
                 player,
@@ -517,13 +532,13 @@ public class ZealotCrystalPlus extends Module {
                         && (!player.hasEffect(MobEffects.STRENGTH) || player.getEffect(MobEffects.STRENGTH) == null || player.getEffect(MobEffects.STRENGTH).getAmplifier() <= 0),
                 isToolLike(player.getMainHandItem()),
                 player.getMainHandItem().is(ItemTags.SWORDS),
-                DamageReductionData.fromEntity(player),
+                DamageReductionData.fromEntity(player, armorMode),
                 mc.level.getDifficulty(),
                 currentRotation
         );
     }
 
-    private List<TargetSnapshot> captureTargets() {
+    private List<TargetSnapshot> captureTargets(DamageUtils.ArmorEnchantmentMode armorMode) {
         if (mc.player == null || mc.level == null) return List.of();
 
         int ticks = motionPredict.getValue() ? predictTicks.getValue() : 0;
@@ -547,13 +562,13 @@ public class ZealotCrystalPlus extends Module {
 
         List<TargetSnapshot> list = new ArrayList<>(targets.size());
         for (LivingEntity living : targets) {
-            list.add(buildTargetSnapshot(living, ticks));
+            list.add(buildTargetSnapshot(living, ticks, armorMode));
         }
 
         return List.copyOf(list);
     }
 
-    private TargetSnapshot buildTargetSnapshot(LivingEntity entity, int ticks) {
+    private TargetSnapshot buildTargetSnapshot(LivingEntity entity, int ticks, DamageUtils.ArmorEnchantmentMode armorMode) {
         double motionX = Mth.clamp(entity.getX() - entity.xo, -0.6, 0.6);
         double motionY = Mth.clamp(entity.getY() - entity.yo, -0.5, 0.5);
         double motionZ = Mth.clamp(entity.getZ() - entity.zo, -0.6, 0.6);
@@ -585,7 +600,7 @@ public class ZealotCrystalPlus extends Module {
                 entity instanceof Player,
                 getRealSpeed(entity),
                 getMinArmorRate(entity),
-                DamageReductionData.fromEntity(entity)
+                DamageReductionData.fromEntity(entity, armorMode)
         );
     }
 
@@ -1049,6 +1064,7 @@ public class ZealotCrystalPlus extends Module {
             updateRenderTarget(currentCrystal.blockPosition().below(), breakPlan.targetDamage(), breakPlan.selfDamage());
 
             PlaceInfo placeInfo = getActionPlaceInfo();
+            cacheFallbackRotation(placeInfo != null ? placeInfo.rotation() : RotationUtils.calculate(breakPlan.pos()));
             if (packetPlace.getValue().onBreak && placeInfo != null && crystalPlaceBoxIntersects(placeInfo.blockPos(), currentCrystal.getBoundingBox())) {
                 placeDirect(placeInfo, true);
             }
@@ -1560,6 +1576,28 @@ public class ZealotCrystalPlus extends Module {
         attackedPosMap.values().removeIf(time -> time < current);
     }
 
+    private void cacheFallbackRotation(Vector2f rotation) {
+        if (rotation == null) return;
+
+        fallbackRotation = new Vector2f(rotation.x, rotation.y);
+        fallbackRotationExpireAt = System.currentTimeMillis() + FALLBACK_ROTATION_DURATION_MS;
+    }
+
+    private Vector2f getFallbackRotation() {
+        Vector2f rotation = fallbackRotation;
+        if (rotation == null) {
+            return null;
+        }
+
+        if (System.currentTimeMillis() > fallbackRotationExpireAt) {
+            fallbackRotation = null;
+            fallbackRotationExpireAt = 0L;
+            return null;
+        }
+
+        return new Vector2f(rotation.x, rotation.y);
+    }
+
     private boolean isEatingPaused() {
         if (!eatingPause.getValue() || mc.player == null) {
             return false;
@@ -1849,6 +1887,7 @@ public class ZealotCrystalPlus extends Module {
             float safeMinSelfDamageReduction,
             float collidingCrystalExtraSelfDamageThreshold,
             DamagePriority damagePriority,
+            DamageUtils.ArmorEnchantmentMode armorMode,
             PlaceBypass placeSideBypass,
             PacketPlaceMode packetPlaceMode,
             BreakMode breakMode,
@@ -1953,7 +1992,7 @@ public class ZealotCrystalPlus extends Module {
             this.blastReduction = blastReduction;
         }
 
-        private static DamageReductionData fromEntity(LivingEntity entity) {
+        private static DamageReductionData fromEntity(LivingEntity entity, DamageUtils.ArmorEnchantmentMode armorMode) {
             float armorValue = (float) entity.getAttributeValue(Attributes.ARMOR);
             float toughness = (float) entity.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
             float resistanceMultiplier = 1.0f;
@@ -1961,12 +2000,20 @@ public class ZealotCrystalPlus extends Module {
                 resistanceMultiplier = Math.max(1.0f - (entity.getEffect(MobEffects.RESISTANCE).getAmplifier() + 1) * 0.2f, 0.0f);
             }
 
-            int epf = 0;
-            for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-                ItemStack stack = entity.getItemBySlot(slot);
-                epf += EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.PROTECTION);
-                epf += EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.BLAST_PROTECTION) * 2;
-            }
+            int epf = switch (armorMode) {
+                case PPPP -> 16;
+                case PPBP -> 20;
+                case None -> {
+                    int actualEpf = 0;
+                    for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+                        ItemStack stack = entity.getItemBySlot(slot);
+                        actualEpf += EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.PROTECTION);
+                        actualEpf += EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.BLAST_PROTECTION) * 2;
+                    }
+                    yield actualEpf;
+                }
+            };
+
             float blastReduction = 1.0f - Math.min(epf, 20) / 25.0f;
             return new DamageReductionData(armorValue, toughness, resistanceMultiplier, blastReduction);
         }
