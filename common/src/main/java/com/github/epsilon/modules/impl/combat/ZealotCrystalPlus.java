@@ -85,6 +85,7 @@ public class ZealotCrystalPlus extends Module {
     private final DoubleSetting yawSpeed = doubleSetting("Yaw Speed", 45.0, 5.0, 180.0, 5.0);
     private final DoubleSetting placeRotationRange = doubleSetting("Place Rotation Range", 0.0, 0.0, 180.0, 5.0);
     private final DoubleSetting breakRotationRange = doubleSetting("Break Rotation Range", 90.0, 0.0, 180.0, 5.0);
+    private final BoolSetting preRotation = boolSetting("Pre Rotation", false);
     private final BoolSetting eatingPause = boolSetting("Eating Pause", false);
     private final IntSetting updateDelay = intSetting("Update Delay", 5, 0, 250, 1);
     private final IntSetting globalDelay = intSetting("Global Delay", 1_000_000, 1_000, 10_000_000, 1_000);
@@ -263,14 +264,16 @@ public class ZealotCrystalPlus extends Module {
         PlaceInfo prePlace = getValidPlaceInfo(cachedRotationPlaceInfo, false);
         target = resolveCurrentTarget(result, prePlace);
 
-        if (preBreak != null) {
-            RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
-        } else if (prePlace != null) {
-            RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
-        } else {
-            Vector2f rotation = getFallbackRotation();
-            if (rotation != null) {
-                RotationManager.INSTANCE.applyRotation(rotation, getRotationSpeed(), Priority.Lowest);
+        if (preRotation.getValue()) {
+            if (preBreak != null) {
+                RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
+            } else if (prePlace != null) {
+                RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
+            } else {
+                Vector2f rotation = getFallbackRotation();
+                if (rotation != null) {
+                    RotationManager.INSTANCE.applyRotation(rotation, getRotationSpeed(), Priority.Lowest);
+                }
             }
         }
 

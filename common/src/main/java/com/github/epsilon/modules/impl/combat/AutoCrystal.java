@@ -62,6 +62,7 @@ public class AutoCrystal extends Module {
     private final BoolSetting targetVillagers = boolSetting("Villagers", false);
     private final EnumSetting<DamagePriority> damagePriority = enumSetting("Damage Priority", DamagePriority.Efficient);
     private final BoolSetting eatingPause = boolSetting("Eating Pause", false);
+    private final BoolSetting preRotation = boolSetting("Pre Rotation", false);
 
     // Calculation
     private final BoolSetting noSuicide = boolSetting("No Suicide", true);
@@ -172,11 +173,13 @@ public class AutoCrystal extends Module {
         PlaceCandidate bestPlace = crystalItem.found() ? selectPlaceCandidate(predictedPos) : null;
 
         if (bestBreak != null) {
-            RotationManager.INSTANCE.applyRotation(
-                    bestBreak.targetRotation(),
-                    breakRotationSpeed.getValue(),
-                    Priority.Medium.priority
-            );
+            if (preRotation.getValue()) {
+                RotationManager.INSTANCE.applyRotation(
+                        bestBreak.targetRotation(),
+                        breakRotationSpeed.getValue(),
+                        Priority.Medium.priority
+                );
+            }
 
             if (breakTimer.passedMillise(breakDelay.getValue())) {
                 doBreakCrystal(bestBreak.crystal());
@@ -185,11 +188,13 @@ public class AutoCrystal extends Module {
         }
 
         if (bestPlace != null) {
-            RotationManager.INSTANCE.applyRotation(
-                    bestPlace.targetRotation(),
-                    placeRotationSpeed.getValue(),
-                    Priority.Medium.priority
-            );
+            if (preRotation.getValue()) {
+                RotationManager.INSTANCE.applyRotation(
+                        bestPlace.targetRotation(),
+                        placeRotationSpeed.getValue(),
+                        Priority.Medium.priority
+                );
+            }
 
             if (placeTimer.passedMillise(placeDelay.getValue())) {
                 doPlaceCrystal(bestPlace, crystalItem);
