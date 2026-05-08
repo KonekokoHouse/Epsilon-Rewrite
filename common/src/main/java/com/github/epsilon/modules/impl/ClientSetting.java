@@ -48,10 +48,6 @@ public class ClientSetting extends Module {
 
     public final DoubleSetting rotateBackSpeed = doubleSetting("Rotate Back Speed", 5.0f, 1.0f, 10.0f, 0.5f);
 
-    public final BoolSetting rotateJitter = boolSetting("Rotate Jitter", false);
-
-    public final DoubleSetting rotateJitterSize = doubleSetting("Rotate Jitter Size", 0.5f, 0.0f, 10.0f, 0.1f, rotateJitter::getValue);
-
     public final EnumSetting<ThemeMode> themeMode = enumSetting("Theme Mode", ThemeMode.Dark);
 
     public final EnumSetting<ThemePreset> themePreset = enumSetting("Theme Preset", ThemePreset.Expressive);
