@@ -160,10 +160,7 @@ public class RotationUtils {
     }
 
     public static Vector2f resetRotation(final Vector2f rotation) {
-        if (rotation == null) {
-            return null;
-        }
-
+        if (rotation == null) return null;
         final float yaw = rotation.x + Mth.wrapDegrees(mc.player.getYRot() - rotation.x);
         final float pitch = mc.player.getXRot();
         return new Vector2f(yaw, pitch);
