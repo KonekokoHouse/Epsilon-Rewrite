@@ -213,20 +213,20 @@ public class Module {
         return addSetting(new EnumSetting<>(name, defaultValue, () -> true, null));
     }
 
-    protected ColorSetting colorSetting(String name, Color defaultValue, Setting.Dependency dependency, boolean allowAlpha) {
-        return addSetting(new ColorSetting(name, defaultValue, dependency, allowAlpha));
+    protected ColorSetting colorSetting(String name, Color defaultValue, boolean allowAlpha, Setting.Dependency dependency) {
+        return addSetting(new ColorSetting(name, defaultValue, allowAlpha, dependency));
     }
 
     protected ColorSetting colorSetting(String name, Color defaultValue, Setting.Dependency dependency) {
-        return addSetting(new ColorSetting(name, defaultValue, dependency, true));
+        return addSetting(new ColorSetting(name, defaultValue, true, dependency));
     }
 
     protected ColorSetting colorSetting(String name, Color defaultValue, boolean allowAlpha) {
-        return addSetting(new ColorSetting(name, defaultValue, () -> true, allowAlpha));
+        return addSetting(new ColorSetting(name, defaultValue, allowAlpha, () -> true));
     }
 
     protected ColorSetting colorSetting(String name, Color defaultValue) {
-        return addSetting(new ColorSetting(name, defaultValue, () -> true, true));
+        return addSetting(new ColorSetting(name, defaultValue, true, () -> true));
     }
 
     protected KeybindSetting keybindSetting(String name, int defaultValue, Setting.Dependency dependency) {

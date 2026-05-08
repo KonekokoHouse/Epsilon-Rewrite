@@ -7,7 +7,6 @@ import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
@@ -422,11 +421,8 @@ public class AddonClientSettingTab implements ClientSettingTabView {
         float subScale = 0.50f;
         float textX = rowBounds.x() + MD3Theme.ROW_CONTENT_INSET;
         float titleY = rowBounds.y() + 7.0f;
-        scope.text(trimToWidth(addon.getDisplayName(), titleScale, rowBounds.width() - 14.0f), textX, titleY, titleScale,
-                selectedProgress > 0.2f ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY,
-                StaticFontLoader.DUCKSANS);
-        scope.text(trimToWidth(addon.getAddonId(), subScale, rowBounds.width() - 14.0f), textX, titleY + 12.0f, subScale,
-                selectedProgress > 0.2f ? MD3Theme.withAlpha(MD3Theme.ON_PRIMARY_CONTAINER, 180) : MD3Theme.TEXT_MUTED);
+        scope.text(trimToWidth(addon.getDisplayName(), titleScale, rowBounds.width() - 14.0f), textX, titleY, titleScale, selectedProgress > 0.2f ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY);
+        scope.text(trimToWidth(addon.getAddonId(), subScale, rowBounds.width() - 14.0f), textX, titleY + 12.0f, subScale, selectedProgress > 0.2f ? MD3Theme.withAlpha(MD3Theme.ON_PRIMARY_CONTAINER, 180) : MD3Theme.TEXT_MUTED);
     }
 
     private void buildAddonInfo(PanelUiTree.Scope scope, EpsilonAddon addon, PanelLayout.Rect infoBounds) {
@@ -435,11 +431,11 @@ public class AddonClientSettingTab implements ClientSettingTabView {
         float titleScale = 0.72f;
         float labelScale = 0.52f;
         float descScale = 0.56f;
-        float titleHeight = textRenderer.getHeight(titleScale, StaticFontLoader.DUCKSANS);
+        float titleHeight = textRenderer.getHeight(titleScale);
         float labelHeight = textRenderer.getHeight(labelScale);
         float textX = infoBounds.x() + MD3Theme.ROW_CONTENT_INSET;
         float titleY = infoBounds.y() + 8.0f;
-        scope.text(trimToWidth(addon.getDisplayName(), titleScale, infoBounds.width() - 96.0f), textX, titleY, titleScale, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+        scope.text(trimToWidth(addon.getDisplayName(), titleScale, infoBounds.width() - 96.0f), textX, titleY, titleScale, MD3Theme.TEXT_PRIMARY);
 
         String version = addon.getVersion().isBlank() ? "-" : addon.getVersion();
         String metaLine = idComponent.getTranslatedName() + ": " + addon.getAddonId()
@@ -511,7 +507,7 @@ public class AddonClientSettingTab implements ClientSettingTabView {
     }
 
     private float getDetailInfoHeight(PanelLayout.Rect detailPanelBounds, EpsilonAddon addon) {
-        float titleHeight = textRenderer.getHeight(0.72f, StaticFontLoader.DUCKSANS);
+        float titleHeight = textRenderer.getHeight(0.72f);
         float labelHeight = textRenderer.getHeight(0.52f);
         float descHeight = textRenderer.getHeight(0.56f);
 

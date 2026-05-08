@@ -1,6 +1,5 @@
 package com.github.epsilon.gui.panel.popup;
 
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.dsl.PanelRenderBatch;
@@ -81,10 +80,10 @@ public class ConfirmActionPopup implements PanelPopupHost.Popup {
             String message = messageSupplier.get();
             String cancelLabel = cancelLabelSupplier.get();
             String confirmLabel = confirmLabelSupplier.get();
-            scope.text(title, textX, animatedY + 10.0f, titleScale, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+            scope.text(title, textX, animatedY + 10.0f, titleScale, MD3Theme.TEXT_PRIMARY);
             scope.text(message, textX, animatedY + 24.0f, messageScale, MD3Theme.TEXT_SECONDARY);
             if (detail != null && !detail.isBlank()) {
-                scope.text(detail, textX, animatedY + 37.0f, detailScale, MD3Theme.PRIMARY, StaticFontLoader.DUCKSANS);
+                scope.text(detail, textX, animatedY + 37.0f, detailScale, MD3Theme.PRIMARY);
             }
 
             buildButton(scope, cancelButtonBounds, cancelLabel, false, cancelHoverAnimation.getValue());

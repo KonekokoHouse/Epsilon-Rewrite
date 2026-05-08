@@ -103,7 +103,7 @@ public class EnumSelectPopup implements PanelPopupHost.Popup {
                     if (selected) {
                         content.text("V", itemBounds.x() + 8.0f, itemY + 6.5f, 0.72f, MD3Theme.ON_SECONDARY_CONTAINER, StaticFontLoader.ICONS);
                     }
-                    content.text(setting.getTranslatedValueByIndex(i), itemBounds.x() + (selected ? 22.0f : 10.0f), itemY + 7.0f, 0.62f, textColor, StaticFontLoader.DUCKSANS);
+                    content.text(setting.getTranslatedValueByIndex(i), itemBounds.x() + (selected ? 22.0f : 10.0f), itemY + 7.0f, 0.62f, textColor);
                 }
             });
         });

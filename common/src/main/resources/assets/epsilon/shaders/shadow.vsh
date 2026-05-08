@@ -10,9 +10,9 @@ layout(location = 3) in vec4 Radius;
 
 out vec2 f_Position;
 out vec4 f_Color;
-flat out vec4 f_Bounds;
-flat out vec4 f_Radius;
-flat out float f_BlurRadius;
+out vec4 f_Bounds;
+out vec4 f_Radius;
+out float f_BlurRadius;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position.xy, 0.0, 1.0);

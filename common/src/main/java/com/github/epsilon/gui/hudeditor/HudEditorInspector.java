@@ -6,7 +6,6 @@ import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.ShadowRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.adapter.SettingListController;
@@ -84,7 +83,7 @@ public class HudEditorInspector {
         roundRectRenderer.addRoundRect(bounds.x() + 1.0f, bounds.y() + 1.0f, bounds.width() - 2.0f, bounds.height() - 2.0f, MD3Theme.SECTION_RADIUS - 1.0f, MD3Theme.SURFACE_CONTAINER_LOW);
 
         float titleX = bounds.x() + MD3Theme.PANEL_TITLE_INSET;
-        textRenderer.addText(titleComponent.getTranslatedName(), titleX, bounds.y() + HEADER_TOP, TITLE_SCALE, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+        textRenderer.addText(titleComponent.getTranslatedName(), titleX, bounds.y() + HEADER_TOP, TITLE_SCALE, MD3Theme.TEXT_PRIMARY);
 
         boolean collapseHovered = collapseButtonBounds.contains(mouseX, mouseY);
         roundRectRenderer.addRoundRect(
@@ -96,7 +95,7 @@ public class HudEditorInspector {
                 collapseHovered ? MD3Theme.SURFACE_CONTAINER_HIGH : MD3Theme.SURFACE_CONTAINER
         );
         String collapseGlyph = collapsed ? "+" : "-";
-        textRenderer.addText(collapseGlyph, collapseButtonBounds.x() + 4.0f, collapseButtonBounds.y() + 2.0f, 0.68f, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+        textRenderer.addText(collapseGlyph, collapseButtonBounds.x() + 4.0f, collapseButtonBounds.y() + 2.0f, 0.68f, MD3Theme.TEXT_PRIMARY);
 
         if (collapsed) {
             flushChrome();

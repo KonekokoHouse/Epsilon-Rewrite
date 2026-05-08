@@ -3,7 +3,6 @@ package com.github.epsilon.gui.panel.component;
 import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.adapter.ModuleViewModel;
@@ -94,7 +93,7 @@ public class ModuleRow {
         float titleScale = 0.70f;
         float subScale = 0.60f;
         float keyScale = 0.6f;
-        float titleHeight = textRenderer.getHeight(titleScale, StaticFontLoader.DUCKSANS);
+        float titleHeight = textRenderer.getHeight(titleScale);
         float subHeight = textRenderer.getHeight(subScale);
         float keyHeight = textRenderer.getHeight(keyScale);
         float lineGap = 3.0f;
@@ -121,7 +120,7 @@ public class ModuleRow {
                     MD3Theme.stateLayer(MD3Theme.PRIMARY, selectedProgress, 42));
         }
 
-        scope.text(module.displayName(), PanelElements.rowLabelX(bounds), titleY, titleScale, titleColor, StaticFontLoader.DUCKSANS);
+        scope.text(module.displayName(), PanelElements.rowLabelX(bounds), titleY, titleScale, titleColor);
         scope.text(module.module().getAddonId() != null ? module.module().getAddonId() : "unknown", PanelElements.rowLabelX(bounds), subY, subScale, subColor);
         scope.toggle(toggleBounds, toggleProgress, toggleHoverProgress);
 

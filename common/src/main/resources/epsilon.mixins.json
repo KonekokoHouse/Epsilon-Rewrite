@@ -3,11 +3,6 @@
   "package": "com.github.epsilon.mixins",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "IAbstractContainerScreen",
-    "IMinecraft",
-    "IReloadState",
-    "IResourceLoadStateTracker",
-    "IServerboundMovePlayerPacket",
     "MixinAvatarRenderer",
     "MixinBlockCollisions",
     "MixinCamera",

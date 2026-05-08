@@ -7,7 +7,6 @@ import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.ShadowRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
@@ -91,7 +90,7 @@ public class ModuleDetailPanel {
 
         Module module = state.getSelectedModule();
         String detailTitle = module == null ? noModuleComponent.getTranslatedName() : module.getTranslatedName();
-        PanelUiTree headerTree = PanelUiTree.build(scope -> scope.text(detailTitle, bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS));
+        PanelUiTree headerTree = PanelUiTree.build(scope -> scope.text(detailTitle, bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY));
         PanelUiCompiler.render(headerTree, roundRectRenderer, rectRenderer, textRenderer);
 
         if (module == null) {

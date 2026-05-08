@@ -5,7 +5,6 @@ import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.gui.panel.utils.IMEFocusHelper;
-import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.modules.HudModule;
 import com.github.epsilon.modules.impl.hud.notification.NotificationManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -176,14 +175,12 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (inspector.mouseReleased(event)) {
-            ConfigManager.INSTANCE.saveNow();
             return true;
         }
 
         if (dragging != null && event.button() == 0) {
             dragging = null;
             clearSnapPreview();
-            ConfigManager.INSTANCE.saveNow();
             return true;
         }
 
@@ -207,7 +204,6 @@ public class HudEditorScreen extends Screen {
             if (dragging != null) {
                 dragging = null;
                 clearSnapPreview();
-                ConfigManager.INSTANCE.saveNow();
                 return true;
             }
             if (selected != null) {
@@ -247,7 +243,6 @@ public class HudEditorScreen extends Screen {
         dragging = null;
         clearSnapPreview();
         IMEFocusHelper.deactivate();
-        ConfigManager.INSTANCE.saveNow();
         super.onClose();
         minecraft.setScreen(PanelScreen.INSTANCE);
     }

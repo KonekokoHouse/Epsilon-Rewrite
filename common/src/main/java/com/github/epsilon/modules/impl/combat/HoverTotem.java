@@ -2,7 +2,6 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.mixins.IAbstractContainerScreen;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
@@ -57,7 +56,7 @@ public class HoverTotem extends Module {
         if (nullCheck()) return;
 
         if (mc.screen instanceof InventoryScreen inv) {
-            Slot hoveredSlot = ((IAbstractContainerScreen) inv).sakura$getHoveredSlot();
+            Slot hoveredSlot = inv.hoveredSlot;
 
             if (this.autoSwitch.getValue()) {
                 int slotValue = this.slot.getValue().intValue();

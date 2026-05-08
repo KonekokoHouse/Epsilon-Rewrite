@@ -67,7 +67,7 @@ public class KillAura extends Module {
 
     private final BoolSetting swingHand = boolSetting("SwingHand", true);
 
-    private final BoolSetting esp = boolSetting("ESP", false);
+    private final BoolSetting esp = boolSetting("ESP", true);
 
     private final EnumSetting<ESPMode> espMode = enumSetting("ESP Mode", ESPMode.Firefly, esp::getValue);
 
@@ -77,9 +77,9 @@ public class KillAura extends Module {
     private final DoubleSetting espRotSpeed = doubleSetting("Rot Speed", 2.0, 0.5, 10.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
     private final DoubleSetting waveSpeed = doubleSetting("Wave Speed", 3.0, 0.5, 10.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
 
-    private final ColorSetting fireflyColor = colorSetting("Firefly Color", new Color(149, 149, 149, 80), () -> esp.getValue() && espMode.is(ESPMode.Firefly));
-    private final EnumSetting<Firefly.ColorMode> fireflyColorMode = enumSetting("Firefly Color Mode", Firefly.ColorMode.Solid, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
-    private final ColorSetting fireflyColor2 = colorSetting("Firefly Color 2", new Color(255, 133, 161, 80), () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
+    private final ColorSetting fireflyColor = colorSetting("Firefly Color", new Color(149, 149, 149, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
+    private final EnumSetting<Firefly.ColorMode> fireflyColorMode = enumSetting("Firefly Color Mode", Firefly.ColorMode.Blend, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
+    private final ColorSetting fireflyColor2 = colorSetting("Firefly Color 2", new Color(255, 133, 161, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
     private final DoubleSetting fireflyColorMix = doubleSetting("Firefly Color Mix", 0.65, 0.0, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
     private final DoubleSetting fireflyColorSpeed = doubleSetting("Firefly Color Speed", 1.2, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
     private final DoubleSetting fireflyRainbowSpeed = doubleSetting("Firefly Rainbow Speed", 1.0, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Rainbow));
@@ -102,7 +102,7 @@ public class KillAura extends Module {
     }
 
     @EventHandler
-    public void onTick(TickEvent.Pre e) {
+    private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
         if (mc.player.isUsingItem() || mc.player.isBlocking()) return;
@@ -141,7 +141,7 @@ public class KillAura extends Module {
                     RotationUtils.getRotationsToEntity(target),
                     rotationSpeed.getValue().floatValue(),
                     Priority.Medium.priority,
-                    record -> {
+                    _ -> {
                         if (mode.is(Mode.OnePointEight)) {
                             while (attacks >= 1.0) {
                                 clickTargets(targets);

@@ -2,14 +2,14 @@ accessWidener v2 official
 
 accessible field net/minecraft/client/multiplayer/MultiPlayerGameMode destroyProgress F
 
-mutable field net/minecraft/network/protocol/game/ServerboundUseItemPacket yRot F
-accessible field net/minecraft/network/protocol/game/ServerboundUseItemPacket yRot F
-mutable field net/minecraft/network/protocol/game/ServerboundUseItemPacket xRot F
-accessible field net/minecraft/network/protocol/game/ServerboundUseItemPacket xRot F
+accessible field net/minecraft/network/protocol/game/ServerboundMovePlayerPacket yRot F
+mutable field net/minecraft/network/protocol/game/ServerboundMovePlayerPacket yRot F
 
 accessible class net/minecraft/client/ResourceLoadStateTracker$ReloadState
 
 accessible field net/minecraft/client/player/LocalPlayer positionReminder I
+
+accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen hoveredSlot Lnet/minecraft/world/inventory/Slot;
 
 accessible method net/minecraft/client/multiplayer/ClientLevel getBlockStatePredictionHandler ()Lnet/minecraft/client/multiplayer/prediction/BlockStatePredictionHandler;
 
@@ -21,6 +21,10 @@ accessible field net/minecraft/client/renderer/RenderPipelines LINES_SNIPPET Lco
 accessible method net/minecraft/client/renderer/rendertype/RenderType create (Ljava/lang/String;Lnet/minecraft/client/renderer/rendertype/RenderSetup;)Lnet/minecraft/client/renderer/rendertype/RenderType;
 
 accessible class net/minecraft/core/component/DataComponentInitializers$InitializerEntry
+
+accessible field net/minecraft/client/Minecraft reloadStateTracker Lnet/minecraft/client/ResourceLoadStateTracker;
+accessible field net/minecraft/client/ResourceLoadStateTracker$ReloadState finished Z
+accessible field net/minecraft/client/ResourceLoadStateTracker reloadState Lnet/minecraft/client/ResourceLoadStateTracker$ReloadState;
 
 accessible field net/minecraft/client/renderer/ItemInHandRenderer mainHandHeight F
 accessible field net/minecraft/client/renderer/ItemInHandRenderer offHandHeight F
