@@ -36,6 +36,12 @@ public class MixinGuiRenderer {
     private FeatureRenderDispatcher featureRenderDispatcher;
 
     @Unique
+    private GuiRenderState epsilon$levelRenderState;
+
+    @Unique
+    private EpsilonGuiRenderer epsilon$levelGuiRenderer;
+
+    @Unique
     private GuiRenderState epsilon$renderState;
 
     @Unique
@@ -45,9 +51,38 @@ public class MixinGuiRenderer {
     private void onDrawHead(GpuBufferSlice fogBuffer, CallbackInfo ci) {
         BlurShader.INSTANCE.beginFrame();
 
+        epsilon$ensureRenderers();
+
+        Minecraft mc = Minecraft.getInstance();
+        int mouseX = (int) mc.mouseHandler.getScaledXPos(mc.getWindow());
+        int mouseY = (int) mc.mouseHandler.getScaledYPos(mc.getWindow());
+
+        GuiGraphicsExtractor levelGuiGraphics = new GuiGraphicsExtractor(mc, epsilon$levelRenderState, mouseX, mouseY);
+        EventBus.INSTANCE.post(new Render2DEvent.Level(levelGuiGraphics));
+        epsilon$levelGuiRenderer.render(fogBuffer);
+        epsilon$levelGuiRenderer.endFrame();
+
+        GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(mc, epsilon$renderState, mouseX, mouseY);
+        EventBus.INSTANCE.post(new Render2DEvent.HUD(guiGraphics));
+
+        epsilon$guiRenderer.render(fogBuffer);
+
+        epsilon$guiRenderer.endFrame();
+    }
+
+    @Unique
+    private void epsilon$ensureRenderers() {
+        if (epsilon$levelRenderState == null || epsilon$levelGuiRenderer == null) {
+            this.epsilon$levelRenderState = new GuiRenderState();
+            this.epsilon$levelGuiRenderer = new EpsilonGuiRenderer(
+                    this.epsilon$levelRenderState,
+                    this.bufferSource,
+                    this.submitNodeCollector,
+                    this.featureRenderDispatcher
+            );
+        }
         if (epsilon$renderState == null || epsilon$guiRenderer == null) {
             this.epsilon$renderState = new GuiRenderState();
-
             this.epsilon$guiRenderer = new EpsilonGuiRenderer(
                     this.epsilon$renderState,
                     this.bufferSource,
@@ -55,16 +90,6 @@ public class MixinGuiRenderer {
                     this.featureRenderDispatcher
             );
         }
-
-        Minecraft mc = Minecraft.getInstance();
-
-        GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(mc, epsilon$renderState, (int) mc.mouseHandler.getScaledXPos(mc.getWindow()), (int) mc.mouseHandler.getScaledYPos(mc.getWindow()));
-
-        EventBus.INSTANCE.post(new Render2DEvent(guiGraphics));
-
-        epsilon$guiRenderer.render(fogBuffer);
-
-        epsilon$guiRenderer.endFrame();
     }
 
 }

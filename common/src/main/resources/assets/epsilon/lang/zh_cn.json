@@ -677,6 +677,8 @@
   "epsilon.modules.name tags": "名字标签",
   "epsilon.modules.name tags.range": "范围",
   "epsilon.modules.name tags.scale": "缩放",
+  "epsilon.modules.name tags.vanilla name tags": "显示原版名字标签",
+  "epsilon.modules.name tags.background color": "背景颜色",
   "epsilon.modules.name tags.show equipment": "显示装备",
   "epsilon.modules.name tags.show hands": "显示手部",
   "epsilon.modules.name tags.show self": "显示自己",

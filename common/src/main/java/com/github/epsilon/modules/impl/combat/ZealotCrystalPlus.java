@@ -336,7 +336,7 @@ public class ZealotCrystalPlus extends Module {
     }
 
     @EventHandler
-    private void onRender2D(Render2DEvent event) {
+    private void onRender2D(Render2DEvent.Level event) {
         if (nullCheck() || renderPrevPos == null || renderCurrentPos == null) return;
         if (!renderTargetDamage.getValue() && !renderSelfDamage.getValue()) return;
 

@@ -142,7 +142,7 @@ public class ModuleManager {
     }
 
     @EventHandler
-    private void onRender2D(Render2DEvent event) {
+    private void onRender2D(Render2DEvent.HUD event) {
         Minecraft mc = Minecraft.getInstance();
         if (ClientUtils.isLoading() || mc.level == null || mc.screen instanceof HudEditorScreen) return;
 

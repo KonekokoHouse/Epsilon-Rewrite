@@ -1,5 +1,6 @@
 package com.github.epsilon.mixins;
 
+import com.github.epsilon.modules.impl.render.NameTags;
 import com.github.epsilon.modules.impl.render.NoRender;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -15,7 +16,7 @@ public class MixinEntityRenderer<T extends LivingEntity, S extends LivingEntityR
 
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(T entity, double distance, CallbackInfoReturnable<Boolean> cir) {
-        if (entity instanceof Player && NoRender.INSTANCE.playerNameTags.getValue() && NoRender.INSTANCE.isEnabled()) {
+        if (entity instanceof Player && (!NameTags.INSTANCE.vanillaNameTags.getValue()) && NameTags.INSTANCE.isEnabled()) {
             cir.setReturnValue(false);
         }
     }
