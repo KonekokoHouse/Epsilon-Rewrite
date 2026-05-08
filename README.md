@@ -2,7 +2,7 @@
 <h4 align="center">
     <p>
         <b>English</b> |
-        <a href="https://github.com/NekoyaHouse/Epsilon/blob/main/README_zh.md">中文</a>
+        <a href="./README_zh.md">中文</a>
     </p>
 </h4>
 
@@ -17,7 +17,7 @@
 A modern multi loader Minecraft utility client built on NeoForge & Fabric with advanced rendering system and modular architecture.
 
 ## 🚀 Addon System
-[Epsilon Addon Template](https://github.com/KonekokoHouse/Epsilon-Addon-Template)
+[Epsilon Addon Template](https://github.com/NekoyaHouse/Epsilon-Addon-Template)
 
 [Addon Development Guide](docs/addon-development.md)
 
