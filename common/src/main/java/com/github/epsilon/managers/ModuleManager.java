@@ -113,6 +113,7 @@ public class ModuleManager {
                 NameTags.INSTANCE,
                 NoRender.INSTANCE,
                 PopChams.INSTANCE,
+                AntiAlias.INSTANCE,
 
                 // Hud
                 NotificationsHud.INSTANCE,

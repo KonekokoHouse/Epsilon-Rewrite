@@ -1,6 +1,7 @@
 package com.github.epsilon.mixins;
 
 import com.github.epsilon.events.bus.EventBus;
+import com.github.epsilon.events.impl.AfterRender3DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
@@ -24,6 +25,7 @@ public class MixinLevelRenderer {
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(modelViewMatrix);
         EventBus.INSTANCE.post(new Render3DEvent(poseStack));
+        EventBus.INSTANCE.post(new AfterRender3DEvent());
     }
 
 }
