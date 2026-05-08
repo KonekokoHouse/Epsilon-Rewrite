@@ -77,8 +77,8 @@ public class PacketMine extends Module {
     private final BoolSetting fading = boolSetting("Fading", true);
     private final DoubleSetting renderTime = doubleSetting("Render Time", 0.1, 0.0, 5, 0.1, fading::getValue);
     private final DoubleSetting fadeTime = doubleSetting("Fade Time", 0.2, 0.0, 5, 0.1, fading::getValue);
-    private final ColorSetting mainColor = colorSetting("Main Color", new Color(255, 255, 255, 50));
-    private final ColorSetting secondColor = colorSetting("Second Color", new Color(255, 255, 255, 50));
+    private final ColorSetting fadeSideColor = colorSetting("Fade Side Color", new Color(70, 200, 155, 50));
+    private final ColorSetting fadeLineColor = colorSetting("Fade Line Color", new Color(70, 200, 155, 255));
     private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 0, 0, 40));
     private final ColorSetting sideEndColor = colorSetting("Side End", new Color(0, 150, 10, 30));
     private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 0, 0, 50));
@@ -90,12 +90,15 @@ public class PacketMine extends Module {
 
     public static BlockPos selfClickPos = null;
     public static int maxBreaksCount;
-    public static int publicProgress = 0, secondPublicProgress = 0;
+    public static int mainProgressPercent = 0, secondProgressPercent = 0;
     public static boolean completed = false;
     public static BlockPos targetPos, secondPos;
     private static float progress, secondProgress;
     private long lastTime, secondLastTime;
+    private long fadeLastTime;
     private static boolean started, secondStarted;
+    private BlockPos renderPos, secondRenderPos;
+    private double renderProgress, secondRenderProgress;
     private int oldSlot = -1;
     private final TimerUtils bypassTimer = new TimerUtils();
     private final TimerUtils timer = new TimerUtils();
@@ -118,12 +121,17 @@ public class PacketMine extends Module {
         secondPos = null;
         started = false;
         secondStarted = false;
-        publicProgress = 0;
-        secondPublicProgress = 0;
+        mainProgressPercent = 0;
+        secondProgressPercent = 0;
         progress = 0;
         secondProgress = 0;
         lastTime = System.currentTimeMillis();
         secondLastTime = System.currentTimeMillis();
+        fadeLastTime = System.currentTimeMillis();
+        renderPos = null;
+        secondRenderPos = null;
+        renderProgress = 0;
+        secondRenderProgress = 0;
     }
 
     @Override
@@ -156,8 +164,8 @@ public class PacketMine extends Module {
                     targetPos = pos;
                     secondStarted = false;
                     secondProgress = 0;
-                    secondPublicProgress = 0;
-                    publicProgress = 0;
+                    secondProgressPercent = 0;
+                    mainProgressPercent = 0;
                     started = false;
                     progress = 0;
                     completed = false;
@@ -166,11 +174,11 @@ public class PacketMine extends Module {
                     targetPos = pos;
                     secondStarted = false;
                     secondProgress = 0;
-                    secondPublicProgress = 0;
+                    secondProgressPercent = 0;
                     started = false;
                 }
             } else if (targetPos == null || !targetPos.equals(pos)) {
-                publicProgress = 0;
+                mainProgressPercent = 0;
                 targetPos = pos;
                 started = false;
                 progress = 0;
@@ -178,7 +186,7 @@ public class PacketMine extends Module {
             }
         } else {
             if (!pos.equals(targetPos)) {
-                publicProgress = 0;
+                mainProgressPercent = 0;
                 targetPos = pos;
                 started = false;
                 progress = 0;
@@ -189,11 +197,15 @@ public class PacketMine extends Module {
 
     @EventHandler
     private void onRender(Render3DEvent event) {
+        long now = System.currentTimeMillis();
+        double fadeDelta = (now - fadeLastTime) / 1000d;
+        fadeLastTime = now;
+
         if (targetPos == null && secondPos == null) selfClickPos = null;
-        if (publicProgress >= 100) {
+        if (mainProgressPercent >= 100) {
             if (!instantMine.getValue()) targetPos = null;
         }
-        if (secondPublicProgress >= 100) {
+        if (secondProgressPercent >= 100) {
             secondPos = null;
         }
         if (timer.passedMillise(switchTime.getValue()) && hasSwitch && switchMode.getValue() != SwitchMode.None) {
@@ -208,6 +220,16 @@ public class PacketMine extends Module {
             maxBreaksCount = 0;
             targetPos = null;
         }
+        if (targetPos != null) {
+            renderPos = targetPos;
+        }
+        if (secondPos != null) {
+            secondRenderPos = secondPos;
+        }
+
+        updateFadeProgress(fadeDelta);
+        renderFadeBoxes(event.getPoseStack());
+
         if (secondPos != null && doubleBreak.getValue()) {
             if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(secondPos.getCenter())) > range.getValue()) {
                 secondPos = null;
@@ -215,7 +237,7 @@ public class PacketMine extends Module {
             }
             double secondMax = getMineTicksSecond(getTool(secondPos));
             double secondDelta = (System.currentTimeMillis() - secondLastTime) / 1000d;
-            secondPublicProgress = (int) (secondProgress / (secondMax * mineDamage.getValue()) * 100);
+            secondProgressPercent = (int) (secondProgress / (secondMax * mineDamage.getValue()) * 100);
             secondLastTime = System.currentTimeMillis();
             if (!secondStarted) {
                 sendStart(secondPos);
@@ -236,7 +258,7 @@ public class PacketMine extends Module {
         }
         if (doubleBreak.getValue()) {
             if (!usingPause.getValue() || !checkPause(onlyMain.getValue())) {
-                if ((secondPublicProgress >= switchDamage.getValue() || publicProgress >= switchDamage.getValue()) && !hasSwitch && secondPos != null) {
+                if ((secondProgressPercent >= switchDamage.getValue() || mainProgressPercent >= switchDamage.getValue()) && !hasSwitch && secondPos != null) {
                     int bestSlot = getTool(secondPos);
                     if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
                     if (!switchMode.is(SwitchMode.None) && bestSlot != -1) {
@@ -257,7 +279,7 @@ public class PacketMine extends Module {
                 return;
             }
             double max = getMineTicks(getTool(targetPos));
-            publicProgress = (int) (progress / (max * mineDamage.getValue()) * 100);
+            mainProgressPercent = (int) (progress / (max * mineDamage.getValue()) * 100);
             if (progress >= max * mineDamage.getValue() && completed) {
                 if (isAir(targetPos) || mc.level.getBlockState(targetPos).canBeReplaced()) maxBreaksCount = 0;
                 if (!isAir(targetPos) && !mc.level.getBlockState(targetPos).canBeReplaced() && !(usingPause.getValue() && checkPause(onlyMain.getValue()))) {
@@ -376,9 +398,7 @@ public class PacketMine extends Module {
         float hardness = state.getDestroySpeed(mc.level, targetPos);
         if (hardness < 0) return Float.MAX_VALUE;
         if (hardness == 0) return 1;
-        ItemStack stack = slot == -1
-                ? ItemStack.EMPTY
-                : mc.player.getInventory().getItem(slot);
+        ItemStack stack = slot == -1 ? ItemStack.EMPTY : mc.player.getInventory().getItem(slot);
         boolean canHarvest = stack.isCorrectToolForDrops(state);
         float speed = stack.getDestroySpeed(state);
         int efficiency = EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.EFFICIENCY);
@@ -409,9 +429,7 @@ public class PacketMine extends Module {
         float hardness = state.getDestroySpeed(mc.level, secondPos);
         if (hardness < 0) return Float.MAX_VALUE;
         if (hardness == 0) return 1;
-        ItemStack stack = slot == -1
-                ? ItemStack.EMPTY
-                : mc.player.getInventory().getItem(slot);
+        ItemStack stack = slot == -1 ? ItemStack.EMPTY : mc.player.getInventory().getItem(slot);
         boolean canHarvest = stack.isCorrectToolForDrops(state);
         float speed = stack.getDestroySpeed(state);
         int efficiency = EnchantmentUtils.getEnchantmentLevel(stack, Enchantments.EFFICIENCY);
@@ -440,6 +458,12 @@ public class PacketMine extends Module {
         return mc.level.getBlockState(breakPos).isAir() || mc.level.getBlockState(breakPos).getBlock() == Blocks.FIRE && hasCrystal(breakPos);
     }
 
+    private boolean isSolidForFade(BlockPos pos) {
+        if (pos == null) return false;
+        BlockState state = mc.level.getBlockState(pos);
+        return !isAir(pos) && !state.canBeReplaced();
+    }
+
     private boolean hasCrystal(BlockPos pos) {
         for (Entity entity : mc.level.getEntities(null, new AABB(pos))) {
             if (entity instanceof EndCrystal endCrystal && endCrystal.isAlive()) {
@@ -466,14 +490,59 @@ public class PacketMine extends Module {
         return index;
     }
 
-    public boolean checkPause(boolean onlyMain) {
+    private boolean checkPause(boolean onlyMain) {
         return mc.options.keyUse.isDown() && (!onlyMain || mc.player.getUsedItemHand() == InteractionHand.MAIN_HAND);
     }
 
-    public boolean canBreak(BlockPos blockPos) {
+    private boolean canBreak(BlockPos blockPos) {
         BlockState state = mc.level.getBlockState(blockPos);
         if (!mc.player.isCreative() && state.getDestroySpeed(mc.level, blockPos) < 0) return false;
         return state.getCollisionShape(mc.level, blockPos) != Shapes.empty();
+    }
+
+    private void updateFadeProgress(double delta) {
+        if (!fading.getValue()) {
+            renderProgress = 0;
+            secondRenderProgress = 0;
+            return;
+        }
+
+        boolean paused = usingPause.getValue() && checkPause(onlyMain.getValue());
+        if (isSolidForFade(renderPos) && !paused) {
+            renderProgress = fadeTime.getValue() + renderTime.getValue();
+        } else {
+            renderProgress = Math.max(0, renderProgress - delta);
+        }
+
+        if (isSolidForFade(secondRenderPos) && !paused) {
+            secondRenderProgress = fadeTime.getValue() + renderTime.getValue();
+        } else {
+            secondRenderProgress = Math.max(0, secondRenderProgress - delta);
+        }
+    }
+
+    private void renderFadeBoxes(PoseStack stack) {
+        if (fading.getValue()) {
+            renderFadeBox(stack, renderPos, renderProgress);
+            renderFadeBox(stack, secondRenderPos, secondRenderProgress);
+        }
+    }
+
+    private void renderFadeBox(PoseStack stack, BlockPos pos, double progress) {
+        if (pos == null || progress <= 0 || isSolidForFade(pos)) return;
+
+        Color color1 = new Color(fadeSideColor.getValue().getRed(),
+                fadeSideColor.getValue().getGreen(),
+                fadeSideColor.getValue().getBlue(),
+                (int) Math.round(fadeSideColor.getValue().getAlpha() * Math.min(1, progress / fadeTime.getValue()))
+        );
+        Color color2 = new Color(fadeLineColor.getValue().getRed(),
+                fadeLineColor.getValue().getGreen(),
+                fadeLineColor.getValue().getBlue(),
+                (int) Math.round(fadeLineColor.getValue().getAlpha() * Math.min(1, progress / fadeTime.getValue()))
+        );
+        Render3DUtils.drawFilledBox(pos, color1);
+        Render3DUtils.drawOutlineBox(stack, pos, color2);
     }
 
     private void mainBlockRender(PoseStack stack) {
@@ -492,7 +561,6 @@ public class PacketMine extends Module {
             }
             case Normal -> {
                 AABB box = AABB.ofSize(targetPos.getCenter(), rawProgress, rawProgress, rawProgress);
-
                 Render3DUtils.drawFilledBox(box, color1);
                 Render3DUtils.drawOutlineBox(stack, box, color2);
             }
