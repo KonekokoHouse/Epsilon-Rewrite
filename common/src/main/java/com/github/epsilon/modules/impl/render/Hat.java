@@ -23,7 +23,7 @@ public class Hat extends Module {
         super("Hat", Category.RENDER);
     }
 
-    public enum Mode {
+    private enum Mode {
         Astolfo,
         Sexy,
         Fade
