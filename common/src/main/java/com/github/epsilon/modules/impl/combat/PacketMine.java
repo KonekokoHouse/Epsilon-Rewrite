@@ -77,16 +77,16 @@ public class PacketMine extends Module {
     private final BoolSetting fading = boolSetting("Fading", true);
     private final DoubleSetting renderTime = doubleSetting("Render Time", 0.1, 0.0, 5, 0.1, fading::getValue);
     private final DoubleSetting fadeTime = doubleSetting("Fade Time", 0.2, 0.0, 5, 0.1, fading::getValue);
-    private final ColorSetting fadeSideColor = colorSetting("Fade Side Color", new Color(70, 200, 155, 50));
-    private final ColorSetting fadeLineColor = colorSetting("Fade Line Color", new Color(70, 200, 155, 255));
-    private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 0, 0, 40));
-    private final ColorSetting sideEndColor = colorSetting("Side End", new Color(0, 150, 10, 30));
-    private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 0, 0, 50));
-    private final ColorSetting lineEndColor = colorSetting("Line End", new Color(5, 160, 0, 100));
-    private final ColorSetting secondSideStartColor = colorSetting("Second Side Start", new Color(255, 0, 0, 40));
-    private final ColorSetting secondSideEndColor = colorSetting("Second Side End", new Color(0, 150, 10, 30));
-    private final ColorSetting secondLineStartColor = colorSetting("Second Line Start", new Color(255, 0, 0, 50));
-    private final ColorSetting secondLineEndColor = colorSetting("Second Line End", new Color(5, 160, 0, 100));
+    private final ColorSetting fadeSideColor = colorSetting("Fade Side Color", new Color(70, 200, 155, 31));
+    private final ColorSetting fadeLineColor = colorSetting("Fade Line Color", new Color(70, 200, 155, 233));
+    private final ColorSetting sideStartColor = colorSetting("Side Start", new Color(255, 0, 0, 31));
+    private final ColorSetting sideEndColor = colorSetting("Side End", new Color(0, 150, 10, 31));
+    private final ColorSetting lineStartColor = colorSetting("Line Start", new Color(255, 0, 0, 233));
+    private final ColorSetting lineEndColor = colorSetting("Line End", new Color(5, 160, 0, 233));
+    private final ColorSetting secondSideStartColor = colorSetting("Second Side Start", new Color(255, 0, 0, 31));
+    private final ColorSetting secondSideEndColor = colorSetting("Second Side End", new Color(0, 150, 10, 31));
+    private final ColorSetting secondLineStartColor = colorSetting("Second Line Start", new Color(255, 0, 0, 233));
+    private final ColorSetting secondLineEndColor = colorSetting("Second Line End", new Color(5, 160, 0, 233));
 
     public static BlockPos selfClickPos = null;
     public static int maxBreaksCount;
