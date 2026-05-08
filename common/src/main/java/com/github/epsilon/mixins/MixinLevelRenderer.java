@@ -21,7 +21,9 @@ public class MixinLevelRenderer {
 
     @Inject(method = "renderLevel", at = @At("RETURN"))
     private void onPostRenderLevel(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, ChunkSectionsToRender chunkSectionsToRender, CallbackInfo ci) {
-        EventBus.INSTANCE.post(new Render3DEvent(new PoseStack()));
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(modelViewMatrix);
+        EventBus.INSTANCE.post(new Render3DEvent(poseStack));
     }
 
 }

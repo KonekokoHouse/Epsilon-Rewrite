@@ -100,7 +100,7 @@ public class Hat extends Module {
         stack.mulPose(Axis.XP.rotationDegrees(pitch / 3.0f));
         stack.translate(0, 0, pitch / 270.0);
 
-        Matrix4f matrix = new Matrix4f(mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.viewRotationMatrix).mul(stack.last().pose());
+        Matrix4f matrix = stack.last().pose();
         Tesselator tesselator = Tesselator.getInstance();
 
         float lineWidth = 2.0f;

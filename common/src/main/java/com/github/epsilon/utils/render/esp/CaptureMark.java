@@ -67,9 +67,9 @@ public class CaptureMark {
         poseStack.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
 
-        Matrix4f matrix = new Matrix4f(mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.viewRotationMatrix).mul(poseStack.last().pose());
-
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+        Matrix4f matrix = poseStack.last().pose();
 
         Color c1 = getColorForProgress(0f, waveSpeed, color1, color2, timeSeconds);
         Color c2 = getColorForProgress(0.25f, waveSpeed, color1, color2, timeSeconds);

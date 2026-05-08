@@ -72,7 +72,7 @@ public class Firefly {
                 stack.mulPose(Axis.YP.rotationDegrees(-camera.yRot()));
                 stack.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
 
-                Matrix4f matrix = new Matrix4f(mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.viewRotationMatrix).mul(stack.last().pose());
+                Matrix4f matrix = stack.last().pose();
 
                 float scale = Math.max(0.24f * (offset), 0.2f);
 
