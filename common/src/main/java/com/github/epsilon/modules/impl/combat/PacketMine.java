@@ -146,20 +146,6 @@ public class PacketMine extends Module {
         }
     }
 
-    public boolean isInstantMining(BlockPos pos) {
-        if (!isEnabled() || pos == null || !instantMine.getValue()) {
-            return false;
-        }
-
-        for (MineAction action : actions) {
-            if (!action.removed && action.pos.equals(pos)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     @EventHandler
     private void onStartBreakingBlock(AttackBlockEvent event) {
         if (!canBreak(event.getBlockPos())) return;
@@ -167,6 +153,13 @@ public class PacketMine extends Module {
         if (!mineTimer.passedMillise(mineDelay.getValue())) return;
         selfClickPos = event.getBlockPos();
         mine(event.getBlockPos());
+    }
+
+    public boolean isInstantMining(BlockPos pos) {
+        if (!isEnabled() || !instantMine.getValue() || pos == null) return false;
+        if (!completed || targetPos == null || !targetPos.equals(pos)) return false;
+        BlockState state = mc.level.getBlockState(pos);
+        return !state.isAir() && !state.canBeReplaced();
     }
 
     public void mine(BlockPos pos) {
@@ -270,21 +263,21 @@ public class PacketMine extends Module {
                 sendStopSecond();
             }
         }
-        if (doubleBreak.getValue()) {
-            if (!usingPause.getValue() || !checkPause(onlyMain.getValue())) {
-                if ((secondProgressPercent >= switchDamage.getValue() || mainProgressPercent >= switchDamage.getValue()) && !hasSwitch && secondPos != null) {
-                    int bestSlot = getTool(secondPos);
-                    if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
-                    if (!switchMode.is(SwitchMode.None) && bestSlot != -1) {
-                        if (switchMode.is(SwitchMode.Delay)) {
-                            InvUtils.swap(bestSlot, false);
-                        } else if (switchMode.is(SwitchMode.Silent)) {
-                            mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
-                        }
-                        timer.reset();
-                        hasSwitch = true;
-                    }
+        if (
+                doubleBreak.getValue()
+                        && (!usingPause.getValue() || !checkPause(onlyMain.getValue()))
+                        && ((secondProgressPercent >= switchDamage.getValue() || mainProgressPercent >= switchDamage.getValue()) && !hasSwitch && secondPos != null)
+        ) {
+            int bestSlot = getTool(secondPos);
+            if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
+            if (!switchMode.is(SwitchMode.None) && bestSlot != -1) {
+                if (switchMode.is(SwitchMode.Delay)) {
+                    InvUtils.swap(bestSlot, false);
+                } else if (switchMode.is(SwitchMode.Silent)) {
+                    mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
                 }
+                timer.reset();
+                hasSwitch = true;
             }
         }
         if (targetPos != null) {
