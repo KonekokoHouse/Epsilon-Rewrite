@@ -115,6 +115,7 @@ public class ModuleManager {
                 NoRender.INSTANCE,
                 PopChams.INSTANCE,
                 AntiAlias.INSTANCE,
+                Filter.INSTANCE,
 
                 // Hud
                 NotificationsHud.INSTANCE,

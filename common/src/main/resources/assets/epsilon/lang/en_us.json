@@ -663,6 +663,8 @@
   "epsilon.modules.esp": "ESP",
   "epsilon.modules.esp.chests": "Chests",
   "epsilon.modules.esp.range": "Range",
+  "epsilon.modules.filter": "Filter",
+  "epsilon.modules.filter.base color": "Base Color",
   "epsilon.modules.fullbright": "Fullbright",
   "epsilon.modules.fullbright.mode": "Mode",
   "epsilon.modules.fullbright.mode.gamma": "Gamma",
