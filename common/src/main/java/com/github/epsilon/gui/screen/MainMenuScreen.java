@@ -168,7 +168,7 @@ public class MainMenuScreen extends Screen {
         rectRenderer.addRect(drawX, buttonY, layout.buttonWidth, layout.buttonLineHeight, MD3Theme.lerp(lineBase, lineHover, hover));
 
         float textY = buttonY + layout.buttonTextOffsetY;
-        textRenderer.addText(localizedTitle(entry.title), drawX, textY, layout.buttonTextScale, labelColor, StaticFontLoader.DUCKSANS);
+        textRenderer.addText(localizedTitle(entry.title), drawX, textY, layout.buttonTextScale, labelColor);
     }
 
     private static String localizedTitle(String title) {

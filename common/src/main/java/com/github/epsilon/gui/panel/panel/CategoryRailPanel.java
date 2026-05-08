@@ -99,12 +99,12 @@ public class CategoryRailPanel {
             float categoryStartY = getCategoryStartY(bounds);
             if (titleProgress > 0.02f) {
                 float titleY = bounds.y() + 7.0f;
-                float titleHeight = clippedTextRenderer.getHeight(titleScale, StaticFontLoader.DUCKSANS);
+                float titleHeight = clippedTextRenderer.getHeight(titleScale);
                 float pad = 3.0f;
                 float subtitleY = titleY + titleHeight + pad;
                 float titleOffset = (1.0f - titleProgress) * 8.0f;
                 float subtitleOffset = (1.0f - subtitleProgress) * 10.0f;
-                scope.text("Epsilon", bounds.x() + 38.0f + titleOffset, titleY, titleScale, MD3Theme.withAlpha(MD3Theme.TEXT_PRIMARY, (int) (255 * titleProgress)), StaticFontLoader.DUCKSANS);
+                scope.text("Epsilon", bounds.x() + 38.0f + titleOffset, titleY, titleScale, MD3Theme.withAlpha(MD3Theme.TEXT_PRIMARY, (int) (255 * titleProgress)));
                 if (subtitleProgress > 0.02f) {
                     scope.text(Epsilon.VERSION, bounds.x() + 38.0f + subtitleOffset, subtitleY, subtitleScale, MD3Theme.withAlpha(MD3Theme.TEXT_SECONDARY, (int) (210 * subtitleProgress)));
                 }
@@ -277,7 +277,7 @@ public class CategoryRailPanel {
         Color labelColor = selected ? MD3Theme.ON_SECONDARY_CONTAINER : MD3Theme.TEXT_PRIMARY;
         Color countColor = selected ? MD3Theme.ON_SECONDARY_CONTAINER : MD3Theme.TEXT_SECONDARY;
         float iconHeight = clippedTextRenderer.getHeight(itemIconScale, StaticFontLoader.ICONS);
-        float labelHeight = clippedTextRenderer.getHeight(itemLabelScale, StaticFontLoader.DUCKSANS);
+        float labelHeight = clippedTextRenderer.getHeight(itemLabelScale);
         float countHeight = clippedTextRenderer.getHeight(itemCountScale);
         float iconY = itemRect.y() + (itemRect.height() - iconHeight) / 2.0f - 2.0f;
         float labelY = itemRect.y() + (itemRect.height() - labelHeight) / 2.0f - 1.0f;
@@ -291,7 +291,7 @@ public class CategoryRailPanel {
             float textOffset = (1.0f - contentProgress) * 5.0f;
             Color animatedLabel = MD3Theme.withAlpha(labelColor, (int) (255 * contentProgress));
             Color animatedCount = MD3Theme.withAlpha(countColor, (int) (220 * contentProgress));
-            scope.text(category.getName(), itemRect.x() + 30.0f + textOffset, labelY, itemLabelScale, animatedLabel, StaticFontLoader.DUCKSANS);
+            scope.text(category.getName(), itemRect.x() + 30.0f + textOffset, labelY, itemLabelScale, animatedLabel);
             float countWidth = clippedTextRenderer.getWidth(Integer.toString(count), itemCountScale);
             scope.text(Integer.toString(count), itemRect.right() - 12.0f - countWidth, countY, itemCountScale, animatedCount);
         }
@@ -313,9 +313,9 @@ public class CategoryRailPanel {
         if (contentProgress > 0.02f) {
             float textOffset = (1.0f - contentProgress) * 5.0f;
             Color animatedLabel = MD3Theme.withAlpha(settingsLabelColor, (int) (255 * contentProgress));
-            float settingsLabelHeight = clippedTextRenderer.getHeight(itemLabelScale, StaticFontLoader.DUCKSANS);
+            float settingsLabelHeight = clippedTextRenderer.getHeight(itemLabelScale);
             float settingsLabelY = settingsRect.y() + (settingsRect.height() - settingsLabelHeight) / 2.0f - 1.0f;
-            scope.text(settingsLabelComponent.getTranslatedName(), settingsRect.x() + 30.0f + textOffset, settingsLabelY, itemLabelScale, animatedLabel, StaticFontLoader.DUCKSANS);
+            scope.text(settingsLabelComponent.getTranslatedName(), settingsRect.x() + 30.0f + textOffset, settingsLabelY, itemLabelScale, animatedLabel);
         }
     }
 

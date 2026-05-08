@@ -67,7 +67,7 @@ public class MessagePopup implements PanelPopupHost.Popup {
             String title = titleSupplier.get();
             String message = messageSupplier.get();
             String buttonLabel = buttonLabelSupplier.get();
-            scope.text(title, textX, popupY + 10.0f, titleScale, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+            scope.text(title, textX, popupY + 10.0f, titleScale, MD3Theme.TEXT_PRIMARY);
             scope.text(message, textX, popupY + 25.0f, messageScale, MD3Theme.TEXT_SECONDARY);
             if (detail != null && !detail.isBlank()) {
                 scope.text(detail, textX, popupY + 38.0f, detailScale, MD3Theme.TEXT_MUTED);

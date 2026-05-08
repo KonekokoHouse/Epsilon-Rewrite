@@ -80,7 +80,7 @@ public class ClientSettingPanel {
         int effectiveMouseY = popupConsumesHover ? Integer.MIN_VALUE : mouseY;
 
         PanelUiTree tree = PanelUiTree.build(scope -> {
-            scope.text(titleComponent.getTranslatedName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+            scope.text(titleComponent.getTranslatedName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY);
             buildTabs(scope, effectiveMouseX, effectiveMouseY);
         });
         PanelUiCompiler.render(tree, null, roundRectRenderer, rectRenderer, textRenderer);

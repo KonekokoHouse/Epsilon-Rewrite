@@ -102,7 +102,7 @@ public class ModuleListPanel {
         }
 
         PanelUiTree tree = PanelUiTree.build(scope -> {
-            scope.text(state.getSelectedCategory().getName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY, StaticFontLoader.DUCKSANS);
+            scope.text(state.getSelectedCategory().getName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 10.0f, 0.78f, MD3Theme.TEXT_PRIMARY);
             scope.text(modulesComponent.getTranslatedName(), bounds.x() + MD3Theme.PANEL_TITLE_INSET, bounds.y() + 21.0f, 0.56f, MD3Theme.TEXT_SECONDARY);
             buildSearchField(scope, mouseX, mouseY);
             scope.viewport(contentBuffer, viewport, guiHeight, state.getModuleScroll(), maxModuleScroll, contentHeight, content -> {
