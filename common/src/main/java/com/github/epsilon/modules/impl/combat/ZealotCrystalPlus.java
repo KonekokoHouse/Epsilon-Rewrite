@@ -55,16 +55,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 public class ZealotCrystalPlus extends Module {
 
@@ -739,7 +731,8 @@ public class ZealotCrystalPlus extends Module {
 
             if (snapshot.self().totalHealth() - adjustedDamage <= snapshot.settings().noSuicide()) continue;
             if (snapshot.self().totalHealth() - collidingDamage <= snapshot.settings().noSuicide()) continue;
-            if (!snapshot.settings().lethalOverride() && adjustedDamage > snapshot.settings().placeMaxSelfDamage()) continue;
+            if (!snapshot.settings().lethalOverride() && adjustedDamage > snapshot.settings().placeMaxSelfDamage())
+                continue;
 
             for (TargetSnapshot targetInfo : snapshot.targets()) {
                 if (targetInfo.box().intersects(placeBox)) continue;
@@ -832,7 +825,8 @@ public class ZealotCrystalPlus extends Module {
         for (CrystalSnapshot crystal : crystalList) {
             float selfDamage = calcDamage(snapshot.self(), crystal.pos(), snapshot.resistantBlocks());
             if (snapshot.self().totalHealth() - selfDamage <= snapshot.settings().noSuicide()) continue;
-            if (!snapshot.settings().lethalOverride() && selfDamage > snapshot.settings().breakMaxSelfDamage()) continue;
+            if (!snapshot.settings().lethalOverride() && selfDamage > snapshot.settings().breakMaxSelfDamage())
+                continue;
 
             for (TargetSnapshot targetInfo : snapshot.targets()) {
                 float targetDamage = calcDamage(targetInfo, crystal.pos(), snapshot.resistantBlocks(), snapshot.self().difficulty());
@@ -1094,7 +1088,8 @@ public class ZealotCrystalPlus extends Module {
             case Target -> crystalPlaceBoxIntersects(placeInfo.blockPos(), getCrystalBoundingBox(crystalPos));
             case Own -> crystalPlaceBoxIntersects(placeInfo.blockPos(), getCrystalBoundingBox(crystalPos))
                     || (placedPosMap.containsKey(toLong(packet.getX(), packet.getY() - 1.0, packet.getZ())) && checkBreakDamage(snapshot, crystalPos));
-            case Smart -> crystalPlaceBoxIntersects(placeInfo.blockPos(), getCrystalBoundingBox(crystalPos)) || checkBreakDamage(snapshot, crystalPos);
+            case Smart ->
+                    crystalPlaceBoxIntersects(placeInfo.blockPos(), getCrystalBoundingBox(crystalPos)) || checkBreakDamage(snapshot, crystalPos);
             case All -> true;
             case Off -> false;
         };
@@ -1521,8 +1516,9 @@ public class ZealotCrystalPlus extends Module {
         return switch (swingHand.getValue()) {
             case OffHand -> InteractionHand.OFF_HAND;
             case MainHand -> InteractionHand.MAIN_HAND;
-            case Auto -> (placing && mc.player.getOffhandItem().is(Items.END_CRYSTAL)) || !mc.player.getOffhandItem().is(Items.GOLDEN_APPLE)
-                    ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+            case Auto ->
+                    (placing && mc.player.getOffhandItem().is(Items.END_CRYSTAL)) || !mc.player.getOffhandItem().is(Items.GOLDEN_APPLE)
+                            ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         };
     }
 

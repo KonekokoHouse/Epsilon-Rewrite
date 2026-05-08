@@ -1,6 +1,5 @@
 package com.github.epsilon.gui.panel.popup;
 
-import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.dsl.PanelRenderBatch;

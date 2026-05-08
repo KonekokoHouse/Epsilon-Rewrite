@@ -5,7 +5,6 @@ import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.gui.panel.utils.IMEFocusHelper;
-import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.modules.HudModule;
 import com.github.epsilon.modules.impl.hud.notification.NotificationManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
