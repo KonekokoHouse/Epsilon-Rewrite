@@ -9,7 +9,7 @@ layout(std140) uniform BlurUniforms {
     vec4 Params3;
 };
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 float roundedBoxSDF(vec2 center, vec2 size, vec4 r) {
     vec2 r_side = (center.x > 0.0) ? r.yz : r.xw;

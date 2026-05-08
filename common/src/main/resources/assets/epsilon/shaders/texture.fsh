@@ -1,10 +1,10 @@
 #version 410 core
 
-smooth in vec2 f_Position;
-smooth in vec4 f_Color;
-smooth in vec2 f_TexCoord;
-flat in vec4 f_InnerRect;
-flat in vec4 f_Radius;
+in vec2 f_Position;
+in vec4 f_Color;
+in vec2 f_TexCoord;
+in vec4 f_InnerRect;
+in vec4 f_Radius;
 
 layout(location = 0) out vec4 fragColor;
 

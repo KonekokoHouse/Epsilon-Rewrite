@@ -434,9 +434,16 @@ public class ZealotCrystalPlus extends Module {
     }
 
     private void waitForSignal(long millis, int nanos) throws InterruptedException {
+        long normalizedMillis = Math.max(0L, millis);
+        int normalizedNanos = Math.max(0, nanos);
+        if (normalizedNanos >= 1_000_000) {
+            normalizedMillis += normalizedNanos / 1_000_000L;
+            normalizedNanos %= 1_000_000;
+        }
+
         synchronized (workerSignal) {
-            if (millis > 0 || nanos > 0) {
-                workerSignal.wait(millis, nanos);
+            if (normalizedMillis > 0 || normalizedNanos > 0) {
+                workerSignal.wait(normalizedMillis, normalizedNanos);
             } else {
                 workerSignal.wait(1L);
             }
