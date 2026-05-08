@@ -73,6 +73,7 @@ public class HudEditorInspector {
         this.lastScreenWidth = screenWidth;
         this.lastScreenHeight = screenHeight;
         this.bounds = computeBounds(screenWidth, screenHeight);
+        popupHost.setOverlayBounds(bounds);
         this.headerBounds = new PanelLayout.Rect(bounds.x(), bounds.y(), bounds.width(), HEADER_HEIGHT);
         float buttonX = bounds.x() + bounds.width() - MD3Theme.PANEL_TITLE_INSET - COLLAPSE_BUTTON_SIZE;
         float buttonY = bounds.y() + (HEADER_HEIGHT - COLLAPSE_BUTTON_SIZE) * 0.5f;
@@ -155,6 +156,7 @@ public class HudEditorInspector {
 
     public void renderPopups(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         settingList.getPopupHost().render(graphics, mouseX, mouseY, partialTick);
+        settingList.getPopupHost().flush();
     }
 
     public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
