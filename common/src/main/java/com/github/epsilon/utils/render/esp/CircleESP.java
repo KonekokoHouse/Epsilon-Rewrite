@@ -70,10 +70,10 @@ public class CircleESP {
 
             Vector2f nextPoint = getPoint(nextAngle, radius);
             Vector2f linePoint = getPoint(radAngle, radius);
-            Vector3f normal = getNormal(radAngle);
+            Vector2f normal = getNormal(radAngle);
 
-            lineBuffer.addVertex(entry, linePoint.x, 0, linePoint.y).setColor(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), Math.round(lineColor.getAlpha() * alpha)).setNormal(entry, normal.x, normal.y, normal.z).setLineWidth(2f);
-            lineBuffer.addVertex(entry, nextPoint.x, 0, nextPoint.y).setColor(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), Math.round(lineColor.getAlpha() * alpha)).setNormal(entry, normal.x, normal.y, normal.z).setLineWidth(2f);
+            lineBuffer.addVertex(entry, linePoint.x, 0f, linePoint.y).setColor(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), Math.round(lineColor.getAlpha() * alpha)).setNormal(entry, normal.x, 0f, normal.y).setLineWidth(2f);
+            lineBuffer.addVertex(entry, nextPoint.x, 0f, nextPoint.y).setColor(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), Math.round(lineColor.getAlpha() * alpha)).setNormal(entry, normal.x, 0f, normal.y).setLineWidth(2f);
         }
 
         Render3DUtils.LINES.draw(lineBuffer.buildOrThrow());
@@ -81,12 +81,12 @@ public class CircleESP {
         poseStack.popPose();
     }
 
-    private static Vector3f getNormal(float radAngle) {
-        return new Vector3f((float) -Math.cos(radAngle), 0.0f, (float) -Math.sin(radAngle));
-    }
-
     private static Vector2f getPoint(float radAngle, float radius) {
         return new Vector2f((float) (-Math.sin(radAngle) * radius), (float) (Math.cos(radAngle) * radius));
+    }
+
+    private static Vector2f getNormal(float radAngle) {
+        return new Vector2f((float) -Math.cos(radAngle), (float) -Math.sin(radAngle));
     }
 
 }

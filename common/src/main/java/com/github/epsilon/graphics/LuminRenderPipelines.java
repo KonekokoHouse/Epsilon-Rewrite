@@ -45,6 +45,14 @@ public class LuminRenderPipelines {
             .withCull(false)
             .build();
 
+    public final static RenderPipeline ROUND_RECT_OUTLINE = RenderPipeline.builder(NO_BLEND_DEPTH_SNIPPET)
+            .withLocation(ResourceLocationUtils.getIdentifier("pipelines/round_rectangle_outline"))
+            .withVertexFormat(LuminVertexFormats.ROUND_RECT_OUTLINE, VertexFormat.Mode.QUADS)
+            .withVertexShader(ResourceLocationUtils.getIdentifier("round_rectangle_outline"))
+            .withFragmentShader(ResourceLocationUtils.getIdentifier("round_rectangle_outline"))
+            .withCull(false)
+            .build();
+
     public final static RenderPipeline SHADOW = RenderPipeline.builder(NO_BLEND_DEPTH_SNIPPET)
             .withLocation(ResourceLocationUtils.getIdentifier("pipelines/shadow"))
             .withVertexFormat(LuminVertexFormats.ROUND_RECT, VertexFormat.Mode.QUADS)
