@@ -156,11 +156,11 @@ public class MainMenuScreen extends Screen {
 
 
         Color lineBase = applyAlpha(MD3Theme.TEXT_MUTED, 0.70f * appear);
-        Color lineHover = applyAlpha(entry.title.equals("Quit") ? MD3Theme.ERROR : MD3Theme.PRIMARY, 0.98f * appear);
+        Color lineHover = applyAlpha(MD3Theme.PRIMARY, 0.98f * appear);
 
         Color labelColor = MD3Theme.lerp(
                 applyAlpha(MD3Theme.TEXT_PRIMARY, 0.94f * appear),
-                applyAlpha(entry.title.equals("Quit") ? MD3Theme.ON_TERTIARY_CONTAINER : MD3Theme.ON_PRIMARY_CONTAINER, 0.98f * appear),
+                applyAlpha(MD3Theme.ON_PRIMARY_CONTAINER, 0.98f * appear),
                 hover * 0.68f
         );
 

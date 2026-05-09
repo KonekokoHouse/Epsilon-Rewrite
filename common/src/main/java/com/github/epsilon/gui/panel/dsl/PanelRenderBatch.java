@@ -8,7 +8,9 @@ import com.github.epsilon.graphics.renderers.*;
  * 一个批次持有阴影、圆角矩形、矩形和文本四类 renderer，负责承接
  * {@link PanelUiCompiler} 的编译输出，并在统一阶段执行 flush 或 clear。
  */
-public record PanelRenderBatch(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
+public record PanelRenderBatch(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
+                               RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer,
+                               TextRenderer textRenderer) {
 
     public PanelRenderBatch() {
         this(new ShadowRenderer(), new RoundRectRenderer(), new RoundRectOutlineRenderer(), new RectRenderer(), new TextRenderer());

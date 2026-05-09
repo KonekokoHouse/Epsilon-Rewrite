@@ -337,7 +337,9 @@ public class PanelUiCompiler {
         }
     }
 
-    private record RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer, PanelContentBuffer buffer) {
+    private record RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
+                                RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer,
+                                TextRenderer textRenderer, PanelContentBuffer buffer) {
         private RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
             this(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer, null);
         }
