@@ -4,6 +4,7 @@ import com.github.epsilon.graphics.renderers.*;
 import com.github.epsilon.graphics.text.ttf.TtfFontLoader;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
+import com.github.epsilon.gui.panel.component.PanelElements;
 import com.github.epsilon.gui.panel.utils.PanelContentBuffer;
 
 import java.awt.*;
@@ -258,30 +259,7 @@ public class PanelUiCompiler {
     }
 
     private static void renderSwitch(RenderTarget target, PanelLayout.Rect bounds, float toggleProgress, float hoverProgress) {
-        Color track = MD3Theme.switchTrack(toggleProgress);
-        Color knob = MD3Theme.switchKnob(toggleProgress);
-        Color outline = MD3Theme.switchTrackOutline(toggleProgress, hoverProgress);
-        float knobSize = 8.0f + 3.0f * toggleProgress;
-        float knobTravel = bounds.width() - 10.0f - knobSize;
-        float knobX = bounds.x() + 5.0f + knobTravel * toggleProgress;
-        float knobY = bounds.centerY() - knobSize / 2.0f;
-        target.roundRectRenderer().addRoundRect(bounds.x(), bounds.y(), bounds.width(), bounds.height(), bounds.height() / 2.0f, track);
-        if (outline.getAlpha() > 0 && target.roundRectOutlineRenderer() != null) {
-            target.roundRectOutlineRenderer().addOutline(
-                    bounds.x(), bounds.y(), bounds.width(), bounds.height(),
-                    bounds.height() / 2.0f,
-                    MD3Theme.switchTrackOutlineWidth(toggleProgress),
-                    outline
-            );
-        }
-        if (hoverProgress > 0.02f) {
-            float haloSize = 16.0f;
-            float haloX = knobX + knobSize / 2.0f - haloSize / 2.0f;
-            float haloY = bounds.centerY() - haloSize / 2.0f;
-            target.roundRectRenderer().addRoundRect(haloX, haloY, haloSize, haloSize, haloSize / 2.0f,
-                    MD3Theme.stateLayer(MD3Theme.TEXT_PRIMARY, hoverProgress, 18));
-        }
-        target.roundRectRenderer().addRoundRect(knobX, knobY, knobSize, knobSize, knobSize / 2.0f, knob);
+        PanelElements.drawSwitch(target.roundRectRenderer(), target.roundRectOutlineRenderer(), bounds, toggleProgress, hoverProgress);
     }
 
     private static void renderFilledField(RenderTarget target, PanelLayout.Rect bounds, boolean focused, float hoverProgress) {

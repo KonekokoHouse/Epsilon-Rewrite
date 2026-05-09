@@ -65,8 +65,13 @@ public class MD3Theme {
     public static final float CONTROL_HEIGHT = 18.0f;
     public static final float CONTROL_RADIUS = 7.0f;
     public static final float COMPACT_CHIP_HEIGHT = 16.0f;
-    public static final float SWITCH_WIDTH = 30.0f;
+    public static final float SWITCH_WIDTH = 26.0f;
     public static final float SWITCH_HEIGHT = 16.0f;
+    public static final float SWITCH_HANDLE_SIZE_OFF = 8.0f;
+    public static final float SWITCH_HANDLE_SIZE_ON = 12.0f;
+    public static final float SWITCH_HANDLE_INSET_OFF = 4.0f;
+    public static final float SWITCH_HANDLE_INSET_ON = 2.0f;
+    public static final float SWITCH_STATE_LAYER_SIZE = 20.0f;
 
     private MD3Theme() {
     }
