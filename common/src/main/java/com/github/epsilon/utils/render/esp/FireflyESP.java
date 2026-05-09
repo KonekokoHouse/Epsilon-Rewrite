@@ -1,7 +1,6 @@
 package com.github.epsilon.utils.render.esp;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
-import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.utils.render.ColorUtils;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -19,12 +18,10 @@ import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 
 import java.awt.*;
-import java.util.function.Function;
 
 public class FireflyESP {
 

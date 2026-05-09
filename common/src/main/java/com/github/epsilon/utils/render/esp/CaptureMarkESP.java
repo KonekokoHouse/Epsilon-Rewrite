@@ -1,7 +1,6 @@
 package com.github.epsilon.utils.render.esp;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
-import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.utils.render.ColorUtils;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
