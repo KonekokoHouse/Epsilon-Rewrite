@@ -9,10 +9,12 @@ import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.math.MathUtils;
-import com.github.epsilon.utils.render.esp.CaptureMark;
-import com.github.epsilon.utils.render.esp.Firefly;
+import com.github.epsilon.utils.render.esp.CaptureMarkESP;
+import com.github.epsilon.utils.render.esp.CircleESP;
+import com.github.epsilon.utils.render.esp.FireflyESP;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,6 +44,7 @@ public class KillAura extends Module {
 
     private enum ESPMode {
         CaptureMark,
+        Circle,
         Firefly
     }
 
@@ -69,7 +72,7 @@ public class KillAura extends Module {
 
     private final BoolSetting esp = boolSetting("ESP", true);
 
-    private final EnumSetting<ESPMode> espMode = enumSetting("ESP Mode", ESPMode.Firefly, esp::getValue);
+    private final EnumSetting<ESPMode> espMode = enumSetting("ESP Mode", ESPMode.Circle, esp::getValue);
 
     private final ColorSetting espColor1 = colorSetting("ESP Main", new Color(255, 183, 197), () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
     private final ColorSetting espColor2 = colorSetting("ESP Second", new Color(255, 133, 161), () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
@@ -77,14 +80,18 @@ public class KillAura extends Module {
     private final DoubleSetting espRotSpeed = doubleSetting("Rot Speed", 2.0, 0.5, 10.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
     private final DoubleSetting waveSpeed = doubleSetting("Wave Speed", 3.0, 0.5, 10.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.CaptureMark));
 
+    private final ColorSetting sideColor = colorSetting("Side Color", Color.WHITE, false);
+    private final ColorSetting lineColor = colorSetting("Line Color", new Color(255, 255, 255, 233), () -> esp.getValue() && espMode.is(ESPMode.Circle));
+    private final DoubleSetting circleRadius = doubleSetting("Circle Radius", 0.75, 0.1, 2.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Circle));
+
     private final ColorSetting fireflyColor = colorSetting("Firefly Color", new Color(149, 149, 149, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
-    private final EnumSetting<Firefly.ColorMode> fireflyColorMode = enumSetting("Firefly Color Mode", Firefly.ColorMode.Blend, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
-    private final ColorSetting fireflyColor2 = colorSetting("Firefly Color 2", new Color(255, 133, 161, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
-    private final DoubleSetting fireflyColorMix = doubleSetting("Firefly Color Mix", 0.65, 0.0, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
-    private final DoubleSetting fireflyColorSpeed = doubleSetting("Firefly Color Speed", 1.2, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Blend));
-    private final DoubleSetting fireflyRainbowSpeed = doubleSetting("Firefly Rainbow Speed", 1.0, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Rainbow));
-    private final DoubleSetting fireflyRainbowSaturation = doubleSetting("Firefly Rainbow Saturation", 0.85, 0.1, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Rainbow));
-    private final DoubleSetting fireflyRainbowBrightness = doubleSetting("Firefly Rainbow Brightness", 1.0, 0.1, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(Firefly.ColorMode.Rainbow));
+    private final EnumSetting<FireflyESP.ColorMode> fireflyColorMode = enumSetting("Firefly Color Mode", FireflyESP.ColorMode.Blend, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
+    private final ColorSetting fireflyColor2 = colorSetting("Firefly Color 2", new Color(255, 133, 161, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Blend));
+    private final DoubleSetting fireflyColorMix = doubleSetting("Firefly Color Mix", 0.65, 0.0, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Blend));
+    private final DoubleSetting fireflyColorSpeed = doubleSetting("Firefly Color Speed", 1.2, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Blend));
+    private final DoubleSetting fireflyRainbowSpeed = doubleSetting("Firefly Rainbow Speed", 1.0, 0.1, 6.0, 0.1, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Rainbow));
+    private final DoubleSetting fireflyRainbowSaturation = doubleSetting("Firefly Rainbow Saturation", 0.85, 0.1, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Rainbow));
+    private final DoubleSetting fireflyRainbowBrightness = doubleSetting("Firefly Rainbow Brightness", 1.0, 0.1, 1.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Firefly) && fireflyColorMode.is(FireflyESP.ColorMode.Rainbow));
     private final IntSetting fireflyLength = intSetting("Firefly Length", 14, 8, 128, 1, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
     private final IntSetting fireflyFactor = intSetting("Firefly Factor", 8, 1, 10, 1, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
     private final DoubleSetting fireflyShaking = doubleSetting("Firefly Shaking", 1.8, 0.25, 10.0, 0.25, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
@@ -186,15 +193,36 @@ public class KillAura extends Module {
 
     @EventHandler
     private void onRender3D(Render3DEvent event) {
-        if (nullCheck() || !esp.getValue() || target == null) return;
+        if (!esp.getValue()) return;
+
+        if (target == null) return;
+
+        PoseStack stack = event.getPoseStack();
 
         switch (espMode.getValue()) {
             case CaptureMark -> {
-                CaptureMark.render(event.getPoseStack(), target, espSize.getValue(), espRotSpeed.getValue(), waveSpeed.getValue(), espColor1.getValue(), espColor2.getValue());
+                CaptureMarkESP.render(
+                        stack,
+                        target,
+                        espSize.getValue(),
+                        espRotSpeed.getValue(),
+                        waveSpeed.getValue(),
+                        espColor1.getValue(),
+                        espColor2.getValue()
+                );
+            }
+            case Circle -> {
+                CircleESP.render(
+                        stack,
+                        target,
+                        circleRadius.getValue().floatValue(),
+                        sideColor.getValue(),
+                        lineColor.getValue()
+                );
             }
             case Firefly -> {
-                Firefly.render(
-                        event.getPoseStack(),
+                FireflyESP.render(
+                        stack,
                         target,
                         fireflyLength.getValue(),
                         fireflyFactor.getValue(),

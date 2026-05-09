@@ -1,16 +1,8 @@
 package com.github.epsilon.utils.render;
 
-import com.github.epsilon.assets.resources.ResourceLocationUtils;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
+import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
@@ -23,29 +15,6 @@ import java.awt.*;
 public class Render3DUtils {
 
     static Minecraft mc = Minecraft.getInstance();
-
-    private static final RenderPipeline FILLED_BOX_PIPELINE = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
-            .withLocation(ResourceLocationUtils.getIdentifier("pipeline/filled_box"))
-            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
-            .withCull(false)
-            .build();
-
-    private static final RenderType FILLED_BOX = RenderType.create("sakura_filled_box",
-            RenderSetup.builder(FILLED_BOX_PIPELINE)
-                    .sortOnUpload()
-                    .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .createRenderSetup());
-
-    private static final RenderPipeline LINES_PIPELINE = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
-            .withLocation(ResourceLocationUtils.getIdentifier("pipeline/lines"))
-            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
-            .withCull(false)
-            .build();
-
-    private static final RenderType LINES = RenderType.create("sakura_lines", RenderSetup.builder(LINES_PIPELINE)
-            .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-            .setOutputTarget(OutputTarget.ITEM_ENTITY_TARGET)
-            .createRenderSetup());
 
     public static void drawFilledBox(BlockPos blockPos, Color color) {
         drawFilledBox(new AABB(blockPos), color.getRGB());
@@ -103,7 +72,7 @@ public class Render3DUtils {
         vertex(buffer, matrix, minX, maxY, maxZ, c1);
         vertex(buffer, matrix, minX, maxY, minZ, c1);
 
-        FILLED_BOX.draw(buffer.buildOrThrow());
+        LuminRenderPipelines.FILLED_BOX.draw(buffer.buildOrThrow());
     }
 
     public static void drawOutlineBox(PoseStack stack, BlockPos blockPos, Color color) {
@@ -147,7 +116,7 @@ public class Render3DUtils {
         vertexLine(buffer, matrix, entry, maxX, minY, maxZ, maxX, maxY, maxZ, color, thickness);
         vertexLine(buffer, matrix, entry, minX, minY, maxZ, minX, maxY, maxZ, color, thickness);
 
-        LINES.draw(buffer.buildOrThrow());
+        LuminRenderPipelines.LINES.draw(buffer.buildOrThrow());
     }
 
     private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z, int color) {

@@ -1,6 +1,7 @@
 package com.github.epsilon.utils.render.esp;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.utils.render.ColorUtils;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -24,28 +25,25 @@ import org.joml.Matrix4f;
 
 import java.awt.*;
 
-public class CaptureMark {
+public class CaptureMarkESP {
 
     private static final Minecraft mc = Minecraft.getInstance();
 
-    private static final Identifier CAPTUREMARK = ResourceLocationUtils.getIdentifier("textures/particles/target.png");
+    private static final Identifier CAPTUREMARK_TEX = ResourceLocationUtils.getIdentifier("textures/particles/target.png");
 
     private static final RenderPipeline TARGET_ICON_PIPELINE = RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
-            .withLocation("pipeline/sakura_target_icon")
+            .withLocation("pipeline/epsilon_target_icon")
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
             .build();
 
-    private static final RenderType TARGET_ICON_LAYER = RenderType.create(
-            "sakura_target_icon",
-            RenderSetup.builder(TARGET_ICON_PIPELINE)
-                    .withTexture("Sampler0", CAPTUREMARK)
-                    .sortOnUpload()
-                    .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .setOutputTarget(OutputTarget.MAIN_TARGET)
-                    .createRenderSetup()
-    );
+    private static final RenderType TARGET_ICON_LAYER = RenderType.create("epsilon_target_icon", RenderSetup.builder(TARGET_ICON_PIPELINE)
+            .withTexture("Sampler0", CAPTUREMARK_TEX)
+            .sortOnUpload()
+            .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
+            .setOutputTarget(OutputTarget.MAIN_TARGET)
+            .createRenderSetup());
 
     public static void render(PoseStack poseStack, LivingEntity target, double espSize, double rotSpeed, double waveSpeed, Color color1, Color color2) {
         double timeSeconds = System.nanoTime() * 1.0E-9;
