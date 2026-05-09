@@ -145,7 +145,7 @@ public class HudEditorInspector {
 
         settingList.layoutRows(settings, viewport, scroll, rowWidth, (_, row, rowBounds) -> {
             float hover = rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f;
-            row.render(graphics, contentBuffer.roundRectRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hover, effectiveMouseX, effectiveMouseY, partialTick);
+            row.render(graphics, contentBuffer.roundRectRenderer(), contentBuffer.roundRectOutlineRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hover, effectiveMouseX, effectiveMouseY, partialTick);
         });
 
         flushChrome();

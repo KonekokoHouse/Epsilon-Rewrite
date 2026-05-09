@@ -125,7 +125,7 @@ public class ModuleDetailPanel {
                 }
                 Animation hoverAnimation = hoverAnimations.computeIfAbsent(setting, ignored -> new Animation(Easing.EASE_OUT_CUBIC, 120L));
                 hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
-                row.render(GuiGraphicsExtractor, contentBuffer.roundRectRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
+                row.render(GuiGraphicsExtractor, contentBuffer.roundRectRenderer(), contentBuffer.roundRectOutlineRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
                 contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
             });
 

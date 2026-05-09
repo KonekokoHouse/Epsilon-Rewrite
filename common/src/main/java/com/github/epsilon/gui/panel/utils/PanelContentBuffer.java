@@ -1,9 +1,6 @@
 package com.github.epsilon.gui.panel.utils;
 
-import com.github.epsilon.graphics.renderers.RectRenderer;
-import com.github.epsilon.graphics.renderers.RoundRectRenderer;
-import com.github.epsilon.graphics.renderers.ShadowRenderer;
-import com.github.epsilon.graphics.renderers.TextRenderer;
+import com.github.epsilon.graphics.renderers.*;
 import com.github.epsilon.graphics.text.ttf.TtfFontLoader;
 import com.github.epsilon.gui.panel.PanelLayout;
 import net.minecraft.client.Minecraft;
@@ -21,6 +18,7 @@ import java.util.List;
 public class PanelContentBuffer {
 
     private final RoundRectRenderer roundRectRenderer = new RoundRectRenderer();
+    private final RoundRectOutlineRenderer roundRectOutlineRenderer = new RoundRectOutlineRenderer();
     private final RectRenderer rectRenderer = new RectRenderer();
     private final ShadowRenderer shadowRenderer = new ShadowRenderer();
     private final TextRenderer textRenderer = new TextRenderer();
@@ -38,6 +36,10 @@ public class PanelContentBuffer {
 
     public RectRenderer rectRenderer() {
         return rectRenderer;
+    }
+
+    public RoundRectOutlineRenderer roundRectOutlineRenderer() {
+        return roundRectOutlineRenderer;
     }
 
     public ShadowRenderer shadowRenderer() {
@@ -71,6 +73,7 @@ public class PanelContentBuffer {
     private void clearContent() {
         shadowRenderer.clear();
         roundRectRenderer.clear();
+        roundRectOutlineRenderer.clear();
         rectRenderer.clear();
         textRenderer.clear();
     }
@@ -87,7 +90,7 @@ public class PanelContentBuffer {
      * @param contentHeight 内容总高度
      */
     public void queueViewport(PanelLayout.Rect viewport, int guiHeight, float scroll, float maxScroll, float contentHeight) {
-        PanelScissor.apply(viewport, rectRenderer, roundRectRenderer, shadowRenderer, textRenderer, guiHeight);
+        PanelScissor.apply(viewport, rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, textRenderer, guiHeight);
         scrollBarRenderer.clear();
         ScrollBarUtils.draw(scrollBarRenderer, viewport, scroll, maxScroll, contentHeight);
         pendingViewport = viewport;
@@ -104,9 +107,10 @@ public class PanelContentBuffer {
         }
         shadowRenderer.draw();
         roundRectRenderer.draw();
+        roundRectOutlineRenderer.draw();
         rectRenderer.draw();
         textRenderer.draw();
-        PanelScissor.clear(rectRenderer, roundRectRenderer, shadowRenderer, textRenderer);
+        PanelScissor.clear(rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, textRenderer);
         flushMarqueeTexts();
         scrollBarRenderer.draw();
         scrollBarRenderer.clear();

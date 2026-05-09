@@ -2,10 +2,7 @@ package com.github.epsilon.gui.panel;
 
 import com.github.epsilon.assets.holders.TranslateHolder;
 import com.github.epsilon.graphics.LuminRenderSystem;
-import com.github.epsilon.graphics.renderers.RectRenderer;
-import com.github.epsilon.graphics.renderers.RoundRectRenderer;
-import com.github.epsilon.graphics.renderers.ShadowRenderer;
-import com.github.epsilon.graphics.renderers.TextRenderer;
+import com.github.epsilon.graphics.renderers.*;
 import com.github.epsilon.gui.panel.dsl.PanelRenderBatch;
 import com.github.epsilon.gui.panel.input.PanelInputRouter;
 import com.github.epsilon.gui.panel.panel.CategoryRailPanel;
@@ -39,8 +36,9 @@ public class PanelScreen extends Screen {
     private final TextRenderer textRenderer = new TextRenderer();
     private final RectRenderer rectRenderer = new RectRenderer();
     private final RoundRectRenderer roundRectRenderer = new RoundRectRenderer();
+    private final RoundRectOutlineRenderer roundRectOutlineRenderer = new RoundRectOutlineRenderer();
     private final ShadowRenderer shadowRenderer = new ShadowRenderer();
-    private final PanelRenderBatch renderBatch = new PanelRenderBatch(shadowRenderer, roundRectRenderer, rectRenderer, textRenderer);
+    private final PanelRenderBatch renderBatch = new PanelRenderBatch(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer);
     private final PanelPopupHost popupHost = new PanelPopupHost();
     private final PanelInputRouter inputRouter = new PanelInputRouter();
     private final CategoryRailPanel categoryRailPanel = new CategoryRailPanel(state, rectRenderer, roundRectRenderer, textRenderer);

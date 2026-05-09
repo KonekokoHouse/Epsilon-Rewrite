@@ -1,6 +1,7 @@
 package com.github.epsilon.gui.panel.component;
 
 import com.github.epsilon.graphics.renderers.RectRenderer;
+import com.github.epsilon.graphics.renderers.RoundRectOutlineRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.gui.panel.PanelLayout;
@@ -30,9 +31,9 @@ public abstract class SettingRow<T extends Setting<?>> {
         return 28.0f;
     }
 
-    public void render(GuiGraphicsExtractor GuiGraphicsExtractor, RoundRectRenderer roundRectRenderer, RectRenderer rectRenderer, TextRenderer textRenderer, PanelLayout.Rect bounds, float hoverProgress, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphicsExtractor GuiGraphicsExtractor, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer, PanelLayout.Rect bounds, float hoverProgress, int mouseX, int mouseY, float partialTick) {
         PanelUiTree tree = PanelUiTree.build(scope -> buildUi(scope, GuiGraphicsExtractor, textRenderer, bounds, hoverProgress, mouseX, mouseY, partialTick));
-        PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
+        PanelUiCompiler.render(tree, null, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer);
     }
 
     public void buildUi(PanelUiTree.Scope scope, GuiGraphicsExtractor guiGraphics, TextRenderer textRenderer,

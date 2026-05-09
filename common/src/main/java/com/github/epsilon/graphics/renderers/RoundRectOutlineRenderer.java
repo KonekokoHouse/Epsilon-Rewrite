@@ -29,9 +29,31 @@ public class RoundRectOutlineRenderer implements IRenderer {
         addOutline(x, y, width, height, radius, radius, radius, radius, outlineWidth, color);
     }
 
-    public void addOutline(float x, float y, float width, float height,
-                           float radiusTopLeft, float radiusTopRight, float radiusBottomRight, float radiusBottomLeft,
-                           float outlineWidth, Color color) {
+    public void addOutline(float x, float y, float width, float height, float radiusTopLeft, float radiusTopRight, float radiusBottomRight, float radiusBottomLeft, float outlineWidth, Color color) {
+        addOutlineGradient(x, y, width, height, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, color, color, color, color
+        );
+    }
+
+    public void addVerticalGradient(float x, float y, float width, float height, float radius, float outlineWidth, Color top, Color bottom) {
+        addVerticalGradient(x, y, width, height, radius, radius, radius, radius, outlineWidth, top, bottom);
+    }
+
+    public void addVerticalGradient(float x, float y, float width, float height, float radiusTopLeft, float radiusTopRight, float radiusBottomRight, float radiusBottomLeft, float outlineWidth, Color top, Color bottom) {
+        addOutlineGradient(x, y, width, height, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, top, bottom, bottom, top);
+    }
+
+    public void addHorizontalGradient(float x, float y, float width, float height, float radius, float outlineWidth, Color left, Color right) {
+        addHorizontalGradient(x, y, width, height, radius, radius, radius, radius, outlineWidth, left, right);
+    }
+
+    public void addHorizontalGradient(float x, float y, float width, float height, float radiusTopLeft, float radiusTopRight, float radiusBottomRight, float radiusBottomLeft, float outlineWidth, Color left, Color right) {
+        addOutlineGradient(x, y, width, height, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, left, left, right, right);
+    }
+
+    /**
+     * 颜色顺序对应四个角顶点：左上、左下、右下、右上 (TL, BL, BR, TR)
+     */
+    public void addOutlineGradient(float x, float y, float width, float height, float radiusTopLeft, float radiusTopRight, float radiusBottomRight, float radiusBottomLeft, float outlineWidth, Color colorTopLeft, Color colorBottomLeft, Color colorBottomRight, Color colorTopRight) {
         if (outlineWidth <= 0.0f) return;
 
         buffer.tryMap();
@@ -43,18 +65,18 @@ public class RoundRectOutlineRenderer implements IRenderer {
         float outerY1 = y - halfOutline;
         float outerX2 = x2 + halfOutline;
         float outerY2 = y2 + halfOutline;
-        int argb = ARGB.toABGR(color.getRGB());
+        int argbTopLeft = ARGB.toABGR(colorTopLeft.getRGB());
+        int argbBottomLeft = ARGB.toABGR(colorBottomLeft.getRGB());
+        int argbBottomRight = ARGB.toABGR(colorBottomRight.getRGB());
+        int argbTopRight = ARGB.toABGR(colorTopRight.getRGB());
 
-        addVertex(outerX1, outerY1, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argb);
-        addVertex(outerX1, outerY2, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argb);
-        addVertex(outerX2, outerY2, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argb);
-        addVertex(outerX2, outerY1, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argb);
+        addVertex(outerX1, outerY1, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argbTopLeft);
+        addVertex(outerX1, outerY2, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argbBottomLeft);
+        addVertex(outerX2, outerY2, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argbBottomRight);
+        addVertex(outerX2, outerY1, x, y, x2, y2, radiusTopLeft, radiusTopRight, radiusBottomRight, radiusBottomLeft, outlineWidth, argbTopRight);
     }
 
-    private void addVertex(float vx, float vy,
-                           float rx1, float ry1, float rx2, float ry2,
-                           float r1, float r2, float r3, float r4,
-                           float outlineWidth, int color) {
+    private void addVertex(float vx, float vy, float rx1, float ry1, float rx2, float ry2, float r1, float r2, float r3, float r4, float outlineWidth, int color) {
         long baseAddr = MemoryUtil.memAddress(buffer.getMappedBuffer());
         long p = baseAddr + currentOffset;
 
@@ -123,4 +145,5 @@ public class RoundRectOutlineRenderer implements IRenderer {
     public void close() {
         buffer.close();
     }
+
 }

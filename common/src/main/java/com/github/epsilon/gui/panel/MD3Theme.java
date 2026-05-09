@@ -176,6 +176,25 @@ public class MD3Theme {
         return isLightTheme() ? TEXT_SECONDARY : TEXT_MUTED;
     }
 
+    public static Color switchTrack(float toggleProgress) {
+        return lerp(SURFACE_CONTAINER_HIGHEST, PRIMARY, toggleProgress);
+    }
+
+    public static Color switchKnob(float toggleProgress) {
+        return lerp(OUTLINE, ON_PRIMARY, toggleProgress);
+    }
+
+    public static Color switchTrackOutline(float toggleProgress, float hoverProgress) {
+        float inactive = 1.0f - Mth.clamp(toggleProgress, 0.0f, 1.0f);
+        float hoverMix = Mth.clamp(hoverProgress * 0.35f, 0.0f, 1.0f);
+        Color base = lerp(OUTLINE, TEXT_PRIMARY, hoverMix);
+        return withAlpha(base, (int) (inactive * (isLightTheme() ? 188 : 168)));
+    }
+
+    public static float switchTrackOutlineWidth(float toggleProgress) {
+        return 1.0f + (1.0f - Mth.clamp(toggleProgress, 0.0f, 1.0f)) * 0.1f;
+    }
+
     private record ThemePalette(
             Color shadow,
             Color surface,
