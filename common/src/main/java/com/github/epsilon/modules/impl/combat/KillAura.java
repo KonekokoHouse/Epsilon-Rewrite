@@ -83,6 +83,7 @@ public class KillAura extends Module {
     private final ColorSetting sideColor = colorSetting("Side Color", Color.WHITE, false);
     private final ColorSetting lineColor = colorSetting("Line Color", new Color(255, 255, 255, 233), () -> esp.getValue() && espMode.is(ESPMode.Circle));
     private final DoubleSetting circleRadius = doubleSetting("Circle Radius", 0.75, 0.1, 2.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Circle));
+    private final DoubleSetting circleAlphaFactor = doubleSetting("Circle Alpha Factor", 1.0, 0.0, 2.0, 0.05, () -> esp.getValue() && espMode.is(ESPMode.Circle));
 
     private final ColorSetting fireflyColor = colorSetting("Firefly Color", new Color(149, 149, 149, 255), false, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
     private final EnumSetting<FireflyESP.ColorMode> fireflyColorMode = enumSetting("Firefly Color Mode", FireflyESP.ColorMode.Blend, () -> esp.getValue() && espMode.is(ESPMode.Firefly));
@@ -217,7 +218,8 @@ public class KillAura extends Module {
                         target,
                         circleRadius.getValue().floatValue(),
                         sideColor.getValue(),
-                        lineColor.getValue()
+                        lineColor.getValue(),
+                        circleAlphaFactor.getValue().floatValue()
                 );
             }
             case Firefly -> {
