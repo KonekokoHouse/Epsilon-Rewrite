@@ -3,36 +3,32 @@ package com.github.epsilon.managers;
 import com.github.epsilon.Epsilon;
 import com.github.epsilon.addon.EpsilonAddon;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class AddonManager {
-
+public final class AddonManager {
     public static final AddonManager INSTANCE = new AddonManager();
-
     private final List<EpsilonAddon> addons = new ArrayList<>();
     private final Set<String> addonIds = new HashSet<>();
-
     private boolean setupComplete;
-
     private AddonManager() {
+
     }
 
     public synchronized void registerAddon(EpsilonAddon addon) {
-        if (addon == null) {
+
+        if (Objects.isNull(addon)) {
             return;
         }
 
         String addonId = addon.getAddonId();
-        if (addonId == null || addonId.isBlank()) {
-            Epsilon.LOGGER.warn("Ignoring Epsilon addon with blank addonId: {}", addon.getClass().getName());
+        if (isBlank(addonId)) {
+            Epsilon.LOGGER.warn("忽略无有效ID的插件：{}", addon.getClass().getName());
             return;
         }
 
+        // 重复ID校验
         if (!addonIds.add(addonId)) {
-            Epsilon.LOGGER.warn("Duplicate Epsilon addon id ignored: {}", addonId);
+            Epsilon.LOGGER.warn("忽略重复插件ID：{}", addonId);
             return;
         }
 
@@ -40,12 +36,10 @@ public class AddonManager {
     }
 
     public synchronized void registerAddons(Iterable<EpsilonAddon> addonIterable) {
-        if (addonIterable == null) {
+        if (Objects.isNull(addonIterable)) {
             return;
         }
-        for (EpsilonAddon addon : addonIterable) {
-            registerAddon(addon);
-        }
+        addonIterable.forEach(this::registerAddon);
     }
 
     public synchronized void setupAddons() {
@@ -53,20 +47,28 @@ public class AddonManager {
             return;
         }
         setupComplete = true;
-
         for (EpsilonAddon addon : addons) {
             try {
                 addon.initAddonI18n();
                 addon.onSetup();
-                Epsilon.LOGGER.info("Loaded Epsilon addon: {}", addon.getAddonId());
-            } catch (Throwable throwable) {
-                Epsilon.LOGGER.error("Failed to setup Epsilon addon: {}", addon.getAddonId(), throwable);
+                Epsilon.LOGGER.info("插件加载完成：{}", addon.getAddonId());
+            } catch (Throwable t) {
+                Epsilon.LOGGER.error("插件初始化失败：{}", addon.getAddonId(), t);
             }
         }
     }
 
     public synchronized List<EpsilonAddon> getAddons() {
-        return List.copyOf(addons);
+        return Collections.unmodifiableList(addons);
     }
 
+     /**
+     * 兼容低版本jdk的字符串空判断
+     *
+     * @param str 字符串
+     * @return 是否为空/空白
+     */
+    private boolean isBlank(String str) {
+        return str == null || str.isBlank();
+    }
 }
