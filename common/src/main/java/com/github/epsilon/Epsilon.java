@@ -1,6 +1,5 @@
 package com.github.epsilon;
 
-import com.github.epsilon.assets.i18n.I18NFileGenerator;
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.managers.AddonManager;
 import com.github.epsilon.managers.ConfigManager;
@@ -25,19 +24,14 @@ public class Epsilon {
 
         EventBus.INSTANCE.registerLambdaFactory(Epsilon.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
-        // 初始化 Managers
         ModuleManager.INSTANCE.initModules();
         AddonManager.INSTANCE.setupAddons();
         ConfigManager.INSTANCE.initConfig();
         HealthManager.INSTANCE.getClass();
 
-        // 生成空的 i18n 文件
-        I18NFileGenerator.generate("epsilon-empty-i18n.json");
-
-        // 添加一个退出游戏时候的钩子
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ConfigManager.INSTANCE.saveNow();
-            Epsilon.LOGGER.info("お兄ちゃん、私はあなたを一番愛しています~");
+            Epsilon.LOGGER.info("Epsilon saved config on shutdown");
         }));
 
         Epsilon.LOGGER.info("Epsilon has loaded successfully, Meow~");

@@ -127,6 +127,7 @@ public class Scaffold extends Module {
         if (shouldSwapBack) {
             InvUtils.swapBack();
         }
+        renderBoxes.clear();
     }
 
     @EventHandler

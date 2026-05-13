@@ -74,7 +74,7 @@ public class LambdaListener implements IListener {
             if (isStatic) this.executor = (Consumer<Object>) lambdaFactory.invoke();
             else this.executor = (Consumer<Object>) lambdaFactory.invoke(object);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            throw new IllegalStateException("Failed to create event listener for " + klass.getName() + "#" + method.getName(), throwable);
         }
     }
 

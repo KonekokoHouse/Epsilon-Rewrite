@@ -141,6 +141,7 @@ public class SafeAnchor extends Module {
     @Override
     protected void onDisable() {
         ownAnchors.clear();
+        renderBoxes.clear();
     }
 
     @EventHandler

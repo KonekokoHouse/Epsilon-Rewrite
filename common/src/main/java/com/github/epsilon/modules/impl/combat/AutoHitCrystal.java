@@ -95,6 +95,11 @@ public class AutoHitCrystal extends Module {
         resetState();
     }
 
+    @Override
+    protected void onDisable() {
+        renderBoxes.clear();
+    }
+
     @EventHandler
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
