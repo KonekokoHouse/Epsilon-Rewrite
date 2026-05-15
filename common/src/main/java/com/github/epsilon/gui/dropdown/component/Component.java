@@ -1,0 +1,61 @@
+package com.github.epsilon.gui.dropdown.component;
+
+import com.github.epsilon.gui.dropdown.DropdownRenderer;
+
+public abstract class Component {
+
+    protected float x;
+    protected float y;
+    protected float width;
+
+    public abstract float getHeight();
+
+    public abstract void draw(DropdownRenderer renderer, int mouseX, int mouseY);
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return false;
+    }
+
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        return false;
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return false;
+    }
+
+    public boolean charTyped(String typedText) {
+        return false;
+    }
+
+    public void setPosition(float x, float y, float width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    protected boolean isHovered(double mouseX, double mouseY, float x, float y, float w, float h) {
+        return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+    }
+
+    protected boolean isHovered(double mouseX, double mouseY) {
+        return isHovered(mouseX, mouseY, x, y, width, getHeight());
+    }
+
+}

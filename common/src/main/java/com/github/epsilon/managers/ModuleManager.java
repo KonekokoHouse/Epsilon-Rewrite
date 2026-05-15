@@ -101,18 +101,19 @@ public class ModuleManager {
                 Velocity.INSTANCE,
 
                 // Render
+                AntiAlias.INSTANCE,
                 AspectRatio.INSTANCE,
                 CameraClip.INSTANCE,
                 Chams.INSTANCE,
                 ESP.INSTANCE,
+                Filter.INSTANCE,
                 Fullbright.INSTANCE,
                 HandsView.INSTANCE,
                 Hat.INSTANCE,
                 NameTags.INSTANCE,
                 NoRender.INSTANCE,
-                PopChams.INSTANCE,
-                AntiAlias.INSTANCE,
-                Filter.INSTANCE,
+                //PopChams.INSTANCE,
+                TestGui.INSTANCE,
 
                 // Hud
                 NotificationsHud.INSTANCE,

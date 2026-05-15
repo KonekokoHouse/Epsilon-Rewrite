@@ -15,7 +15,6 @@ import com.mojang.blaze3d.textures.FilterMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
 
 import java.awt.*;
 import java.util.OptionalInt;
@@ -23,9 +22,6 @@ import java.util.OptionalInt;
 public class FilterShader {
 
     public static final FilterShader INSTANCE = new FilterShader();
-
-    private static final Identifier vertexShader = ResourceLocationUtils.getIdentifier("fullscreen");
-    private static final Identifier fragmentShader = ResourceLocationUtils.getIdentifier("filter");
 
     private static final int UNIFORMS_SIZE = new Std140SizeCalculator()
             .putVec4()
@@ -44,8 +40,8 @@ public class FilterShader {
         if (this.pipeline == null) {
             this.pipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
                     .withLocation(ResourceLocationUtils.getIdentifier("pipeline/filter"))
-                    .withVertexShader(vertexShader)
-                    .withFragmentShader(fragmentShader)
+                    .withVertexShader(ResourceLocationUtils.getIdentifier("fullscreen"))
+                    .withFragmentShader(ResourceLocationUtils.getIdentifier("filter"))
                     .withUniform("FilterColor", UniformType.UNIFORM_BUFFER)
                     .withSampler("InputSampler")
                     .withCull(false)
