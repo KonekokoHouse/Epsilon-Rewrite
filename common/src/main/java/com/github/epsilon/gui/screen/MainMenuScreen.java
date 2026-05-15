@@ -94,7 +94,6 @@ public class MainMenuScreen extends Screen {
         uiRenderTarget.resize(window.getWidth(), window.getHeight());
         LuminRenderSystem.setActiveTarget(uiRenderTarget);
 
-        MD3Theme.syncFromSettings();
         drawMenu(mouseX, mouseY);
 
         LuminRenderSystem.setActiveTarget(null);
@@ -105,9 +104,9 @@ public class MainMenuScreen extends Screen {
         float introProgress = easeOutCubic(Mth.clamp((Util.getMillis() - introStartMs) / 650.0f, 0.0f, 1.0f));
         Layout layout = Layout.resolve(width, height, entries.size());
 
-        Color titleColor = applyAlpha(MD3Theme.TEXT_PRIMARY, 0.96f);
-        Color subtitleColor = applyAlpha(MD3Theme.TEXT_SECONDARY, 0.90f);
-        Color accentColor = applyAlpha(MD3Theme.PRIMARY, 0.95f);
+        Color titleColor = applyAlpha(new Color(230, 224, 233), 0.96f);
+        Color subtitleColor = applyAlpha(new Color(202, 196, 208), 0.90f);
+        Color accentColor = applyAlpha(new Color(208, 188, 255), 0.95f);
 
         String title = "EPSILON";
         String subtitle = Epsilon.VERSION;
@@ -155,12 +154,12 @@ public class MainMenuScreen extends Screen {
         );
 
 
-        Color lineBase = applyAlpha(MD3Theme.TEXT_MUTED, 0.70f * appear);
-        Color lineHover = applyAlpha(MD3Theme.PRIMARY, 0.98f * appear);
+        Color lineBase = applyAlpha(new Color(147, 143, 153), 0.70f * appear);
+        Color lineHover = applyAlpha(new Color(208, 188, 255), 0.98f * appear);
 
         Color labelColor = MD3Theme.lerp(
-                applyAlpha(MD3Theme.TEXT_PRIMARY, 0.94f * appear),
-                applyAlpha(MD3Theme.ON_PRIMARY_CONTAINER, 0.98f * appear),
+                applyAlpha(new Color(230, 224, 233), 0.94f * appear),
+                applyAlpha(new Color(234, 221, 255), 0.98f * appear),
                 hover * 0.68f
         );
 
