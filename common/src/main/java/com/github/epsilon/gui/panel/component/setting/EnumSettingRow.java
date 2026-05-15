@@ -43,7 +43,7 @@ public class EnumSettingRow extends SettingRow<EnumSetting<?>> {
                 null, 0.58f, null);
 
         float chevronProgress = scope.animate(dropdownAnimation, dropdownOpen);
-        float chevronSize = 3.5f;
+        float chevronSize = 3.0f;
         float chevronCenterX = chipBounds.right() - 7.0f;
         float chevronCenterY = chipBounds.y() + chipBounds.height() / 2.0f;
         scope.triangle(chevronCenterX, chevronCenterY, chevronSize, chevronProgress, MD3Theme.ON_SECONDARY_CONTAINER);

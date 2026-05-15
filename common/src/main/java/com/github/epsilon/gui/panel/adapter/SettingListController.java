@@ -316,7 +316,7 @@ public class SettingListController {
                 countScale,
                 MD3Theme.ON_SECONDARY_CONTAINER);
 
-        float chevronSize = 4.0f;
+        float chevronSize = 3.0f;
         float chevronCenterX = headerBounds.right() - MD3Theme.ROW_TRAILING_INSET - chevronSize - 3.0f;
         float chevronCenterY = headerBounds.y() + GROUP_HEADER_HEIGHT / 2.0f;
         scope.triangle(chevronCenterX, chevronCenterY, chevronSize, expandProgress, MD3Theme.lerp(MD3Theme.TEXT_MUTED, MD3Theme.PRIMARY, hoverProgress));
