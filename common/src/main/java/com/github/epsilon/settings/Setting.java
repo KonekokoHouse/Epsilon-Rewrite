@@ -11,6 +11,7 @@ public abstract class Setting<V> {
     protected V defaultValue;
     protected final Dependency dependency;
     protected Consumer<V> onChanged;
+    protected SettingGroup group;
 
     protected TranslateComponent translateComponent;
 
@@ -55,6 +56,16 @@ public abstract class Setting<V> {
 
     public boolean isAvailable() {
         return dependency != null && this.dependency.check();
+    }
+
+    public SettingGroup getGroup() {
+        return group;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <S extends Setting<V>> S group(SettingGroup group) {
+        this.group = group;
+        return (S) this;
     }
 
     @FunctionalInterface

@@ -9,6 +9,8 @@ import com.github.epsilon.graphics.renderers.TextRenderer;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.adapter.SettingListController;
+import com.github.epsilon.gui.panel.dsl.PanelUiCompiler;
+import com.github.epsilon.gui.panel.dsl.PanelUiTree;
 import com.github.epsilon.gui.panel.popup.PanelPopupHost;
 import com.github.epsilon.gui.panel.utils.PanelContentBuffer;
 import com.github.epsilon.gui.panel.utils.ScrollBarDragState;
@@ -134,7 +136,7 @@ public class HudEditorInspector {
             return;
         }
 
-        float contentHeight = settings.size() * (28.0f + MD3Theme.ROW_GAP);
+        float contentHeight = settingList.getContentHeight(settings);
         maxScroll = Math.max(0.0f, contentHeight - viewport.height());
         scroll = Mth.clamp(scroll, 0.0f, maxScroll);
         boolean hasScrollBar = maxScroll > 0.0f;
@@ -143,14 +145,16 @@ public class HudEditorInspector {
         int effectiveMouseX = popupConsumesHover ? Integer.MIN_VALUE : mouseX;
         int effectiveMouseY = popupConsumesHover ? Integer.MIN_VALUE : mouseY;
 
-        settingList.layoutRows(settings, viewport, scroll, rowWidth, (_, row, rowBounds) -> {
-            float hover = rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f;
-            row.render(graphics, contentBuffer.roundRectRenderer(), contentBuffer.roundRectOutlineRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hover, effectiveMouseX, effectiveMouseY, partialTick);
-        });
+        PanelUiTree settingsTree = PanelUiTree.build(scope -> scope.viewport(contentBuffer, viewport, guiHeight, scroll, maxScroll, contentHeight, content ->
+                settingList.layoutRows(settings, viewport, scroll, rowWidth, content, textRenderer, effectiveMouseX, effectiveMouseY, (_, row, rowBounds) -> {
+                    float hover = rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f;
+                    row.buildUi(content, graphics, textRenderer, rowBounds, hover, effectiveMouseX, effectiveMouseY, partialTick);
+                })
+        ));
+        PanelUiCompiler.render(settingsTree, roundRectRenderer, rectRenderer, textRenderer);
 
         flushChrome();
 
-        contentBuffer.queueViewport(viewport, guiHeight, scroll, maxScroll, contentHeight);
         contentBuffer.flushAndClear();
     }
 

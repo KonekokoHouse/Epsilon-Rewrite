@@ -21,10 +21,13 @@
 package your.mod.addon;
 
 import com.github.epsilon.addon.EpsilonAddon;
+import com.github.epsilon.settings.SettingGroup;
+import com.github.epsilon.settings.impl.BoolSetting;
 
 public class ExampleAddon extends EpsilonAddon {
 
-    private final BoolSetting enableParticles = boolSetting("Enable Particles", true);
+    private final SettingGroup sgGeneral = settingGroup("General");
+    private final BoolSetting enableParticles = boolSetting("Enable Particles", true).group(sgGeneral);
 
     public ExampleAddon() {
         super("example_addon");
@@ -59,10 +62,12 @@ public class ExampleAddon extends EpsilonAddon {
 - `getDescription()`：用于显示 Addon 的简介。
 - `getVersion()` / `getAuthors()`：用于显示基础信息。
 - `boolSetting(...)` / `intSetting(...)` / `enumSetting(...)` 等：用于声明 **Addon 自己的设置**，这些设置会显示在 `Client Settings -> Addons` 中，并随配置一起保存。
+- `settingGroup("General")`：用于声明可折叠的设置分组；设置通过 `boolSetting(...).group(sgGeneral)` 这样的链式 DSL 归入分组。
 
 Addon setting 的翻译 key 约定为：
 
 - `{addonId}.settings.{settingNameLowerCase}`
+- `{addonId}.settings.{groupNameLowerCase}`
 
 Addon 模块翻译 key 仍然为：
 

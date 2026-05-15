@@ -64,7 +64,7 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
         List<Setting<?>> settings = ClientSetting.INSTANCE.getSettings().stream()
                 .filter(Setting::isAvailable)
                 .toList();
-        float contentHeight = settings.size() * (28.0f + MD3Theme.ROW_GAP);
+        float contentHeight = settingListController.getContentHeight(settings);
         state.setMaxClientSettingScroll(contentHeight - bounds.height());
         float maxScroll = Math.max(0.0f, contentHeight - bounds.height());
         boolean hasScrollBar = maxScroll > 0.0f;
@@ -85,8 +85,8 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
                     if (!rebuildContent) {
                         return;
                     }
-                    settingListController.prepareLayout(settings);
-                    settingListController.appendRows(settings, bounds, state.getClientSettingScroll(), rowWidth, (setting, row, rowBounds) -> {
+                    settingListController.layoutRows(settings, bounds, state.getClientSettingScroll(), rowWidth,
+                            content, textRenderer, effectiveMouseX, effectiveMouseY, (setting, row, rowBounds) -> {
                         if (row instanceof KeybindSettingRow keybindRow) {
                             keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
                         }
@@ -99,6 +99,7 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
                         row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
                         contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
                     });
+                    contentState.noteAnimation(settingListController.hasActiveAnimations());
                 }));
         PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
 
@@ -119,7 +120,7 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
 
     @Override
     public boolean hasActiveAnimations() {
-        return contentState.hasActiveAnimations();
+        return contentState.hasActiveAnimations() || settingListController.hasActiveAnimations();
     }
 
     @Override
@@ -281,9 +282,12 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
         for (Setting<?> setting : settings) {
             signature = signature * 31L + setting.getName().hashCode();
             signature = signature * 31L + (setting.isAvailable() ? 1 : 0);
+            if (setting.getGroup() != null) {
+                signature = signature * 31L + setting.getGroup().getName().hashCode();
+                signature = signature * 31L + (setting.getGroup().isCollapsed() ? 1 : 0);
+            }
         }
         return signature;
     }
 
 }
-

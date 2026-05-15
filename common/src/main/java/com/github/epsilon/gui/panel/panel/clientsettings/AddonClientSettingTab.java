@@ -102,7 +102,7 @@ public class AddonClientSettingTab implements ClientSettingTabView {
         boolean listHasScrollBar = maxListScroll > 0.0f;
         float listRowWidth = listHasScrollBar ? listViewport.width() - ScrollBarUtils.TOTAL_WIDTH : listViewport.width();
 
-        float settingsContentHeight = selectedSettings.size() * (28.0f + MD3Theme.ROW_GAP);
+        float settingsContentHeight = settingListController.getContentHeight(selectedSettings);
         state.setMaxAddonDetailScroll(settingsContentHeight - settingsViewport.height());
         float maxDetailScroll = Math.max(0.0f, settingsContentHeight - settingsViewport.height());
         boolean detailHasScrollBar = maxDetailScroll > 0.0f;
@@ -118,6 +118,7 @@ public class AddonClientSettingTab implements ClientSettingTabView {
             listBuffer.clear();
             detailBuffer.clear();
             contentState.beginRebuild();
+            settingListController.prepareLayout(selectedSettings);
             rowEntries.clear();
             List<String> addonIds = addons.stream().map(EpsilonAddon::getAddonId).toList();
             rowHoverAnimations.keySet().removeIf(id -> !addonIds.contains(id));
@@ -168,8 +169,8 @@ public class AddonClientSettingTab implements ClientSettingTabView {
                         if (!rebuildContent) {
                             return;
                         }
-                        settingListController.prepareLayout(selectedSettings);
-                        settingListController.appendRows(selectedSettings, settingsViewport, state.getAddonDetailScroll(), settingsRowWidth, (setting, row, rowBounds) -> {
+                        settingListController.layoutRows(selectedSettings, settingsViewport, state.getAddonDetailScroll(), settingsRowWidth,
+                                content, textRenderer, effectiveMouseX, effectiveMouseY, (setting, row, rowBounds) -> {
                             if (row instanceof KeybindSettingRow keybindRow) {
                                 keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
                             }
@@ -182,6 +183,7 @@ public class AddonClientSettingTab implements ClientSettingTabView {
                             row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
                             contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
                         });
+                        contentState.noteAnimation(settingListController.hasActiveAnimations());
                     });
                 }
             }
@@ -209,7 +211,8 @@ public class AddonClientSettingTab implements ClientSettingTabView {
         return contentState.hasActiveAnimations()
                 || rowHoverAnimations.values().stream().anyMatch(animation -> !animation.isFinished())
                 || rowSelectionAnimations.values().stream().anyMatch(animation -> !animation.isFinished())
-                || settingHoverAnimations.values().stream().anyMatch(animation -> !animation.isFinished());
+                || settingHoverAnimations.values().stream().anyMatch(animation -> !animation.isFinished())
+                || settingListController.hasActiveAnimations();
     }
 
     @Override
@@ -583,6 +586,10 @@ public class AddonClientSettingTab implements ClientSettingTabView {
         for (Setting<?> setting : selectedSettings) {
             signature = signature * 31L + setting.getName().hashCode();
             signature = signature * 31L + (setting.isAvailable() ? 1 : 0);
+            if (setting.getGroup() != null) {
+                signature = signature * 31L + setting.getGroup().getName().hashCode();
+                signature = signature * 31L + (setting.getGroup().isCollapsed() ? 1 : 0);
+            }
         }
         return signature;
     }

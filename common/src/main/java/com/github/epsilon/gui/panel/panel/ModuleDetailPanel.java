@@ -108,31 +108,41 @@ public class ModuleDetailPanel {
 
         PanelLayout.Rect viewport = getViewport();
         List<Setting<?>> settings = module.getSettings().stream().filter(Setting::isAvailable).toList();
-        float contentHeight = settings.size() * (28.0f + MD3Theme.ROW_GAP);
+        float contentHeight = settingListController.getContentHeight(settings);
         state.setMaxDetailScroll(contentHeight - viewport.height());
         float maxDetailScroll = Math.max(0, contentHeight - viewport.height());
         boolean hasScrollBar = maxDetailScroll > 0;
         float rowWidth = hasScrollBar ? viewport.width() - ScrollBarUtils.TOTAL_WIDTH : viewport.width();
         long contentSignature = buildContentSignature(module, settings);
+        boolean rebuildContent = shouldRebuildContent(bounds, mouseX, mouseY, module, settings, GuiGraphicsExtractor.guiHeight(), contentSignature);
 
-        if (shouldRebuildContent(bounds, mouseX, mouseY, module, settings, GuiGraphicsExtractor.guiHeight(), contentSignature)) {
+        if (rebuildContent) {
             contentBuffer.clear();
             contentState.beginRebuild();
-
-            settingListController.layoutRows(settings, viewport, state.getDetailScroll(), rowWidth, (setting, row, rowBounds) -> {
-                if (row instanceof KeybindSettingRow keybindRow) {
-                    keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
-                }
-                Animation hoverAnimation = hoverAnimations.computeIfAbsent(setting, ignored -> new Animation(Easing.EASE_OUT_CUBIC, 120L));
-                hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
-                row.render(GuiGraphicsExtractor, contentBuffer.roundRectRenderer(), contentBuffer.roundRectOutlineRenderer(), contentBuffer.rectRenderer(), contentBuffer.textRenderer(), rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
-                contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
-            });
-
-            rememberSnapshot(bounds, mouseX, mouseY, module, settings, GuiGraphicsExtractor.guiHeight(), contentSignature);
         }
 
-        contentBuffer.queueViewport(viewport, guiHeight, state.getDetailScroll(), maxDetailScroll, contentHeight);
+        PanelUiTree contentTree = PanelUiTree.build(scope -> scope.viewport(contentBuffer, viewport, guiHeight,
+                state.getDetailScroll(), maxDetailScroll, contentHeight, content -> {
+                    if (!rebuildContent) {
+                        return;
+                    }
+                    settingListController.layoutRows(settings, viewport, state.getDetailScroll(), rowWidth,
+                            content, textRenderer, effectiveMouseX, effectiveMouseY, (setting, row, rowBounds) -> {
+                                if (row instanceof KeybindSettingRow keybindRow) {
+                                    keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
+                                }
+                                Animation hoverAnimation = hoverAnimations.computeIfAbsent(setting, ignored -> new Animation(Easing.EASE_OUT_CUBIC, 120L));
+                                hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
+                                row.buildUi(content, GuiGraphicsExtractor, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
+                                contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
+                            });
+                    contentState.noteAnimation(settingListController.hasActiveAnimations());
+                }));
+        PanelUiCompiler.render(contentTree, roundRectRenderer, rectRenderer, textRenderer);
+
+        if (rebuildContent) {
+            rememberSnapshot(bounds, mouseX, mouseY, module, settings, GuiGraphicsExtractor.guiHeight(), contentSignature);
+        }
     }
 
     public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
@@ -476,6 +486,7 @@ public class ModuleDetailPanel {
 
     public boolean hasActiveAnimations() {
         return contentState.hasActiveAnimations()
+                || settingListController.hasActiveAnimations()
                 || !keybindHoverAnimation.isFinished()
                 || !keybindFocusAnimation.isFinished()
                 || !bindModeAnimation.isFinished()
@@ -522,6 +533,10 @@ public class ModuleDetailPanel {
         for (Setting<?> setting : settings) {
             signature = signature * 31L + setting.getName().hashCode();
             signature = signature * 31L + (setting.isAvailable() ? 1 : 0);
+            if (setting.getGroup() != null) {
+                signature = signature * 31L + setting.getGroup().getName().hashCode();
+                signature = signature * 31L + (setting.getGroup().isCollapsed() ? 1 : 0);
+            }
         }
         return signature;
     }

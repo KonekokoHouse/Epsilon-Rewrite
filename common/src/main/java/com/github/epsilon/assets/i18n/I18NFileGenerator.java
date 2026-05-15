@@ -4,6 +4,7 @@ import com.github.epsilon.managers.ModuleManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.Setting;
+import com.github.epsilon.settings.SettingGroup;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -73,6 +74,12 @@ public class I18NFileGenerator {
             if (module.translateComponent == null) continue;
             String moduleKey = module.translateComponent.getFullKey();
             root.addProperty(moduleKey, "");
+
+            for (SettingGroup group : module.getSettingGroups()) {
+                TranslateComponent groupComp = group.getTranslateComponent();
+                if (groupComp == null) continue;
+                root.addProperty(groupComp.getFullKey(), "");
+            }
 
             for (Setting<?> setting : module.getSettings()) {
                 TranslateComponent settingComp = setting.getTranslateComponent();
