@@ -52,6 +52,7 @@ public class ModuleDetailPanel {
     private String lastModuleKey = "";
     private List<String> lastVisibleSettings = List.of();
     private final ScrollBarDragState scrollBarDrag = new ScrollBarDragState();
+    private float scrollVelocity = 0;
     private final Animation bindModeAnimation = new Animation(Easing.EASE_OUT_CUBIC, 180L);
     private final Animation bindModeHoverAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
     private final Animation keybindHoverAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
@@ -84,6 +85,16 @@ public class ModuleDetailPanel {
     public void render(GuiGraphicsExtractor GuiGraphicsExtractor, PanelLayout.Rect bounds, int mouseX, int mouseY, float partialTick) {
         this.bounds = bounds;
         this.guiHeight = GuiGraphicsExtractor.guiHeight();
+
+        if (Math.abs(scrollVelocity) > 0.01f) {
+            state.scrollDetail(scrollVelocity * partialTick);
+            scrollVelocity *= 0.86f;
+            if (Math.abs(scrollVelocity) < 0.3f) {
+                scrollVelocity = 0;
+            }
+            markDirty();
+        }
+
         boolean popupConsumesHover = settingListController.isPopupHovered(mouseX, mouseY);
         int effectiveMouseX = popupConsumesHover ? Integer.MIN_VALUE : mouseX;
         int effectiveMouseY = popupConsumesHover ? Integer.MIN_VALUE : mouseY;
@@ -149,6 +160,7 @@ public class ModuleDetailPanel {
         if (bounds == null) {
             return false;
         }
+        scrollVelocity = 0;
         Module module = state.getSelectedModule();
         if (module == null || headerBounds == null) {
             return false;
@@ -259,7 +271,7 @@ public class ModuleDetailPanel {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         PanelLayout.Rect viewport = getViewport();
         if (bounds != null && viewport.contains(mouseX, mouseY)) {
-            state.scrollDetail(-scrollY * 20.0f);
+            scrollVelocity -= (float) scrollY * 24f;
             markDirty();
             return true;
         }

@@ -58,6 +58,7 @@ public class ModuleListPanel {
     private final Animation searchHoverAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
     private final Animation searchFocusAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
     private final ScrollBarDragState scrollBarDrag = new ScrollBarDragState();
+    private float scrollVelocity = 0;
     private boolean searchFocused;
     private int searchCursorIndex;
     private long lastContentSignature = Long.MIN_VALUE;
@@ -83,6 +84,15 @@ public class ModuleListPanel {
     public void render(GuiGraphicsExtractor GuiGraphicsExtractor, PanelLayout.Rect bounds, int mouseX, int mouseY, float partialTick) {
         this.bounds = bounds;
         this.guiHeight = GuiGraphicsExtractor.guiHeight();
+
+        if (Math.abs(scrollVelocity) > 0.01f) {
+            state.scrollModules(scrollVelocity * partialTick);
+            scrollVelocity *= 0.86f;
+            if (Math.abs(scrollVelocity) < 0.3f) {
+                scrollVelocity = 0;
+            }
+            markDirty();
+        }
 
         PanelLayout.Rect viewport = getViewport();
         List<Module> modules = state.getVisibleModules();
@@ -168,6 +178,7 @@ public class ModuleListPanel {
         if (bounds == null || event.button() != 0) {
             return false;
         }
+        scrollVelocity = 0;
         // Scrollbar drag
         PanelLayout.Rect viewport = getViewport();
         float maxScroll = state.getMaxModuleScroll();
@@ -230,7 +241,7 @@ public class ModuleListPanel {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         PanelLayout.Rect viewport = getViewport();
         if (bounds != null && viewport.contains(mouseX, mouseY)) {
-            state.scrollModules(-scrollY * 20.0f);
+            scrollVelocity -= (float) scrollY * 24f;
             markDirty();
             return true;
         }
