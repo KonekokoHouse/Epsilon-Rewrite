@@ -2,13 +2,13 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.AttackEntityEvent;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.EnchantmentUtils;
-import com.github.epsilon.managers.HotbarManager;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.effect.MobEffects;

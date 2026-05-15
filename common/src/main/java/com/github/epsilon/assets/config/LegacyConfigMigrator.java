@@ -31,8 +31,7 @@ public class LegacyConfigMigrator {
      * {@code {targetConfigDir}/{addonId}/{moduleName}.json}
      */
     public Path getModuleFile(Module module) {
-        String addonId = module.getAddonId() != null ? module.getAddonId() : "unknown";
-        return targetConfigDir.resolve(addonId).resolve(module.getName() + ".json");
+        return targetConfigDir.resolve(module.getAddonId()).resolve(module.getName() + ".json");
     }
 
     public void migrateIfNeeded(List<Module> modules) {

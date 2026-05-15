@@ -10,6 +10,7 @@ public final class AddonManager {
     private final List<EpsilonAddon> addons = new ArrayList<>();
     private final Set<String> addonIds = new HashSet<>();
     private boolean setupComplete;
+
     private AddonManager() {
 
     }
@@ -62,7 +63,7 @@ public final class AddonManager {
         return Collections.unmodifiableList(addons);
     }
 
-     /**
+    /**
      * 兼容低版本jdk的字符串空判断
      *
      * @param str 字符串
@@ -71,4 +72,5 @@ public final class AddonManager {
     private boolean isBlank(String str) {
         return str == null || str.isBlank();
     }
+
 }
