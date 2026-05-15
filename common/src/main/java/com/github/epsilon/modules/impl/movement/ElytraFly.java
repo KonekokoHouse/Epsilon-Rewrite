@@ -2,8 +2,6 @@ package com.github.epsilon.modules.impl.movement;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
-import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -12,6 +10,7 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.timer.TimerUtils;
@@ -38,6 +37,11 @@ public class ElytraFly extends Module {
     private enum Mode {
         Control,
         Boost
+    }
+
+    private enum SwapMode {
+        Silent,
+        InvSwitch
     }
 
     private final EnumSetting<Mode> mode = enumSetting("Mode", Mode.Control);
@@ -69,7 +73,7 @@ public class ElytraFly extends Module {
     }
 
     private void updateControl() {
-        FindItemResult elytra = HotbarManager.INSTANCE.find(Items.ELYTRA);
+        FindItemResult elytra = InvUtils.find(Items.ELYTRA);
 
         if (!canGlide(elytra.found()) || mc.player.onGround()) {
             hasFirstFirework = false;
@@ -123,12 +127,16 @@ public class ElytraFly extends Module {
     private void useFirework() {
         if (!useFireworks.getValue() || !timer.hasDelayed(boostDelay.getValue())) return;
 
-        FindItemResult rocket = HotbarManager.INSTANCE.find(swapMode.getValue(), Items.FIREWORK_ROCKET);
+        FindItemResult rocket = swapMode.is(SwapMode.Silent) ? InvUtils.findInHotbar(Items.FIREWORK_ROCKET) : InvUtils.find(Items.FIREWORK_ROCKET);
         if (!rocket.found()) return;
 
         InteractionHand hand = rocket.getHand();
 
-        HotbarManager.INSTANCE.swap(swapMode.getValue(), rocket);
+        if (swapMode.is(SwapMode.Silent)) {
+            InvUtils.swap(rocket.slot(), true);
+        } else {
+            InvUtils.invSwap(rocket.slot());
+        }
 
         InteractionResult result = mc.gameMode.useItem(mc.player, hand);
 
@@ -138,6 +146,11 @@ public class ElytraFly extends Module {
             mc.player.swing(hand);
         }
 
+        if (swapMode.is(SwapMode.Silent)) {
+            InvUtils.swapBack();
+        } else {
+            InvUtils.invSwapBack();
+        }
     }
 
     private void applyMotion() {

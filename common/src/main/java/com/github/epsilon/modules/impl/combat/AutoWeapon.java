@@ -2,13 +2,15 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.AttackEntityEvent;
-import com.github.epsilon.managers.HotbarManager;
+import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.EnchantmentUtils;
+import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.utils.timer.TimerUtils;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.effect.MobEffects;
@@ -85,6 +87,15 @@ public class AutoWeapon extends Module {
     private final BoolSetting mace = boolSetting("Mace", true, () -> page.is(Page.Weapon) && mode.is(Mode.Smart) && onlyOnWeapon.getValue());
     private final BoolSetting trident = boolSetting("Trident", true, () -> page.is(Page.Weapon) && mode.is(Mode.Smart) && onlyOnWeapon.getValue());
 
+    private final TimerUtils backTimer = new TimerUtils();
+    private boolean awaitingBack;
+
+    @Override
+    protected void onDisable() {
+        backTimer.reset();
+        awaitingBack = false;
+    }
+
     @EventHandler
     private void onAttack(AttackEntityEvent event) {
         if (!canSwapByWeapon()) return;
@@ -92,6 +103,8 @@ public class AutoWeapon extends Module {
     }
 
     private void performSwap(Entity target) {
+        if (awaitingBack) return;
+
         int slotIndex;
 
         if (mode.is(Mode.Simple)) {
@@ -103,12 +116,25 @@ public class AutoWeapon extends Module {
         if (slotIndex < 0 || slotIndex > 8) return;
         if (slotIndex == mc.player.getInventory().getSelectedSlot()) return;
 
-        HotbarManager.INSTANCE.swap(slotIndex, swapBack.getValue(), Math.max(0, swapBackDelay.getValue() / 50));
+        InvUtils.swap(slotIndex, swapBack.getValue());
+
+        awaitingBack = swapBack.getValue();
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
+        if (nullCheck()) return;
+        if (!awaitingBack) return;
+        if (backTimer.passedMillise(swapBackDelay.getValue())) {
+            InvUtils.swapBack();
+            backTimer.reset();
+            awaitingBack = false;
+        }
     }
 
     private boolean canSwapByWeapon() {
         if (!onlyOnWeapon.getValue()) return true;
-        return HotbarManager.INSTANCE.testInMainHand(item ->
+        return InvUtils.testInMainHand(item ->
                 (sword.getValue() && item.is(ItemTags.SWORDS)) ||
                         (axe.getValue() && item.is(ItemTags.AXES)) ||
                         (pickaxe.getValue() && item.is(ItemTags.PICKAXES)) ||
@@ -124,7 +150,7 @@ public class AutoWeapon extends Module {
 
         if (target != null && smartShieldBreak.getValue() && target instanceof LivingEntity living && living.isBlocking()) {
             if (currentStack.getItem() instanceof AxeItem) return -1;
-            int axeSlot = HotbarManager.INSTANCE.findInHotbar(item -> item.getItem() instanceof AxeItem).slot();
+            int axeSlot = InvUtils.findInHotbar(item -> item.getItem() instanceof AxeItem).slot();
             if (axeSlot != -1) return axeSlot;
         }
 

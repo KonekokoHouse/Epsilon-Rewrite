@@ -6,7 +6,6 @@ import com.github.epsilon.events.impl.Render2DEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.managers.TargetManager;
 import com.github.epsilon.modules.Category;
@@ -16,6 +15,7 @@ import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.combat.DamageUtils;
 import com.github.epsilon.utils.player.EnchantmentUtils;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.render.WorldToScreen;
 import com.github.epsilon.utils.rotation.Priority;
@@ -994,11 +994,11 @@ public class ZealotCrystalPlus extends Module {
                     return false;
                 }
                 case Legit -> {
-                    HotbarManager.INSTANCE.swap(crystals.slot(), false);
+                    InvUtils.swap(crystals.slot(), false);
                     lastSwapTime = System.currentTimeMillis();
                 }
                 case Ghost -> {
-                    HotbarManager.INSTANCE.swap(crystals.slot(), true);
+                    InvUtils.swap(crystals.slot(), true);
                     lastSwapTime = System.currentTimeMillis();
                 }
             }
@@ -1008,6 +1008,7 @@ public class ZealotCrystalPlus extends Module {
         BlockHitResult hitResult = new BlockHitResult(placeInfo.hitVec(), placeInfo.side(), placeInfo.blockPos(), false);
         RotationManager.INSTANCE.applyRotation(placeInfo.rotation(), getRotationSpeed(), Priority.High, ignored -> {
             if (!isEnabled() || nullCheck()) {
+                InvUtils.swapBack();
                 return;
             }
 
@@ -1022,6 +1023,7 @@ public class ZealotCrystalPlus extends Module {
                 target = placeInfo.target();
                 updateRenderTarget(placeInfo.blockPos(), placeInfo.targetDamage(), placeInfo.selfDamage());
             }
+            InvUtils.swapBack();
         });
 
         return true;
@@ -1044,7 +1046,7 @@ public class ZealotCrystalPlus extends Module {
                 case Legit, Ghost -> {
                     int weaponSlot = findWeaponSlot();
                     if (weaponSlot == -1) return false;
-                    HotbarManager.INSTANCE.swap(weaponSlot, antiWeakness.getValue() == SwitchMode.Ghost);
+                    InvUtils.swap(weaponSlot, antiWeakness.getValue() == SwitchMode.Ghost);
                     lastSwapTime = System.currentTimeMillis();
                 }
             }
@@ -1052,14 +1054,17 @@ public class ZealotCrystalPlus extends Module {
 
         RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(breakPlan.pos()), getRotationSpeed(), Priority.High, ignored -> {
             if (!isEnabled() || nullCheck()) {
+                InvUtils.swapBack();
                 return;
             }
 
             Entity current = mc.level.getEntity(breakPlan.entityId());
             if (!(current instanceof EndCrystal currentCrystal) || !currentCrystal.isAlive()) {
+                InvUtils.swapBack();
                 return;
             }
             if (!checkBreakRange(currentCrystal.position())) {
+                InvUtils.swapBack();
                 return;
             }
 
@@ -1076,6 +1081,8 @@ public class ZealotCrystalPlus extends Module {
             if (packetPlace.getValue().onBreak && placeInfo != null && crystalPlaceBoxIntersects(placeInfo.blockPos(), currentCrystal.getBoundingBox())) {
                 placeDirect(placeInfo, true);
             }
+
+            InvUtils.swapBack();
         });
         return true;
     }
@@ -1517,7 +1524,7 @@ public class ZealotCrystalPlus extends Module {
     }
 
     private FindItemResult findCrystalItem() {
-        return HotbarManager.INSTANCE.findInHotbar(Items.END_CRYSTAL);
+        return InvUtils.findInHotbar(Items.END_CRYSTAL);
     }
 
     private InteractionHand resolveSwingHand(boolean placing) {
@@ -2081,3 +2088,4 @@ public class ZealotCrystalPlus extends Module {
         }
     }
 }
+

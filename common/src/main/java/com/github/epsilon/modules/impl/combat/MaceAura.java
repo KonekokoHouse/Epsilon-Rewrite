@@ -2,7 +2,6 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.managers.TargetManager;
 import com.github.epsilon.modules.Category;
@@ -12,6 +11,7 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
@@ -190,16 +190,19 @@ public class MaceAura extends Module {
         if (nullCheck()) return;
 
         int currentSlot = mc.player.getInventory().getSelectedSlot();
-        FindItemResult hotbar = HotbarManager.INSTANCE.findInHotbar(Items.MACE);
+        boolean swappedInventory = false;
+
+        FindItemResult hotbar = InvUtils.findInHotbar(Items.MACE);
         if (hotbar.found()) {
             if (hotbar.slot() != currentSlot) {
-                HotbarManager.INSTANCE.swap(hotbar.slot(), true);
+                InvUtils.swap(hotbar.slot(), true);
             }
         } else {
-            FindItemResult inv = HotbarManager.INSTANCE.find(Items.MACE);
+            FindItemResult inv = InvUtils.find(Items.MACE);
             if (!inv.found()) return;
-            HotbarManager.INSTANCE.invSwap(inv.slot());
-            HotbarManager.INSTANCE.swap(mc.player.getInventory().getSelectedSlot(), true);
+            InvUtils.invSwap(inv.slot());
+            swappedInventory = true;
+            InvUtils.swap(mc.player.getInventory().getSelectedSlot(), true);
         }
 
         Vec3 startPos = mc.player.position();
@@ -216,6 +219,12 @@ public class MaceAura extends Module {
         attack();
         sendMovePacket(mc.player.getX(), mc.player.getY() + 1.0E-4, mc.player.getZ(), false);
 
+        if (swappedInventory) {
+            InvUtils.invSwapBack();
+        }
+        if (hotbar.found() && hotbar.slot() != currentSlot) {
+            InvUtils.swapBack();
+        }
     }
 
     private void doTp(Vec3 from, Vec3 to, double maxDistance, boolean onGround, int maxPackets) {

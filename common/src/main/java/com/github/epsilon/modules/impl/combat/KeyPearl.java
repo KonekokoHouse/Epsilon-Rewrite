@@ -2,7 +2,6 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
@@ -10,6 +9,7 @@ import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -59,13 +59,13 @@ public class KeyPearl extends Module {
             if (previousSlot == -1)
                 previousSlot = mc.player.getInventory().getSelectedSlot();
 
-            FindItemResult pearl = HotbarManager.INSTANCE.findInHotbar(Items.ENDER_PEARL);
+            FindItemResult pearl = InvUtils.findInHotbar(Items.ENDER_PEARL);
             if (!pearl.found()) {
                 resetState();
                 return;
             }
 
-            HotbarManager.INSTANCE.swap(pearl.slot(), false);
+            InvUtils.swap(pearl.slot(), false);
 
             if (clock < delay.getValue()) {
                 clock++;
@@ -98,7 +98,7 @@ public class KeyPearl extends Module {
             return;
         }
         if (previousSlot != -1) {
-            HotbarManager.INSTANCE.swap(previousSlot, false);
+            InvUtils.swap(previousSlot, false);
         }
         resetState();
     }

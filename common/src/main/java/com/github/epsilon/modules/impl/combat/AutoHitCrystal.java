@@ -6,13 +6,13 @@ import com.github.epsilon.events.bus.listeners.ConsumerListener;
 import com.github.epsilon.events.impl.ClickEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
@@ -217,9 +217,9 @@ public class AutoHitCrystal extends Module {
     }
 
     private boolean selectItemFromHotbar(net.minecraft.world.item.Item item) {
-        FindItemResult result = HotbarManager.INSTANCE.findInHotbar(item);
+        FindItemResult result = InvUtils.findInHotbar(item);
         if (result.found()) {
-            HotbarManager.INSTANCE.swap(result.slot(), false);
+            InvUtils.swap(result.slot(), false);
             return true;
         }
         return false;

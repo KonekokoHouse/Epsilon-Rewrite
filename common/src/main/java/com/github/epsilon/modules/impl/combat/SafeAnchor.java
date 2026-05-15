@@ -6,7 +6,6 @@ import com.github.epsilon.events.bus.listeners.ConsumerListener;
 import com.github.epsilon.events.impl.PacketEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -15,6 +14,7 @@ import com.github.epsilon.utils.combat.DamageUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.ChatUtils;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
@@ -211,7 +211,7 @@ public class SafeAnchor extends Module {
                         return;
                     }
 
-                    FindItemResult glowstone = HotbarManager.INSTANCE.find(Items.GLOWSTONE);
+                    FindItemResult glowstone = InvUtils.find(Items.GLOWSTONE);
                     if (!glowstone.found()) {
                         return;
                     }
@@ -351,9 +351,9 @@ public class SafeAnchor extends Module {
             BlockPos placePos = findPlacePos();
             if (placePos == null) {
                 if (charges <= 0) {
-                    FindItemResult glowstone = HotbarManager.INSTANCE.findInHotbar(Items.GLOWSTONE);
+                    FindItemResult glowstone = InvUtils.findInHotbar(Items.GLOWSTONE);
                     if (glowstone.found()) {
-                        HotbarManager.INSTANCE.swap(glowstone.slot(), false);
+                        InvUtils.swap(glowstone.slot(), false);
                         interactBlock(currentAnchorPos, Direction.UP);
                         delay = 1;
                         explodeNoRotate = true;
@@ -371,9 +371,9 @@ public class SafeAnchor extends Module {
             BlockPos placePos = findPlacePos();
             if (placePos == null) {
                 if (charges <= 0) {
-                    FindItemResult glowstone = HotbarManager.INSTANCE.findInHotbar(Items.GLOWSTONE);
+                    FindItemResult glowstone = InvUtils.findInHotbar(Items.GLOWSTONE);
                     if (glowstone.found()) {
-                        HotbarManager.INSTANCE.swap(glowstone.slot(), false);
+                        InvUtils.swap(glowstone.slot(), false);
                         interactBlock(currentAnchorPos, Direction.UP);
                         delay = 1;
                         prepareExplode();
@@ -390,9 +390,9 @@ public class SafeAnchor extends Module {
             return;
         }
         if (charges < 4) {
-            FindItemResult glowstone = HotbarManager.INSTANCE.findInHotbar(Items.GLOWSTONE);
+            FindItemResult glowstone = InvUtils.findInHotbar(Items.GLOWSTONE);
             if (glowstone.found()) {
-                HotbarManager.INSTANCE.swap(glowstone.slot(), false);
+                InvUtils.swap(glowstone.slot(), false);
                 interactBlock(currentAnchorPos, Direction.UP);
                 delay = 1;
             } else {
@@ -410,9 +410,9 @@ public class SafeAnchor extends Module {
             }
 
             if (placePos != null) {
-                FindItemResult block = HotbarManager.INSTANCE.findInHotbar(Items.GLOWSTONE, Items.RESPAWN_ANCHOR);
+                FindItemResult block = InvUtils.findInHotbar(Items.GLOWSTONE, Items.RESPAWN_ANCHOR);
                 if (block.found()) {
-                    HotbarManager.INSTANCE.swap(block.slot(), false);
+                    InvUtils.swap(block.slot(), false);
                     if (isSidePlacement && targetPlaceSide != null) {
                         if (mc.player.getMainHandItem().is(Items.GLOWSTONE)) {
                             if (placeAt(placePos, targetPlaceSide.getOpposite())) {
@@ -469,9 +469,9 @@ public class SafeAnchor extends Module {
         BlockPos placePos = findPlacePos();
 
         if (placePos != null) {
-            FindItemResult block = HotbarManager.INSTANCE.findInHotbar(Items.GLOWSTONE, Items.RESPAWN_ANCHOR);
+            FindItemResult block = InvUtils.findInHotbar(Items.GLOWSTONE, Items.RESPAWN_ANCHOR);
             if (block.found()) {
-                HotbarManager.INSTANCE.swap(block.slot(), false);
+                InvUtils.swap(block.slot(), false);
                 targetActionPos = placePos;
                 currentRotationSpeed = placeRotationSpeed.getValue();
 
@@ -661,14 +661,14 @@ public class SafeAnchor extends Module {
         }
 
 
-        FindItemResult totem = HotbarManager.INSTANCE.find(stack -> stack.is(Items.TOTEM_OF_UNDYING), 0, 8);
+        FindItemResult totem = InvUtils.find(stack -> stack.is(Items.TOTEM_OF_UNDYING), 0, 8);
         if (totem.found()) {
-            HotbarManager.INSTANCE.swap(totem.slot(), false);
+            InvUtils.swap(totem.slot(), false);
         } else {
 
-            FindItemResult safeItem = HotbarManager.INSTANCE.find(stack -> !stack.is(Items.RESPAWN_ANCHOR) && !stack.is(Items.GLOWSTONE), 0, 8);
+            FindItemResult safeItem = InvUtils.find(stack -> !stack.is(Items.RESPAWN_ANCHOR) && !stack.is(Items.GLOWSTONE), 0, 8);
             if (safeItem.found()) {
-                HotbarManager.INSTANCE.swap(safeItem.slot(), false);
+                InvUtils.swap(safeItem.slot(), false);
             }
         }
 

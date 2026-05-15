@@ -2,7 +2,6 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -10,6 +9,7 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.world.BlockUtils;
@@ -121,7 +121,7 @@ public class CrystalBlocker extends Module {
         if (!mc.level.getBlockState(placePos.below()).isSolid()) return;
 
         // 4. Find obsidian
-        FindItemResult obsidian = HotbarManager.INSTANCE.findInHotbar(Items.OBSIDIAN);
+        FindItemResult obsidian = InvUtils.findInHotbar(Items.OBSIDIAN);
         if (!obsidian.found()) return;
 
         // 5. Rotation and placement
@@ -159,21 +159,27 @@ public class CrystalBlocker extends Module {
             int target = item.slot();
             boolean needSwitch = oldSlot != target;
             if (needSwitch) {
-                HotbarManager.INSTANCE.swap(target, true);
+                InvUtils.swap(target, true);
             }
 
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, bhr);
             mc.player.swing(InteractionHand.MAIN_HAND);
 
-            if (needSwitch && visibleSwapBackDelay.getValue() > 0) {
-                waitingSwapBack = true;
-                swapBackTicks = visibleSwapBackDelay.getValue();
-                savedOldSlot = oldSlot;
+            if (needSwitch) {
+                int backDelay = visibleSwapBackDelay.getValue();
+                if (backDelay > 0) {
+                    waitingSwapBack = true;
+                    swapBackTicks = backDelay;
+                    savedOldSlot = oldSlot;
+                } else {
+                    InvUtils.swapBack();
+                }
             }
         } else {
-            HotbarManager.INSTANCE.invSwap(item.slot());
+            InvUtils.invSwap(item.slot());
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, bhr);
             mc.player.swing(InteractionHand.MAIN_HAND);
+            InvUtils.invSwapBack();
         }
     }
 }

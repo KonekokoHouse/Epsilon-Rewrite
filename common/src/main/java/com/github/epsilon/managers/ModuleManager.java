@@ -66,7 +66,6 @@ public class ModuleManager {
                 SafeCrystal.INSTANCE,
                 SilentAim.INSTANCE,
                 SpearKill.INSTANCE,
-                Surround.INSTANCE,
                 TriggerBot.INSTANCE,
 
                 // Player

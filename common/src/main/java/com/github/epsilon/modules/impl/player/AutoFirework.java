@@ -2,13 +2,13 @@ package com.github.epsilon.modules.impl.player;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
+import com.github.epsilon.utils.player.InvUtils;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -63,13 +63,13 @@ public class AutoFirework extends Module {
                 this.previousItem = mc.player.getMainHandItem();
             }
 
-            int fireworkSlot = HotbarManager.INSTANCE.findInHotbar(Items.FIREWORK_ROCKET).slot();
+            int fireworkSlot = InvUtils.findInHotbar(Items.FIREWORK_ROCKET).slot();
             if (fireworkSlot == -1) {
                 this.resetState();
                 return;
             }
 
-            HotbarManager.INSTANCE.swap(fireworkSlot, false);
+            InvUtils.swap(fireworkSlot, false);
 
             if (this.useDelayCounter < this.delay.getValue()) {
                 ++this.useDelayCounter;
@@ -97,7 +97,7 @@ public class AutoFirework extends Module {
         }
 
         if (this.previousSelectedSlot != -1) {
-            HotbarManager.INSTANCE.swap(this.previousSelectedSlot, false);
+            InvUtils.swap(this.previousSelectedSlot, false);
         }
 
         this.resetState();

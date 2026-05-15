@@ -2,13 +2,13 @@ package com.github.epsilon.modules.impl.player;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
+import com.github.epsilon.utils.player.InvUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -83,7 +83,7 @@ public class ElytraSwap extends Module {
                     } :
                     stack -> stack.is(Items.ELYTRA);
             if (!this.isItemSwapped) {
-                int targetSlot = HotbarManager.INSTANCE.findInHotbar(predicate).slot();
+                int targetSlot = InvUtils.findInHotbar(predicate).slot();
 
                 if (targetSlot == -1) {
                     if (!this.moveToSlot.getValue()) {
@@ -92,7 +92,7 @@ public class ElytraSwap extends Module {
                     }
 
 
-                    int invSlot = HotbarManager.INSTANCE.find(predicate).slot();
+                    int invSlot = InvUtils.find(predicate).slot();
                     if (invSlot != -1) {
 
                         int containerSlot = invSlot;
@@ -109,7 +109,7 @@ public class ElytraSwap extends Module {
                     }
                 }
 
-                HotbarManager.INSTANCE.swap(targetSlot, false);
+                InvUtils.swap(targetSlot, false);
                 this.isItemSwapped = true;
             }
 
@@ -135,7 +135,7 @@ public class ElytraSwap extends Module {
         }
 
         if (this.originalSlot != -1) {
-            HotbarManager.INSTANCE.swap(this.originalSlot, false);
+            InvUtils.swap(this.originalSlot, false);
         }
         this.resetState();
     }

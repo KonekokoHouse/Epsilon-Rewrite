@@ -6,8 +6,6 @@ import com.github.epsilon.events.bus.listeners.ConsumerListener;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.SendPositionEvent;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.managers.HotbarManager;
-import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -17,6 +15,7 @@ import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
+import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.render.animation.Easing;
@@ -105,6 +104,8 @@ public class Scaffold extends Module {
     private int airTicks;
 
     private boolean hasJump;
+    private boolean shouldSwapBack;
+
     private BlockInfo blockInfo;
 
     private final List<RenderBox> renderBoxes = new ArrayList<>();
@@ -112,6 +113,7 @@ public class Scaffold extends Module {
     @Override
     protected void onEnable() {
         blockInfo = null;
+        shouldSwapBack = false;
         hasJump = false;
     }
 
@@ -121,6 +123,9 @@ public class Scaffold extends Module {
         if (hasJump) {
             mc.options.keyJump.setDown(false);
             hasJump = false;
+        }
+        if (shouldSwapBack) {
+            InvUtils.swapBack();
         }
     }
 
@@ -230,7 +235,23 @@ public class Scaffold extends Module {
     }
 
     private FindItemResult findItem() {
-        return HotbarManager.INSTANCE.find(swapMode.getValue(), itemStack -> validItem(itemStack, blockInfo.position));
+        switch (swapMode.getValue()) {
+            case SwapMode.None -> {
+                if (InvUtils.testInOffHand(itemStack -> validItem(itemStack, blockInfo.position))) {
+                    return new FindItemResult(40, mc.player.getOffhandItem().getCount(), mc.player.getOffhandItem().getMaxStackSize());
+                }
+                if (InvUtils.testInMainHand(itemStack -> validItem(itemStack, blockInfo.position))) {
+                    return new FindItemResult(mc.player.getInventory().getSelectedSlot(), mc.player.getMainHandItem().getCount(), mc.player.getMainHandItem().getMaxStackSize());
+                }
+                return new FindItemResult(-1, 0, 0);
+            }
+            case SwapMode.InvSwitch -> {
+                return InvUtils.find(itemStack -> validItem(itemStack, blockInfo.position));
+            }
+            default -> {
+                return InvUtils.findInHotbar(itemStack -> validItem(itemStack, blockInfo.position));
+            }
+        }
     }
 
     private void queuePlaceWithRotation(BlockInfo targetBlockInfo, FindItemResult item) {
@@ -250,9 +271,11 @@ public class Scaffold extends Module {
             switch (swapMode.getValue()) {
                 case Normal -> {
                     boolean should = swapBack.getValue();
-                    HotbarManager.INSTANCE.swap(item.slot(), should);
+                    InvUtils.swap(item.slot(), should);
+                    shouldSwapBack = should;
                 }
-                case Silent, InvSwitch -> HotbarManager.INSTANCE.swap(swapMode.getValue(), item);
+                case Silent -> InvUtils.swap(item.slot(), true);
+                case InvSwitch -> InvUtils.invSwap(item.slot());
             }
 
             InteractionResult result = mc.gameMode.useItemOn(mc.player, item.getHand(), new BlockHitResult(getVec3(currentBlockInfo.position, currentBlockInfo.dir), currentBlockInfo.dir, currentBlockInfo.position, false));
@@ -269,6 +292,10 @@ public class Scaffold extends Module {
                 }
             }
 
+            switch (swapMode.getValue()) {
+                case Silent -> InvUtils.swapBack();
+                case InvSwitch -> InvUtils.invSwapBack();
+            }
         }
     }
 
@@ -350,6 +377,13 @@ public class Scaffold extends Module {
     private enum Mode {
         GodBridge,
         TellyBridge,
+    }
+
+    private enum SwapMode {
+        None,
+        Normal,
+        InvSwitch,
+        Silent,
     }
 
 }
