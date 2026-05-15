@@ -44,13 +44,13 @@ public class EnumSettingRow extends SettingRow<EnumSetting<?>> {
 
         float chevronProgress = scope.animate(dropdownAnimation, dropdownOpen);
         float chevronSize = 3.0f;
-        float chevronCenterX = chipBounds.right() - 7.0f;
+        float chevronCenterX = chipBounds.right() - 7.5f;
         float chevronCenterY = chipBounds.y() + chipBounds.height() / 2.0f;
         scope.triangle(chevronCenterX, chevronCenterY, chevronSize, chevronProgress, MD3Theme.ON_SECONDARY_CONTAINER);
     }
 
     public PanelLayout.Rect getChipBounds(TextRenderer textRenderer, PanelLayout.Rect bounds) {
-        return PanelElements.measureAssistChipBounds(textRenderer, bounds, setting.getTranslatedValue(), 0.60f, 8.0f, 18.0f, 96.0f);
+        return PanelElements.measureAssistChipBounds(textRenderer, bounds, setting.getTranslatedValue(), 0.60f, 8.0f, 10.0f, 96.0f);
     }
 
     @Override
