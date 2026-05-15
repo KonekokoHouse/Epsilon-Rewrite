@@ -171,18 +171,18 @@ public class AddonClientSettingTab implements ClientSettingTabView {
                         }
                         settingListController.layoutRows(selectedSettings, settingsViewport, state.getAddonDetailScroll(), settingsRowWidth,
                                 content, textRenderer, effectiveMouseX, effectiveMouseY, (setting, row, rowBounds) -> {
-                            if (row instanceof KeybindSettingRow keybindRow) {
-                                keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
-                            }
-                            Animation hoverAnimation = settingHoverAnimations.computeIfAbsent(setting, ignored -> {
-                                Animation animation = createAnimation();
-                                animation.setStartValue(0.0f);
-                                return animation;
-                            });
-                            hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
-                            row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
-                            contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
-                        });
+                                    if (row instanceof KeybindSettingRow keybindRow) {
+                                        keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
+                                    }
+                                    Animation hoverAnimation = settingHoverAnimations.computeIfAbsent(setting, ignored -> {
+                                        Animation animation = createAnimation();
+                                        animation.setStartValue(0.0f);
+                                        return animation;
+                                    });
+                                    hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
+                                    row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
+                                    contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
+                                });
                         contentState.noteAnimation(settingListController.hasActiveAnimations());
                     });
                 }

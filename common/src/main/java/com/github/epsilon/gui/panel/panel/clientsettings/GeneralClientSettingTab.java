@@ -4,7 +4,6 @@ import com.github.epsilon.assets.holders.TranslateHolder;
 import com.github.epsilon.graphics.renderers.RectRenderer;
 import com.github.epsilon.graphics.renderers.RoundRectRenderer;
 import com.github.epsilon.graphics.renderers.TextRenderer;
-import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelLayout;
 import com.github.epsilon.gui.panel.PanelState;
 import com.github.epsilon.gui.panel.adapter.SettingListController;
@@ -87,18 +86,18 @@ public class GeneralClientSettingTab implements ClientSettingTabView {
                     }
                     settingListController.layoutRows(settings, bounds, state.getClientSettingScroll(), rowWidth,
                             content, textRenderer, effectiveMouseX, effectiveMouseY, (setting, row, rowBounds) -> {
-                        if (row instanceof KeybindSettingRow keybindRow) {
-                            keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
-                        }
-                        Animation hoverAnimation = hoverAnimations.computeIfAbsent(setting, ignored -> {
-                            Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
-                            animation.setStartValue(0.0f);
-                            return animation;
-                        });
-                        hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
-                        row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
-                        contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
-                    });
+                                if (row instanceof KeybindSettingRow keybindRow) {
+                                    keybindRow.setListening(state.getListeningKeybindSetting() == keybindRow.getSetting());
+                                }
+                                Animation hoverAnimation = hoverAnimations.computeIfAbsent(setting, ignored -> {
+                                    Animation animation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
+                                    animation.setStartValue(0.0f);
+                                    return animation;
+                                });
+                                hoverAnimation.run(rowBounds.contains(effectiveMouseX, effectiveMouseY) ? 1.0f : 0.0f);
+                                row.buildUi(content, guiGraphics, textRenderer, rowBounds, hoverAnimation.getValue(), effectiveMouseX, effectiveMouseY, partialTick);
+                                contentState.noteAnimation(!hoverAnimation.isFinished() || row.hasActiveAnimation());
+                            });
                     contentState.noteAnimation(settingListController.hasActiveAnimations());
                 }));
         PanelUiCompiler.render(tree, roundRectRenderer, rectRenderer, textRenderer);
