@@ -3,6 +3,7 @@ package com.github.epsilon.modules.impl.combat;
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.ClickEvent;
 import com.github.epsilon.events.impl.TickEvent;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
@@ -11,7 +12,6 @@ import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.managers.HotbarManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -67,15 +67,13 @@ public class CrystalAura extends Module {
 
     @Override
     protected void onEnable() {
-        placeClock = 0;
-        breakClock = 0;
+        resetClocks();
         crystalling = false;
     }
 
     @Override
     protected void onDisable() {
-        placeClock = 0;
-        breakClock = 0;
+        resetClocks();
         crystalling = false;
     }
 
@@ -97,8 +95,7 @@ public class CrystalAura extends Module {
         if (damageTick.getValue() && damageTickCheck()) return;
 
         if (activateKey.getValue() != GLFW.GLFW_KEY_UNKNOWN && !KeybindUtils.isPressed(activateKey.getValue())) {
-            placeClock = 0;
-            breakClock = 0;
+            resetClocks();
             crystalling = false;
             return;
         }

@@ -2,6 +2,7 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.TickEvent;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -9,7 +10,6 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.world.BlockUtils;

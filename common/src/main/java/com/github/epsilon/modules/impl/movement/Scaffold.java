@@ -6,6 +6,8 @@ import com.github.epsilon.events.bus.listeners.ConsumerListener;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.SendPositionEvent;
 import com.github.epsilon.events.impl.TickEvent;
+import com.github.epsilon.managers.HotbarManager;
+import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -15,8 +17,6 @@ import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.managers.HotbarManager;
-import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.render.animation.Easing;
@@ -122,7 +122,6 @@ public class Scaffold extends Module {
             mc.options.keyJump.setDown(false);
             hasJump = false;
         }
-        renderBoxes.clear();
     }
 
     @EventHandler

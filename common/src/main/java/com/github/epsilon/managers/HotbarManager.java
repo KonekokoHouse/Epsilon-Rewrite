@@ -2,7 +2,6 @@ package com.github.epsilon.managers;
 
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.bus.EventHandler;
-import com.github.epsilon.events.bus.EventPriority;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.utils.player.FindItemResult;
 import com.github.epsilon.utils.rotation.Priority;
@@ -127,8 +126,8 @@ public class HotbarManager {
      * 在指定槽位范围中查找物品。
      *
      * @param isGood 物品判断器
-     * @param start   起始槽位，包含
-     * @param end     结束槽位，包含
+     * @param start  起始槽位，包含
+     * @param end    结束槽位，包含
      * @return 查找结果，slot 为 -1 表示未找到
      */
     public FindItemResult find(Predicate<ItemStack> isGood, int start, int end) {

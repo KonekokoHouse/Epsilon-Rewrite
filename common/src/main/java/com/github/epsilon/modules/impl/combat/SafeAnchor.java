@@ -6,6 +6,7 @@ import com.github.epsilon.events.bus.listeners.ConsumerListener;
 import com.github.epsilon.events.impl.PacketEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.TickEvent;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.RotationManager;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -14,7 +15,6 @@ import com.github.epsilon.utils.combat.DamageUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.ChatUtils;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
@@ -141,7 +141,6 @@ public class SafeAnchor extends Module {
     @Override
     protected void onDisable() {
         ownAnchors.clear();
-        renderBoxes.clear();
     }
 
     @EventHandler
