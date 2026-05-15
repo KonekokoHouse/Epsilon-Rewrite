@@ -21,6 +21,7 @@ public class PanelContentBuffer {
     private final RoundRectOutlineRenderer roundRectOutlineRenderer = new RoundRectOutlineRenderer();
     private final RectRenderer rectRenderer = new RectRenderer();
     private final ShadowRenderer shadowRenderer = new ShadowRenderer();
+    private final TriangleRenderer triangleRenderer = new TriangleRenderer();
     private final TextRenderer textRenderer = new TextRenderer();
     private final RoundRectRenderer scrollBarRenderer = new RoundRectRenderer();
     private final TextRenderer marqueeRenderer = new TextRenderer();
@@ -44,6 +45,10 @@ public class PanelContentBuffer {
 
     public ShadowRenderer shadowRenderer() {
         return shadowRenderer;
+    }
+
+    public TriangleRenderer triangleRenderer() {
+        return triangleRenderer;
     }
 
     public TextRenderer textRenderer() {
@@ -75,6 +80,7 @@ public class PanelContentBuffer {
         roundRectRenderer.clear();
         roundRectOutlineRenderer.clear();
         rectRenderer.clear();
+        triangleRenderer.clear();
         textRenderer.clear();
     }
 
@@ -90,7 +96,7 @@ public class PanelContentBuffer {
      * @param contentHeight 内容总高度
      */
     public void queueViewport(PanelLayout.Rect viewport, int guiHeight, float scroll, float maxScroll, float contentHeight) {
-        PanelScissor.apply(viewport, rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, textRenderer, guiHeight);
+        PanelScissor.apply(viewport, rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, triangleRenderer, textRenderer, guiHeight);
         scrollBarRenderer.clear();
         ScrollBarUtils.draw(scrollBarRenderer, viewport, scroll, maxScroll, contentHeight);
         pendingViewport = viewport;
@@ -109,8 +115,9 @@ public class PanelContentBuffer {
         roundRectRenderer.draw();
         roundRectOutlineRenderer.draw();
         rectRenderer.draw();
+        triangleRenderer.draw();
         textRenderer.draw();
-        PanelScissor.clear(rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, textRenderer);
+        PanelScissor.clear(rectRenderer, roundRectRenderer, roundRectOutlineRenderer, shadowRenderer, triangleRenderer, textRenderer);
         flushMarqueeTexts();
         scrollBarRenderer.draw();
         scrollBarRenderer.clear();

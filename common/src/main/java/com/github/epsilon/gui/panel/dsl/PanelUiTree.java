@@ -358,6 +358,19 @@ public class PanelUiTree {
         }
 
         /**
+         * 添加一个chevron三角箭头节点。
+         *
+         * @param centerX  三角形中心 X
+         * @param centerY  三角形中心 Y
+         * @param size     三角形半尺寸
+         * @param progress 旋转进度：0 = 指向右，1 = 指向下
+         * @param color    三角形颜色
+         */
+        public void triangle(float centerX, float centerY, float size, float progress, Color color) {
+            nodes.add(new TriangleNode(centerX, centerY, size, progress, color));
+        }
+
+        /**
          * 在独立视口缓冲中构建一个可裁剪子树。
          * <p>
          * 子树会先被编译进 {@link PanelContentBuffer}，稍后在统一 flush 阶段按视口裁剪后输出。
@@ -397,7 +410,7 @@ public class PanelUiTree {
     }
 
 
-    sealed interface UiNode permits GroupNode, ShadowNode, RoundRectNode, RectNode, TextNode, MarqueeTextNode, ButtonNode, SwitchNode, FilledFieldNode, InputNode, AssistChipNode, SegmentedControlNode, IconButtonNode, PopupCardNode, SliderNode, ViewportNode {
+    sealed interface UiNode permits GroupNode, ShadowNode, RoundRectNode, RectNode, TextNode, MarqueeTextNode, ButtonNode, SwitchNode, FilledFieldNode, InputNode, AssistChipNode, SegmentedControlNode, IconButtonNode, PopupCardNode, SliderNode, TriangleNode, ViewportNode {
     }
 
     /**
@@ -490,6 +503,9 @@ public class PanelUiTree {
     record SliderNode(PanelLayout.Rect bounds, float progress, float trackRadius, Color trackColor,
                       float activeEndInset, float activeMinWidth, Color activeColor,
                       float handleWidth, float handleHeight, float handleRadius, Color handleColor) implements UiNode {
+    }
+
+    record TriangleNode(float centerX, float centerY, float size, float progress, Color color) implements UiNode {
     }
 
     record ViewportNode(PanelContentBuffer buffer, PanelLayout.Rect viewport, int guiHeight,

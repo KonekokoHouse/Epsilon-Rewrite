@@ -20,37 +20,20 @@ public class PanelUiCompiler {
     private PanelUiCompiler() {
     }
 
-    /**
-     * 将 UI 树编译进不含阴影的目标 renderer 组合。
-     *
-     * @param tree              待编译的 UI 树
-     * @param roundRectRenderer 圆角矩形 renderer
-     * @param rectRenderer      矩形 renderer
-     * @param textRenderer      文本 renderer
-     */
     public static void render(PanelUiTree tree, RoundRectRenderer roundRectRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
-        render(tree, null, roundRectRenderer, null, rectRenderer, textRenderer);
+        renderNodes(tree.nodes(), new RenderTarget(null, roundRectRenderer, null, rectRenderer, null, textRenderer));
     }
 
-    /**
-     * 将 UI 树编译进完整的 renderer 组合。
-     * <p>
-     * 若树中包含 viewport 节点，其子树会被继续编译到对应的 {@link PanelContentBuffer} 中，
-     * 并在后续 flush 阶段按裁剪区域输出。
-     *
-     * @param tree              待编译的 UI 树
-     * @param shadowRenderer    阴影 renderer，可为空
-     * @param roundRectRenderer 圆角矩形 renderer
-     * @param rectRenderer      矩形 renderer
-     * @param textRenderer      文本 renderer
-     */
     public static void render(PanelUiTree tree, ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
-        render(tree, shadowRenderer, roundRectRenderer, null, rectRenderer, textRenderer);
+        renderNodes(tree.nodes(), new RenderTarget(shadowRenderer, roundRectRenderer, null, rectRenderer, null, textRenderer));
     }
 
-    public static void render(PanelUiTree tree, ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
-                              RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
-        renderNodes(tree.nodes(), new RenderTarget(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer));
+    public static void render(PanelUiTree tree, ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TriangleRenderer triangleRenderer, TextRenderer textRenderer) {
+        renderNodes(tree.nodes(), new RenderTarget(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, triangleRenderer, textRenderer));
+    }
+
+    public static void render(PanelUiTree tree, ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
+        render(tree, shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, null, textRenderer);
     }
 
     private static void renderNodes(List<PanelUiTree.UiNode> nodes, RenderTarget target) {
@@ -215,6 +198,14 @@ public class PanelUiCompiler {
                 renderSlider(target, bounds, progress, trackRadius, trackColor, activeEndInset, activeMinWidth, activeColor, handleWidth, handleHeight, handleRadius, handleColor);
                 continue;
             }
+            if (node instanceof PanelUiTree.TriangleNode(
+                    float centerX, float centerY, float size, float progress, java.awt.Color color
+            )) {
+                if (target.triangleRenderer() != null) {
+                    target.triangleRenderer().addChevronTriangle(centerX, centerY, size, progress, color);
+                }
+                continue;
+            }
             if (node instanceof PanelUiTree.ViewportNode(
                     PanelContentBuffer buffer, PanelLayout.Rect viewport, int guiHeight, float scroll, float maxScroll,
                     float contentHeight, List<PanelUiTree.UiNode> children
@@ -317,13 +308,17 @@ public class PanelUiCompiler {
 
     private record RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
                                 RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer,
-                                TextRenderer textRenderer, PanelContentBuffer buffer) {
-        private RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer, RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer, TextRenderer textRenderer) {
-            this(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer, null);
+                                TriangleRenderer triangleRenderer, TextRenderer textRenderer,
+                                PanelContentBuffer buffer) {
+        private RenderTarget(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
+                             RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer,
+                             TriangleRenderer triangleRenderer, TextRenderer textRenderer) {
+            this(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, triangleRenderer, textRenderer, null);
         }
 
         private static RenderTarget forContentBuffer(PanelContentBuffer buffer) {
-            return new RenderTarget(buffer.shadowRenderer(), buffer.roundRectRenderer(), buffer.roundRectOutlineRenderer(), buffer.rectRenderer(), buffer.textRenderer(), buffer);
+            return new RenderTarget(buffer.shadowRenderer(), buffer.roundRectRenderer(), buffer.roundRectOutlineRenderer(),
+                    buffer.rectRenderer(), buffer.triangleRenderer(), buffer.textRenderer(), buffer);
         }
     }
 

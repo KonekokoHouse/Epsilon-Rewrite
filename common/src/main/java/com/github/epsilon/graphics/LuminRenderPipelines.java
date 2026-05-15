@@ -70,4 +70,12 @@ public class LuminRenderPipelines {
             .withCull(false)
             .build();
 
+    public final static RenderPipeline TRIANGLE = RenderPipeline.builder(NO_BLEND_DEPTH_SNIPPET)
+            .withLocation(ResourceLocationUtils.getIdentifier("pipelines/triangle"))
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLES)
+            .withVertexShader(ResourceLocationUtils.getIdentifier("triangle"))
+            .withFragmentShader(ResourceLocationUtils.getIdentifier("triangle"))
+            .withCull(false)
+            .build();
+
 }

@@ -42,6 +42,7 @@ public class SettingListController {
     private final List<GroupEntry> groupEntries = new ArrayList<>();
 
     private SettingEntry draggingSliderEntry;
+    private EnumSettingRow activeEnumRow;
 
     public SettingListController(PanelPopupHost popupHost) {
         this.popupHost = popupHost;
@@ -90,6 +91,12 @@ public class SettingListController {
                            PanelUiTree.Scope scope, TextRenderer textRenderer, int mouseX, int mouseY,
                            RowRenderCallback callback) {
         prepareLayout(settings);
+
+        if (activeEnumRow != null && popupHost.getActivePopup() == null) {
+            activeEnumRow.setDropdownOpen(false);
+            activeEnumRow = null;
+        }
+
         appendRows(settings, viewport, scroll, rowWidth, scope, textRenderer, mouseX, mouseY, callback);
     }
 
@@ -170,6 +177,11 @@ public class SettingListController {
             }
             if (entry.row instanceof EnumSettingRow enumRow && entry.row.mouseClicked(entry.bounds, event, isDoubleClick)) {
                 popupHost.open(createEnumPopup(enumRow, entry.bounds, popupBounds));
+                enumRow.setDropdownOpen(true);
+                if (activeEnumRow != null && activeEnumRow != enumRow) {
+                    activeEnumRow.setDropdownOpen(false);
+                }
+                activeEnumRow = enumRow;
                 draggingSliderEntry = null;
                 return true;
             }
@@ -253,6 +265,10 @@ public class SettingListController {
         rowCache.clear();
         groupHoverAnimations.clear();
         groupExpandAnimations.clear();
+        if (activeEnumRow != null) {
+            activeEnumRow.setDropdownOpen(false);
+            activeEnumRow = null;
+        }
     }
 
     public boolean hasActiveAnimations() {
@@ -300,12 +316,10 @@ public class SettingListController {
                 countScale,
                 MD3Theme.ON_SECONDARY_CONTAINER);
 
-        String chevron = group.isCollapsed() ? ">" : "v";
-        float chevronScale = 0.58f;
-        float chevronWidth = textRenderer.getWidth(chevron, chevronScale);
-        float chevronY = headerBounds.y() + (GROUP_HEADER_HEIGHT - textRenderer.getHeight(chevronScale)) / 2.0f - 1.0f;
-        scope.text(chevron, headerBounds.right() - MD3Theme.ROW_TRAILING_INSET - chevronWidth - 3.0f, chevronY, chevronScale,
-                MD3Theme.lerp(MD3Theme.TEXT_MUTED, MD3Theme.PRIMARY, hoverProgress));
+        float chevronSize = 4.0f;
+        float chevronCenterX = headerBounds.right() - MD3Theme.ROW_TRAILING_INSET - chevronSize - 3.0f;
+        float chevronCenterY = headerBounds.y() + GROUP_HEADER_HEIGHT / 2.0f;
+        scope.triangle(chevronCenterX, chevronCenterY, chevronSize, expandProgress, MD3Theme.lerp(MD3Theme.TEXT_MUTED, MD3Theme.PRIMARY, hoverProgress));
     }
 
     private List<SettingSection> buildSections(List<Setting<?>> settings) {
