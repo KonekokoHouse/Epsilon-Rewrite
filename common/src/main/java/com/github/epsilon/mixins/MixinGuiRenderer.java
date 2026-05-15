@@ -2,7 +2,6 @@ package com.github.epsilon.mixins;
 
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.impl.Render2DEvent;
-import com.github.epsilon.graphics.shaders.BlurShader;
 import com.github.epsilon.utils.render.EpsilonGuiRenderer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import net.minecraft.client.Minecraft;
@@ -49,8 +48,6 @@ public class MixinGuiRenderer {
 
     @Inject(method = "draw", at = @At("HEAD"))
     private void onDrawHead(GpuBufferSlice fogBuffer, CallbackInfo ci) {
-        BlurShader.INSTANCE.beginFrame();
-
         epsilon$ensureRenderers();
 
         Minecraft mc = Minecraft.getInstance();
