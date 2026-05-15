@@ -12,7 +12,7 @@ import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.render.Render3DUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
@@ -222,9 +222,9 @@ public class AutoHitCrystal extends Module {
     }
 
     private boolean selectItemFromHotbar(net.minecraft.world.item.Item item) {
-        FindItemResult result = InvUtils.findInHotbar(item);
+        FindItemResult result = HotbarManager.INSTANCE.findInHotbar(item);
         if (result.found()) {
-            InvUtils.swap(result.slot(), false);
+            HotbarManager.INSTANCE.swap(result.slot(), false);
             return true;
         }
         return false;

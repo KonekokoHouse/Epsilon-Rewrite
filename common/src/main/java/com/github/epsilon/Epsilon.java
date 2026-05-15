@@ -4,6 +4,7 @@ import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.managers.AddonManager;
 import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.managers.HealthManager;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.managers.ModuleManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +29,7 @@ public class Epsilon {
         AddonManager.INSTANCE.setupAddons();
         ConfigManager.INSTANCE.initConfig();
         HealthManager.INSTANCE.getClass();
+        HotbarManager.INSTANCE.getClass();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ConfigManager.INSTANCE.saveNow();

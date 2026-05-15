@@ -7,7 +7,7 @@ import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.player.EnchantmentUtils;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
@@ -137,11 +137,11 @@ public class PacketMine extends Module {
     @Override
     protected void onDisable() {
         if (hasSwitch) {
-            InvUtils.swap(oldSlot, false);
+            HotbarManager.INSTANCE.swap(oldSlot, false);
             hasSwitch = false;
         }
         if (secondHasSwitch) {
-            InvUtils.swap(oldSlot, false);
+            HotbarManager.INSTANCE.swap(oldSlot, false);
             secondHasSwitch = false;
         }
     }
@@ -217,7 +217,7 @@ public class PacketMine extends Module {
         }
         if (timer.passedMillise(switchTime.getValue()) && hasSwitch && switchMode.getValue() != SwitchMode.None) {
             if (switchMode.is(SwitchMode.Delay)) {
-                InvUtils.swap(oldSlot, false);
+                HotbarManager.INSTANCE.swap(oldSlot, false);
             } else if (switchMode.is(SwitchMode.Silent)) {
                 mc.getConnection().send(new ServerboundSetCarriedItemPacket(oldSlot));
             }
@@ -272,7 +272,7 @@ public class PacketMine extends Module {
             if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
             if (!switchMode.is(SwitchMode.None) && bestSlot != -1) {
                 if (switchMode.is(SwitchMode.Delay)) {
-                    InvUtils.swap(bestSlot, false);
+                    HotbarManager.INSTANCE.swap(bestSlot, false);
                 } else if (switchMode.is(SwitchMode.Silent)) {
                     mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
                 }
@@ -366,7 +366,7 @@ public class PacketMine extends Module {
             if (!hasSwitch) oldSlot = mc.player.getInventory().getSelectedSlot();
             if (switchMode.getValue() != SwitchMode.None && bestSlot != -1) {
                 if (switchMode.is(SwitchMode.Delay)) {
-                    InvUtils.swap(bestSlot, false);
+                    HotbarManager.INSTANCE.swap(bestSlot, false);
                 }
                 if (switchMode.is(SwitchMode.Silent)) {
                     mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));

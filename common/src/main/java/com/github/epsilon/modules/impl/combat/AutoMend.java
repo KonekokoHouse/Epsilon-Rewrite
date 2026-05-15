@@ -8,7 +8,7 @@ import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.rotation.Priority;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
@@ -31,29 +31,15 @@ public class AutoMend extends Module {
     private final EnumSetting<SwitchMode> switchMode = enumSetting("Switch Mode", SwitchMode.Normal);
     private final BoolSetting swingHand = boolSetting("Swing Hand", false);
 
-    private boolean shouldSwapBack;
-
-    @Override
-    protected void onEnable() {
-        shouldSwapBack = false;
-    }
-
-    @Override
-    protected void onDisable() {
-        if (shouldSwapBack) {
-            InvUtils.swapBack();
-        }
-    }
-
     @EventHandler
     private void onClientTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        FindItemResult result = InvUtils.findInHotbar(Items.EXPERIENCE_BOTTLE);
+        FindItemResult result = HotbarManager.INSTANCE.findInHotbar(Items.EXPERIENCE_BOTTLE);
         if (!result.found()) return;
 
         RotationManager.INSTANCE.applyRotation(new Vector2f(mc.player.getYRot(), 90), 10, Priority.High, _ -> {
-            InvUtils.swap(result.slot(), true);
+            HotbarManager.INSTANCE.swap(result.slot(), true);
 
             InteractionHand hand = result.getHand();
             mc.gameMode.useItem(mc.player, hand);
@@ -63,11 +49,6 @@ public class AutoMend extends Module {
                 mc.getConnection().send(new ServerboundSwingPacket(hand));
             }
 
-            if (switchMode.is(SwitchMode.Silent)) {
-                InvUtils.swapBack();
-            } else {
-                shouldSwapBack = true;
-            }
         });
     }
 

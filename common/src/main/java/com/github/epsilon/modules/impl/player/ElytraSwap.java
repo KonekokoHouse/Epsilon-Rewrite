@@ -8,7 +8,7 @@ import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -83,7 +83,7 @@ public class ElytraSwap extends Module {
                     } :
                     stack -> stack.is(Items.ELYTRA);
             if (!this.isItemSwapped) {
-                int targetSlot = InvUtils.findInHotbar(predicate).slot();
+                int targetSlot = HotbarManager.INSTANCE.findInHotbar(predicate).slot();
 
                 if (targetSlot == -1) {
                     if (!this.moveToSlot.getValue()) {
@@ -92,7 +92,7 @@ public class ElytraSwap extends Module {
                     }
 
 
-                    int invSlot = InvUtils.find(predicate).slot();
+                    int invSlot = HotbarManager.INSTANCE.find(predicate).slot();
                     if (invSlot != -1) {
 
                         int containerSlot = invSlot;
@@ -109,7 +109,7 @@ public class ElytraSwap extends Module {
                     }
                 }
 
-                InvUtils.swap(targetSlot, false);
+                HotbarManager.INSTANCE.swap(targetSlot, false);
                 this.isItemSwapped = true;
             }
 
@@ -135,7 +135,7 @@ public class ElytraSwap extends Module {
         }
 
         if (this.originalSlot != -1) {
-            InvUtils.swap(this.originalSlot, false);
+            HotbarManager.INSTANCE.swap(this.originalSlot, false);
         }
         this.resetState();
     }

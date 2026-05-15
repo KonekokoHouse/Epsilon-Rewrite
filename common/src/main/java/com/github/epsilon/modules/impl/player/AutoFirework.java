@@ -8,7 +8,7 @@ import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -63,13 +63,13 @@ public class AutoFirework extends Module {
                 this.previousItem = mc.player.getMainHandItem();
             }
 
-            int fireworkSlot = InvUtils.findInHotbar(Items.FIREWORK_ROCKET).slot();
+            int fireworkSlot = HotbarManager.INSTANCE.findInHotbar(Items.FIREWORK_ROCKET).slot();
             if (fireworkSlot == -1) {
                 this.resetState();
                 return;
             }
 
-            InvUtils.swap(fireworkSlot, false);
+            HotbarManager.INSTANCE.swap(fireworkSlot, false);
 
             if (this.useDelayCounter < this.delay.getValue()) {
                 ++this.useDelayCounter;
@@ -97,7 +97,7 @@ public class AutoFirework extends Module {
         }
 
         if (this.previousSelectedSlot != -1) {
-            InvUtils.swap(this.previousSelectedSlot, false);
+            HotbarManager.INSTANCE.swap(this.previousSelectedSlot, false);
         }
 
         this.resetState();

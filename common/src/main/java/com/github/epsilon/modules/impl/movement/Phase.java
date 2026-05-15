@@ -12,7 +12,8 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
+import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import net.minecraft.core.BlockPos;
@@ -43,11 +44,6 @@ public class Phase extends Module {
         Sunrise,
         ForceMine,
         CCClip
-    }
-
-    private enum SwapMode {
-        Silent,
-        InvSwitch
     }
 
     private final EnumSetting<Mode> mode = enumSetting("Mode", Mode.Vanilla);
@@ -167,12 +163,9 @@ public class Phase extends Module {
             int bestTool = AutoTool.INSTANCE.getTool(blockToBreak);
             if (bestTool == -1) return;
 
-            InvUtils.swap(bestTool, true);
+            HotbarManager.INSTANCE.swap(bestTool, true);
             mc.gameMode.continueDestroyBlock(blockToBreak, mc.player.getDirection());
             mc.player.swing(InteractionHand.MAIN_HAND);
-            if (silent.getValue()) {
-                InvUtils.swapBack();
-            }
         }
 
         if (mode.getValue() == Mode.ForceMine && (mc.player.horizontalCollision || isPlayerInBlock()) && !mc.player.isInWater() && !mc.player.isInLava())
@@ -203,7 +196,7 @@ public class Phase extends Module {
                 }
 
                 Vector2f angle = RotationUtils.calculate(block.getCenter());
-                FindItemResult result = swapMode.is(SwapMode.Silent) ? InvUtils.findInHotbar(Items.ENDER_PEARL) : InvUtils.find(Items.ENDER_PEARL);
+                FindItemResult result = HotbarManager.INSTANCE.find(swapMode.getValue(), Items.ENDER_PEARL);
                 if (result.found()) {
                     float prevYaw = mc.player.getYRot();
                     float prevPitch = mc.player.getXRot();
@@ -221,11 +214,7 @@ public class Phase extends Module {
     }
 
     private void doUsePearl(int slot) {
-        if (swapMode.is(SwapMode.Silent)) {
-            InvUtils.swap(slot, true);
-        } else {
-            InvUtils.invSwap(slot);
-        }
+        HotbarManager.INSTANCE.swap(swapMode.getValue(), slot);
 
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
 
@@ -235,12 +224,6 @@ public class Phase extends Module {
             mc.getConnection().send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
         }
 
-
-        if (swapMode.is(SwapMode.Silent)) {
-            InvUtils.swapBack();
-        } else {
-            InvUtils.invSwapBack();
-        }
 
         if (autoDisable.getValue()) {
             toggle();

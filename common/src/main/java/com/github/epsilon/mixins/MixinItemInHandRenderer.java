@@ -1,5 +1,6 @@
 package com.github.epsilon.mixins;
 
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.modules.impl.render.HandsView;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -28,6 +29,18 @@ public abstract class MixinItemInHandRenderer {
     @Shadow
     protected abstract void applyItemArmAttackTransform(PoseStack poseStack, HumanoidArm arm, float attackValue);
 
+    @Shadow
+    public float mainHandHeight;
+
+    @Shadow
+    public float offHandHeight;
+
+    @Shadow
+    public ItemStack mainHandItem;
+
+    @Shadow
+    public ItemStack offHandItem;
+
     @Inject(method = "renderArmWithItem", at = @At("HEAD"))
     private void cacheBlockingState(AbstractClientPlayer player, float frameInterp, float xRot, InteractionHand hand, float attack, ItemStack itemStack, float inverseArmHeight, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, CallbackInfo ci) {
         epsilon$blocked = HandsView.INSTANCE.shouldApplyBlockingAnimation(hand, itemStack);
@@ -36,6 +49,17 @@ public abstract class MixinItemInHandRenderer {
     @Inject(method = "renderArmWithItem", at = @At("RETURN"))
     private void clearBlockingState(AbstractClientPlayer player, float frameInterp, float xRot, InteractionHand hand, float attack, ItemStack itemStack, float inverseArmHeight, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, CallbackInfo ci) {
         epsilon$blocked = false;
+    }
+
+    @Inject(method = "tick", at = @At("RETURN"))
+    private void hideHotbarSwitchAnimation(CallbackInfo ci) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || !HotbarManager.INSTANCE.shouldHideSwitchAnimation()) return;
+
+        mainHandHeight = 1.0F;
+        offHandHeight = 1.0F;
+        mainHandItem = minecraft.player.getMainHandItem();
+        offHandItem = minecraft.player.getOffhandItem();
     }
 
     @Inject(method = "renderArmWithItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V", ordinal = 2, shift = At.Shift.AFTER))

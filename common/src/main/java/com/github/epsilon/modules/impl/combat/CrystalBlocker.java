@@ -9,7 +9,7 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.world.BlockUtils;
@@ -121,7 +121,7 @@ public class CrystalBlocker extends Module {
         if (!mc.level.getBlockState(placePos.below()).isSolid()) return;
 
         // 4. Find obsidian
-        FindItemResult obsidian = InvUtils.findInHotbar(Items.OBSIDIAN);
+        FindItemResult obsidian = HotbarManager.INSTANCE.findInHotbar(Items.OBSIDIAN);
         if (!obsidian.found()) return;
 
         // 5. Rotation and placement
@@ -159,27 +159,21 @@ public class CrystalBlocker extends Module {
             int target = item.slot();
             boolean needSwitch = oldSlot != target;
             if (needSwitch) {
-                InvUtils.swap(target, true);
+                HotbarManager.INSTANCE.swap(target, true);
             }
 
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, bhr);
             mc.player.swing(InteractionHand.MAIN_HAND);
 
-            if (needSwitch) {
-                int backDelay = visibleSwapBackDelay.getValue();
-                if (backDelay > 0) {
-                    waitingSwapBack = true;
-                    swapBackTicks = backDelay;
-                    savedOldSlot = oldSlot;
-                } else {
-                    InvUtils.swapBack();
-                }
+            if (needSwitch && visibleSwapBackDelay.getValue() > 0) {
+                waitingSwapBack = true;
+                swapBackTicks = visibleSwapBackDelay.getValue();
+                savedOldSlot = oldSlot;
             }
         } else {
-            InvUtils.invSwap(item.slot());
+            HotbarManager.INSTANCE.invSwap(item.slot());
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, bhr);
             mc.player.swing(InteractionHand.MAIN_HAND);
-            InvUtils.invSwapBack();
         }
     }
 }

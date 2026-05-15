@@ -11,7 +11,7 @@ import com.github.epsilon.settings.impl.KeybindSetting;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.math.MathUtils;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -178,7 +178,7 @@ public class CrystalAura extends Module {
                 breakClock = breakDelay.getValue().intValue();
 
                 if (antiWeakness.getValue() && swappedForWeakness) {
-                    InvUtils.swap(prevSlot, false);
+                    HotbarManager.INSTANCE.swap(prevSlot, false);
                 }
             }
         }
@@ -199,10 +199,10 @@ public class CrystalAura extends Module {
     }
 
     private boolean selectSword() {
-        FindItemResult sword = InvUtils.findInHotbar(stack -> stack.is(ItemTags.SWORDS));
+        FindItemResult sword = HotbarManager.INSTANCE.findInHotbar(stack -> stack.is(ItemTags.SWORDS));
 
         if (!sword.found()) return false;
-        InvUtils.swap(sword.slot(), false);
+        HotbarManager.INSTANCE.swap(sword.slot(), false);
         return true;
     }
 

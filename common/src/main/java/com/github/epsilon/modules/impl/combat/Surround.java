@@ -9,7 +9,8 @@ import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
 import com.github.epsilon.utils.player.FindItemResult;
-import com.github.epsilon.utils.player.InvUtils;
+import com.github.epsilon.managers.HotbarManager;
+import com.github.epsilon.managers.HotbarManager.SwapMode;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RaytraceUtils;
@@ -42,12 +43,6 @@ public class Surround extends Module {
 
     private Surround() {
         super("Surround", Category.COMBAT);
-    }
-
-    private enum SwapMode {
-        Normal,
-        Silent,
-        InvSwitch
     }
 
     private final EnumSetting<SwapMode> swapMode = enumSetting("Swap Mode", SwapMode.Silent);
@@ -114,9 +109,7 @@ public class Surround extends Module {
             return;
         }
 
-        FindItemResult itemResult = swapMode.is(SwapMode.InvSwitch)
-                ? InvUtils.find(this::isValidBlock)
-                : InvUtils.findInHotbar(this::isValidBlock);
+        FindItemResult itemResult = HotbarManager.INSTANCE.find(swapMode.getValue(), this::isValidBlock);
         if (!itemResult.found()) return;
 
         int placedCount = 0;
@@ -218,17 +211,8 @@ public class Surround extends Module {
         }
 
         InteractionHand hand = itemResult.getHand();
-        boolean shouldSwapBack = false;
-        boolean shouldInvSwapBack = false;
-
         if (hand == InteractionHand.MAIN_HAND) {
-            if (swapMode.is(SwapMode.InvSwitch)) {
-                InvUtils.invSwap(itemResult.slot());
-                shouldInvSwapBack = true;
-            } else {
-                InvUtils.swap(itemResult.slot(), swapMode.is(SwapMode.Silent));
-                shouldSwapBack = swapMode.is(SwapMode.Silent);
-            }
+            HotbarManager.INSTANCE.swap(swapMode.getValue(), itemResult);
         }
 
         BlockHitResult hitResult = new BlockHitResult(info.hitVec(), info.side(), info.neighborPos(), false);
@@ -238,11 +222,6 @@ public class Surround extends Module {
             placeTimer.reset();
         }
 
-        if (shouldSwapBack) {
-            InvUtils.swapBack();
-        } else if (shouldInvSwapBack) {
-            InvUtils.invSwapBack();
-        }
     }
 
     private record PlaceInfo(
