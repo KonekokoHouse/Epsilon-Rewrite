@@ -68,7 +68,7 @@
   "epsilon.modules.client setting.gui mode.dropdown": "Drop Down",
   "epsilon.modules.client setting.gui mode.panel": "Panel",
   "epsilon.modules.client setting.open hud editor": "Open HUD Editor",
-  "epsilon.modules.client setting.i18n fallback": "I18n Fallback (F3+T Refresh)",
+  "epsilon.modules.client setting.i18n fallback": "I18n Fallback",
   "epsilon.modules.client setting.font anti aliasing": "Font Anti-Aliasing",
   "epsilon.modules.client setting.close gui on outside": "Close Gui On Outside",
   "epsilon.modules.client setting.rotate back speed": "Rotate Back Speed",
