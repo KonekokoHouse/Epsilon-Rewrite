@@ -45,7 +45,7 @@ public class DropdownScreen extends Screen {
         }
 
         for (DropdownPanel panel : panels) {
-            panel.setMaxPanelHeight(height * 0.82f);
+            panel.setMaxPanelHeight(resolveMaxPanelHeight(panel));
             panel.startIntro();
         }
     }
@@ -288,6 +288,16 @@ public class DropdownScreen extends Screen {
 
     private boolean isPanelVisible(String panelId) {
         return panels.stream().anyMatch(panel -> panel.getId().equals(panelId) && panel.isVisible());
+    }
+
+    private float resolveMaxPanelHeight(DropdownPanel panel) {
+        float screenLimited = height * 0.72f;
+        return switch (panel.getId()) {
+            case "main" -> Math.min(screenLimited, 260.0f);
+            case "friend", "config" -> Math.min(screenLimited, 220.0f);
+            case "addon" -> Math.min(screenLimited, 260.0f);
+            default -> Math.min(screenLimited, 350.0f);
+        };
     }
 
 }

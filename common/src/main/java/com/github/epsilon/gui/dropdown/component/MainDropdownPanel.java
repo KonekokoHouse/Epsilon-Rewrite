@@ -24,7 +24,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     private static final TranslateComponent addonComponent = EpsilonTranslateComponent.create("gui", "tab.addon");
     private static final TranslateComponent collapseComponent = EpsilonTranslateComponent.create("gui", "dropdown.collapse_all");
 
-    private static final float HEADER_HEIGHT = 34.0f;
+    private static final float HEADER_HEIGHT = 12.0f;
     private static final float ICON_SIZE = 24.0f;
     private static final float ICON_GAP = 5.0f;
     private static final float CONTENT_PADDING = 7.0f;
@@ -33,8 +33,8 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     private final SettingsContent settingsContent;
 
     public MainDropdownPanel(int panelIndex, Consumer<String> togglePanel, BooleanSupplier anySubPanelVisible, PanelVisibleResolver panelVisibleResolver) {
-        super("main", "Epsilon " + Epsilon.VERSION, "", panelIndex);
-        this.width = 172.0f;
+        super("main", "Epsilon", "", panelIndex);
+        this.width = 160.0f;
         this.settingsContent = new SettingsContent(ClientSetting.INSTANCE.getSettings(), ClientSetting.INSTANCE.getSettingGroups());
         setVisible(true);
         setOpened(true);
@@ -101,10 +101,8 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     }
 
     private void drawBrandHeader(DropdownRenderer renderer, float headerY) {
-        float titleScale = 0.92f;
-        float versionScale = 0.52f;
-        renderer.text().addText("Epsilon", x + CONTENT_PADDING, headerY + 6.0f, titleScale, MD3Theme.TEXT_PRIMARY);
-        renderer.text().addText(Epsilon.VERSION, x + CONTENT_PADDING, headerY + 23.0f, versionScale, MD3Theme.TEXT_MUTED);
+        float versionScale = 0.7f;
+        renderer.text().addText(Epsilon.VERSION, x + CONTENT_PADDING, headerY + 6.0f, versionScale, MD3Theme.TEXT_MUTED);
     }
 
     @Override
