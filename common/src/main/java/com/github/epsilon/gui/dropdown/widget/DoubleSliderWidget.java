@@ -19,6 +19,8 @@ public class DoubleSliderWidget extends SettingWidget<DoubleSetting> {
 
     public DoubleSliderWidget(DoubleSetting setting) {
         super(setting);
+        float initial = (float) ((setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin()));
+        slideAnim.setStartValue(initial);
     }
 
     @Override

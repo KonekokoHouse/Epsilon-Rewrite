@@ -15,6 +15,8 @@ public class IntSliderWidget extends SettingWidget<IntSetting> {
 
     public IntSliderWidget(IntSetting setting) {
         super(setting);
+        float initial = (float) (setting.getValue() - setting.getMin()) / (float) (setting.getMax() - setting.getMin());
+        slideAnim.setStartValue(initial);
     }
 
     @Override
