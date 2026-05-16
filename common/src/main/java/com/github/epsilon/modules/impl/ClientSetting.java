@@ -20,6 +20,11 @@ public class ClientSetting extends Module {
         super("Client Setting", null);
     }
 
+    public enum GuiMode {
+        Dropdown,
+        Panel
+    }
+
     public enum ThemePreset {
         TonalSpot,
         Neutral,
@@ -43,6 +48,8 @@ public class ClientSetting extends Module {
     private final SettingGroup sgNotification = settingGroup("Notification");
 
     // General
+    public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown);
+
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
     private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
@@ -51,7 +58,7 @@ public class ClientSetting extends Module {
 
     public final BoolSetting fontAntiAliasing = boolSetting("Font Anti Aliasing", true).group(sgGeneral);
 
-    public final BoolSetting closeOnOutside = boolSetting("Close Gui On Outside", false).group(sgGeneral);
+    public final BoolSetting closeOnOutside = boolSetting("Close Gui On Outside", false, () -> guiMode.is(GuiMode.Panel)).group(sgGeneral);
 
     // Anti Cheat
     public final DoubleSetting rotateBackSpeed = doubleSetting("Rotate Back Speed", 5.0f, 1.0f, 10.0f, 0.5f).group(sgAntiCheat);

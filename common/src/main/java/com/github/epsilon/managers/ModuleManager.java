@@ -7,6 +7,7 @@ import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.KeyPressEvent;
 import com.github.epsilon.events.impl.MousePressEvent;
 import com.github.epsilon.events.impl.Render2DEvent;
+import com.github.epsilon.gui.dropdown.DropdownScreen;
 import com.github.epsilon.gui.hudeditor.HudEditorScreen;
 import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.managers.sound.SoundKey;
@@ -113,7 +114,6 @@ public class ModuleManager {
                 NameTags.INSTANCE,
                 NoRender.INSTANCE,
                 //PopChams.INSTANCE,
-                TestGui.INSTANCE,
 
                 // Hud
                 NotificationsHUD.INSTANCE,
@@ -164,8 +164,13 @@ public class ModuleManager {
         int keyCode = event.getKey();
         int action = event.getAction();
 
-        if (keyCode == ClientSetting.INSTANCE.guiKeybind.getValue() && action == InputConstants.PRESS) {
-            mc.setScreen(PanelScreen.INSTANCE);
+        ClientSetting cs = ClientSetting.INSTANCE;
+        if (keyCode == cs.guiKeybind.getValue() && action == InputConstants.PRESS) {
+            if (cs.guiMode.is(ClientSetting.GuiMode.Dropdown)) {
+                mc.setScreen(DropdownScreen.INSTANCE);
+            } else {
+                mc.setScreen(PanelScreen.INSTANCE);
+            }
         }
 
         dispatchKeyBind(keyCode, action);

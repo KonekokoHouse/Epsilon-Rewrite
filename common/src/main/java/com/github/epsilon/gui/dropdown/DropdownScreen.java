@@ -4,7 +4,6 @@ import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.gui.dropdown.component.*;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.modules.Category;
-import com.github.epsilon.modules.impl.render.TestGui;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -213,7 +212,6 @@ public class DropdownScreen extends Screen {
     @Override
     public void onClose() {
         DropdownLayoutState.save(panels);
-        TestGui.INSTANCE.setEnabled(false);
         super.onClose();
     }
 
