@@ -26,6 +26,9 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
 
     public BoolWidget(BoolSetting setting) {
         super(setting);
+        float initial = setting.getValue() ? 1.0f : 0.0f;
+        toggleAnim.setStartValue(initial);
+        knobBounceAnim.setStartValue(initial);
     }
 
     @Override
