@@ -127,9 +127,9 @@ public class DropdownScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double mouseX, double mouseY) {
         for (CategoryPanel panel : panels) {
-            panel.mouseDragged(mouseX, mouseY);
+            panel.mouseDragged(event.x(), event.y());
         }
-        return super.mouseDragged(event, mouseX, mouseY);
+        return super.mouseDragged(event, event.x(), event.y());
     }
 
     @Override
