@@ -7,9 +7,11 @@ import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.Setting;
 import com.github.epsilon.settings.impl.*;
+import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class ModuleButton extends Component {
     private final Animation toggleAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_TOGGLE);
     private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
     private boolean expanded;
+    private boolean listeningKeybind;
 
     public ModuleButton(Module module) {
         this.module = module;
@@ -66,19 +69,15 @@ public class ModuleButton extends Component {
         float hover = hoverAnim.getValue();
         float toggle = toggleAnim.getValue();
 
-        java.awt.Color bg = MD3Theme.lerp(DropdownTheme.moduleDisabled(hover), DropdownTheme.moduleEnabled(hover), toggle);
+        Color bg = MD3Theme.lerp(DropdownTheme.moduleDisabled(hover), DropdownTheme.moduleEnabled(hover), toggle);
         renderer.rect().addRect(x + 2.0f, y, width - 4.0f, DropdownTheme.MODULE_HEIGHT, bg);
         renderer.rect().addRect(x + 3.0f, y + DropdownTheme.MODULE_HEIGHT - 0.5f, width - 6.0f, 0.5f, DropdownTheme.moduleDivider());
 
-        java.awt.Color textColor = MD3Theme.lerp(DropdownTheme.moduleTextDisabled(hover), DropdownTheme.moduleTextEnabled(), toggle);
+        Color textColor = MD3Theme.lerp(DropdownTheme.moduleTextDisabled(hover), DropdownTheme.moduleTextEnabled(), toggle);
         float textY = y + (DropdownTheme.MODULE_HEIGHT - renderer.text().getHeight(DropdownTheme.MODULE_TEXT_SCALE)) * 0.5f;
         renderer.text().addText(module.getTranslatedName(), x + DropdownTheme.MODULE_PADDING_X, textY, DropdownTheme.MODULE_TEXT_SCALE, textColor);
 
-        if (!widgets.isEmpty()) {
-            float arrowX = x + width - DropdownTheme.MODULE_PADDING_X - 4.0f;
-            float arrowY = y + DropdownTheme.MODULE_HEIGHT * 0.5f;
-            renderer.triangle().addChevronTriangle(arrowX, arrowY, 3.0f, expandAnim.getValue(), DropdownTheme.expandArrow(toggle));
-        }
+        drawKeybindButton(renderer, toggle);
 
         float expand = expandAnim.getValue();
         if (expand > 0.01f) {
@@ -94,9 +93,63 @@ public class ModuleButton extends Component {
         }
     }
 
+    private void drawKeybindButton(DropdownRenderer renderer, float toggle) {
+        float btnW = DropdownTheme.KEYBIND_WIDTH;
+        float btnH = DropdownTheme.KEYBIND_HEIGHT;
+        float btnX = x + width - DropdownTheme.MODULE_PADDING_X - btnW;
+        float btnY = y + (DropdownTheme.MODULE_HEIGHT - btnH) * 0.5f;
+        float radius = DropdownTheme.KEYBIND_RADIUS;
+        String keyText = listeningKeybind ? "..." : formatCompactKeybind(module.getKeyBind());
+        float textScale = keyText.length() >= 3 ? 0.44f : 0.5f;
+        float textW = renderer.text().getWidth(keyText, textScale);
+        float textH = renderer.text().getHeight(textScale);
+        Color surface = listeningKeybind ? MD3Theme.PRIMARY_CONTAINER : DropdownTheme.keybindSurface(false);
+        Color text = listeningKeybind ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.moduleTextEnabled(), toggle);
+
+        renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, radius, surface);
+        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(text, listeningKeybind ? 150 : 88));
+
+        float textX = btnX + (btnW - textW) * 0.5f;
+        float textY = btnY + (btnH - textH) * 0.5f - 0.5f;
+        renderer.text().addText(keyText, textX, textY, textScale, text);
+        if (module.getBindMode() == Module.BindMode.Hold && !listeningKeybind) {
+            renderer.rect().addRect(textX, textY + textH + 0.5f, textW, 0.75f, text);
+        }
+    }
+
+    private String formatCompactKeybind(int keyCode) {
+        if (keyCode == KeybindUtils.NONE) return "NONE";
+        if (KeybindUtils.isMouseButton(keyCode)) return "M" + (KeybindUtils.decodeMouseButton(keyCode) + 1);
+        String label = KeybindUtils.format(keyCode).replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        if (label.isEmpty()) return "?";
+        return label.length() > 3 ? label.substring(0, 3) : label;
+    }
+
+    private boolean isKeybindButtonHovered(double mouseX, double mouseY) {
+        float btnX = x + width - DropdownTheme.MODULE_PADDING_X - DropdownTheme.KEYBIND_WIDTH;
+        float btnY = y + (DropdownTheme.MODULE_HEIGHT - DropdownTheme.KEYBIND_HEIGHT) * 0.5f;
+        return isHovered(mouseX, mouseY, btnX, btnY, DropdownTheme.KEYBIND_WIDTH, DropdownTheme.KEYBIND_HEIGHT);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (listeningKeybind) {
+            module.setKeyBind(KeybindUtils.encodeMouseButton(button));
+            listeningKeybind = false;
+            return true;
+        }
+
         if (isHovered(mouseX, mouseY, x, y, width, DropdownTheme.MODULE_HEIGHT)) {
+            if (isKeybindButtonHovered(mouseX, mouseY)) {
+                if (button == 0) {
+                    listeningKeybind = true;
+                    return true;
+                }
+                if (button == 2) {
+                    module.setBindMode(module.getBindMode() == Module.BindMode.Toggle ? Module.BindMode.Hold : Module.BindMode.Toggle);
+                    return true;
+                }
+            }
             if (button == 0) {
                 module.toggle();
                 return true;
@@ -133,6 +186,12 @@ public class ModuleButton extends Component {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (listeningKeybind) {
+            module.setKeyBind(keyCode == 256 || keyCode == 259 ? KeybindUtils.NONE : keyCode);
+            listeningKeybind = false;
+            return true;
+        }
+
         if (expanded) {
             for (SettingWidget<?> widget : widgets) {
                 if (!widget.isVisible()) continue;
@@ -166,6 +225,7 @@ public class ModuleButton extends Component {
     }
 
     public boolean hasListeningKeybind() {
+        if (listeningKeybind) return true;
         for (SettingWidget<?> widget : widgets) {
             if (widget instanceof KeybindWidget kw && kw.isListening()) return true;
         }

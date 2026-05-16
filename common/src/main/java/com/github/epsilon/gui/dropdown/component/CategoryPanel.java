@@ -1,5 +1,6 @@
 package com.github.epsilon.gui.dropdown.component;
 
+import com.github.epsilon.graphics.shaders.BlurShader;
 import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.gui.dropdown.DropdownRenderer;
 import com.github.epsilon.gui.dropdown.DropdownTheme;
@@ -46,6 +47,8 @@ public class CategoryPanel {
         float contentHeight = computeContentHeight();
         float visibleHeight = computeVisibleContentHeight(contentHeight);
         float panelHeight = DropdownTheme.PANEL_HEADER_HEIGHT + (visibleHeight + DropdownTheme.PANEL_BOTTOM_PADDING) * expand;
+
+        BlurShader.INSTANCE.render(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, 8f);
 
         renderer.shadow().addShadow(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_SHADOW_BLUR, DropdownTheme.panelShadow());
         renderer.roundRect().addRoundRect(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.panelBackground());

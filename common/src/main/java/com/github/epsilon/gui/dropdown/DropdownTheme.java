@@ -48,7 +48,7 @@ public final class DropdownTheme {
     public static final float COLOR_ALPHA_HEIGHT = 7.0f;
     public static final float COLOR_RADIUS = 5.0f;
 
-    public static final float KEYBIND_WIDTH = 46.0f;
+    public static final float KEYBIND_WIDTH = 34.0f;
     public static final float KEYBIND_HEIGHT = 14.0f;
     public static final float KEYBIND_RADIUS = 5.0f;
 
