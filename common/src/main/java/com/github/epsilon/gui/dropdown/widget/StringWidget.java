@@ -28,9 +28,6 @@ public class StringWidget extends SettingWidget<StringSetting> {
 
         renderer.roundRect().addRoundRect(fieldX, fieldY, fieldW, fieldH, DropdownTheme.INPUT_RADIUS, DropdownTheme.inputSurface(focused));
 
-        float indicatorH = focused ? 1.5f : 1.0f;
-        renderer.rect().addRect(fieldX + 2.0f, fieldY + fieldH - indicatorH, fieldW - 4.0f, indicatorH, DropdownTheme.inputIndicator(focused));
-
         String displayText = setting.getValue();
         if (displayText.isEmpty() && !focused) {
             displayText = "...";
