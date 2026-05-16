@@ -18,6 +18,8 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -238,7 +240,7 @@ public class PacketMine extends Module {
         renderFadeBoxes(event.getPoseStack());
 
         if (secondPos != null && doubleBreak.getValue()) {
-            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(secondPos.getCenter())) > range.getValue()) {
+            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(secondPos))) > range.getValue()) {
                 secondPos = null;
                 return;
             }
@@ -281,7 +283,7 @@ public class PacketMine extends Module {
             }
         }
         if (targetPos != null) {
-            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(targetPos.getCenter())) > range.getValue()) {
+            if (farCancel.getValue() && Math.sqrt(mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(targetPos))) > range.getValue()) {
                 targetPos = null;
                 return;
             }
@@ -567,7 +569,7 @@ public class PacketMine extends Module {
                 Render3DUtils.drawOutlineBox(stack, targetPos, color2);
             }
             case Normal -> {
-                AABB box = AABB.ofSize(targetPos.getCenter(), rawProgress, rawProgress, rawProgress);
+                AABB box = AABB.ofSize(Vec3.atCenterOf(targetPos), rawProgress, rawProgress, rawProgress);
                 Render3DUtils.drawFilledBox(box, color1);
                 Render3DUtils.drawOutlineBox(stack, box, color2);
             }
@@ -601,7 +603,7 @@ public class PacketMine extends Module {
                 Render3DUtils.drawOutlineBox(stack, secondPos, color2);
             }
             case Normal -> {
-                AABB box = AABB.ofSize(secondPos.getCenter(), rawProgress, rawProgress, rawProgress);
+                AABB box = AABB.ofSize(Vec3.atCenterOf(secondPos), rawProgress, rawProgress, rawProgress);
                 Render3DUtils.drawFilledBox(box, color1);
                 Render3DUtils.drawOutlineBox(stack, box, color2);
             }

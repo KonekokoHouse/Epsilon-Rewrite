@@ -62,7 +62,7 @@ public class ClientSetting extends Module {
         });
     }).group(sgGeneral);
 
-    private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
+    private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.gui.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
 
     public final BoolSetting i18nFallback = boolSetting("I18n Fallback", true, _ -> {
         TranslateHolder.INSTANCE.refresh();

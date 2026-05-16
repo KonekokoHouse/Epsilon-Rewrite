@@ -1,8 +1,8 @@
-package com.github.epsilon.modules.impl.world;
+package com.github.epsilon.modules.impl.player;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.events.bus.EventHandler;
-import com.github.epsilon.events.tick.TickEvent;
+import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.vulkan.buffer.VulkanOutputBuffer;
 import com.github.epsilon.graphics.vulkan.buffer.VulkanStd430Buffer;
@@ -46,7 +46,7 @@ public class ComputeTest extends Module {
             .build();
 
     private ComputeTest() {
-        super("Compute Test", Category.WORLD);
+        super("Compute Test", Category.PLAYER);
     }
 
     @Override
@@ -62,7 +62,6 @@ public class ComputeTest extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-        if (vulkanCheck()) return;
         if (dispatched) return;
 
         ensureInitialized();
@@ -91,7 +90,6 @@ public class ComputeTest extends Module {
 
     private void ensureInitialized() {
         if (initialized) return;
-        if (vulkanCheck()) return;
 
         try {
             String computeSource = loadComputeShaderSource();
@@ -169,10 +167,6 @@ public class ComputeTest extends Module {
     }
 
     private void destroyResources() {
-        if (vulkanCheck()) {
-            initialized = false;
-            return;
-        }
 
         if (computeUtils != null) {
             computeUtils.close();

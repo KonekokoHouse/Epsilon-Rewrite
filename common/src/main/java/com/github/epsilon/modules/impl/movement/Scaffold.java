@@ -76,7 +76,7 @@ public class Scaffold extends Module {
                         AABB renderBox = getRenderBox(box, scale);
 
                         Render3DUtils.drawFilledBox(renderBox, side);
-                        Render3DUtils.drawOutlineBox(event.getPoseStack(), renderBox, line);
+                        Render3DUtils.drawOutlineBox(event.getPoseStack(), renderBox, line.getRGB(), 3f);
                     }
                 }
         ));
@@ -353,7 +353,7 @@ public class Scaffold extends Module {
     }
 
     private Vector2f getRotation(BlockInfo blockCache) {
-        Vector2f calculate = onAir() ? RotationUtils.calculate(blockCache.position, blockCache.dir) : RotationUtils.calculate(blockCache.position.getCenter());
+        Vector2f calculate = onAir() ? RotationUtils.calculate(blockCache.position, blockCache.dir) : RotationUtils.calculate(Vec3.atCenterOf(blockCache.position));
         Vector2f reverseYaw = new Vector2f(Mth.wrapDegrees(mc.player.getYRot() - 180), calculate.y);
         boolean hasRotated = RaytraceUtils.overBlock(reverseYaw, blockCache.position, blockCache.dir);
         if (hasRotated) return reverseYaw;

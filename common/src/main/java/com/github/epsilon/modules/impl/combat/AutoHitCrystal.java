@@ -99,7 +99,7 @@ public class AutoHitCrystal extends Module {
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (mc.screen != null) {
+        if (mc.gui.screen() != null) {
             return;
         }
 

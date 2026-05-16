@@ -1,13 +1,10 @@
 package com.github.epsilon.graphics.immediate;
 
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
-/**
- * Lightweight immediate-mode tessellator replacement.
- * It keeps one growable CPU-side buffer and creates BufferBuilder instances on demand.
- */
 public final class LuminTessellator {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
@@ -23,9 +20,7 @@ public final class LuminTessellator {
         return INSTANCE;
     }
 
-    public BufferBuilder begin(VertexFormat.Mode mode, VertexFormat format) {
+    public BufferBuilder begin(PrimitiveTopology mode, VertexFormat format) {
         return new BufferBuilder(this.allocator, mode, format);
     }
 }
-
-

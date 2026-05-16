@@ -159,7 +159,7 @@ public class Blink extends Module {
 
     @EventHandler
     public void onMotion(SendPositionEvent event) {
-        if (mc.screen instanceof RecoverWorldDataScreen && this.isEnabled()) {
+        if (mc.gui.screen() instanceof RecoverWorldDataScreen && this.isEnabled()) {
             this.setEnabled(false);
         }
         if (nullCheck()) return;

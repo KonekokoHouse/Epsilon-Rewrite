@@ -47,7 +47,7 @@ Lumin Graphics 的所有渲染操作均通过专门的 **Renderer（渲染器）
 
 ```java
 // 推荐的初始化方式
-private final Supplier<RectRenderer> rectRenderer = Suppliers.memoize(RectRenderer::new);
+private final Supplier<RectRenderer> rectRenderer = Suppliers.memoize(RectRenderer::create);
 
 // 使用 .get() 获取渲染器实例
 rectRenderer.get().addRect(10f,10f,100f,100f,Color.WHITE);

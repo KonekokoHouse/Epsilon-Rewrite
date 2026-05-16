@@ -64,12 +64,12 @@ public class CaptureMarkESP {
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
 
         Matrix4f matrix = poseStack.last().pose();
-        LuminImmediateRenderer.PosTexColorQuads builder = LuminImmediateRenderer.beginPosTexColorQuads(TARGET_ICON_PIPELINE, CAPTUREMARK);
+        LuminImmediateRenderer.PosTexColorQuads builder = LuminImmediateRenderer.beginPosTexColorQuads(TARGET_ICON_PIPELINE, CAPTUREMARK_TEX);
 
-        Color c1 = getColorForProgress(0, waveSpeed, color1, color2);
-        Color c2 = getColorForProgress(0.25f, waveSpeed, color1, color2);
-        Color c3 = getColorForProgress(0.5f, waveSpeed, color1, color2);
-        Color c4 = getColorForProgress(0.75f, waveSpeed, color1, color2);
+        Color c1 = getColorForProgress(0, waveSpeed, color1, color2, timeSeconds);
+        Color c2 = getColorForProgress(0.25f, waveSpeed, color1, color2, timeSeconds);
+        Color c3 = getColorForProgress(0.5f, waveSpeed, color1, color2, timeSeconds);
+        Color c4 = getColorForProgress(0.75f, waveSpeed, color1, color2, timeSeconds);
 
         builder.vertex(matrix, -size, -size, 0, 0, 0, c1.getRGB());
         builder.vertex(matrix, -size, size, 0, 0, 1, c2.getRGB());

@@ -117,6 +117,11 @@ public class Render3DUtils {
         vertexLine(builder, matrix, entry, maxX, minY, maxZ, minX, minY, maxZ, color, thickness);
         vertexLine(builder, matrix, entry, minX, minY, maxZ, minX, minY, minZ, color, thickness);
 
+        vertexLine(builder, matrix, entry, minX, minY, minZ, maxX, minY, minZ, color, thickness);
+        vertexLine(builder, matrix, entry, maxX, minY, minZ, maxX, minY, maxZ, color, thickness);
+        vertexLine(builder, matrix, entry, maxX, minY, maxZ, minX, minY, maxZ, color, thickness);
+        vertexLine(builder, matrix, entry, minX, minY, maxZ, minX, minY, minZ, color, thickness);
+
         vertexLine(builder, matrix, entry, minX, maxY, minZ, maxX, maxY, minZ, color, thickness);
         vertexLine(builder, matrix, entry, maxX, maxY, minZ, maxX, maxY, maxZ, color, thickness);
         vertexLine(builder, matrix, entry, maxX, maxY, maxZ, minX, maxY, maxZ, color, thickness);
@@ -157,6 +162,14 @@ public class Render3DUtils {
         float zNormal = z2 - z1;
         float normalSqrt = Mth.sqrt(xNormal * xNormal + yNormal * yNormal + zNormal * zNormal);
         return new Vector3f(xNormal / normalSqrt, yNormal / normalSqrt, zNormal / normalSqrt);
+    }
+
+    public static void drawOutlineBox(PoseStack stack, AABB box, Color color) {
+        drawOutlineBox(stack, box, color.getRGB(), 1.5f);
+    }
+
+    public static void drawOutlineBox(PoseStack stack, BlockPos pos, Color color) {
+        drawOutlineBox(stack, new AABB(pos), color.getRGB(), 1.5f);
     }
 
 }

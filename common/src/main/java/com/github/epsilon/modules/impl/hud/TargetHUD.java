@@ -164,7 +164,7 @@ public class TargetHUD extends HudModule {
         if (isRenderableTarget(target)) {
             return target;
         }
-        return mc.screen instanceof HudEditorScreen ? mc.player : null;
+        return mc.gui.screen() instanceof HudEditorScreen ? mc.player : null;
     }
 
     private boolean isRenderableTarget(LivingEntity target) {

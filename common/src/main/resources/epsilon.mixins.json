@@ -17,7 +17,7 @@
     "MixinFlowingFluid",
     "MixinGameRenderer",
     "MixinGlDebug",
-    "MixinGui",
+    "MixinHud",
     "MixinGuiRenderer",
     "MixinHumanoidMobRenderer",
     "MixinItem",

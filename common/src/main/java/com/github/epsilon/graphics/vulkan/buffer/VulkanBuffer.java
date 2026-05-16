@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.vulkan.buffer;
 
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.mojang.blaze3d.vulkan.VulkanUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -63,6 +64,7 @@ public final class VulkanBuffer implements AutoCloseable {
             VmaAllocationInfo allocationInfo = mapped ? VmaAllocationInfo.calloc(stack) : null;
 
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vmaCreateBuffer(allocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo),
                     "Can't create Vulkan buffer"
             );
@@ -73,6 +75,7 @@ public final class VulkanBuffer implements AutoCloseable {
                 if (mappedPtr == MemoryUtil.NULL) {
                     PointerBuffer pMapped = stack.mallocPointer(1);
                     VulkanUtils.crashIfFailure(
+                            LuminRenderSystem.vulkanContext.blz3dDevice(),
                             vmaMapMemory(allocator, pAllocation.get(0), pMapped),
                             "Can't map Vulkan buffer memory"
                     );

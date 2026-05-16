@@ -5,8 +5,13 @@ import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.*;
+import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.rendertype.PreparedRenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -79,7 +84,7 @@ public class Hat extends Module {
             colors[i] = this.fadeBetween(colorMode, this.offset.getValue(), (double) i * ((double) this.offset.getValue() / this.points.getValue()));
         }
 
-        Vec3 camera = mc.gameRenderer.getMainCamera().position();
+        Vec3 camera = mc.gameRenderer.mainCamera().position();
         float tickDelta = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         double x = Mth.lerp(tickDelta, player.xOld, player.getX()) - camera.x;
         double y = Mth.lerp(tickDelta, player.yOld, player.getY()) - camera.y;
@@ -101,10 +106,10 @@ public class Hat extends Module {
         stack.translate(0, 0, pitch / 270.0);
 
         Matrix4f matrix = stack.last().pose();
-        Tesselator tesselator = Tesselator.getInstance();
 
         float lineWidth = 2.0f;
-        BufferBuilder outlineBuffer = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL_LINE_WIDTH);
+        ByteBufferBuilder lineByteBuf = new ByteBufferBuilder(4096);
+        BufferBuilder outlineBuffer = new BufferBuilder(lineByteBuf, PrimitiveTopology.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL_LINE_WIDTH);
         for (int i = 0; i < pointCount; i++) {
             int next = (i + 1) % pointCount;
 
@@ -123,9 +128,10 @@ public class Hat extends Module {
             outlineBuffer.addVertex(matrix, (float) p1[0], 0.0f, (float) p1[1]).setColor(c1.getRed(), c1.getGreen(), c1.getBlue(), 255).setNormal(nx, 0.0f, nz).setLineWidth(lineWidth);
             outlineBuffer.addVertex(matrix, (float) p2[0], 0.0f, (float) p2[1]).setColor(c2.getRed(), c2.getGreen(), c2.getBlue(), 255).setNormal(nx, 0.0f, nz).setLineWidth(lineWidth);
         }
-        RenderTypes.lines().draw(outlineBuffer.buildOrThrow());
+        drawMesh(outlineBuffer);
 
-        BufferBuilder coneBuffer = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        ByteBufferBuilder coneByteBuf = new ByteBufferBuilder(4096);
+        BufferBuilder coneBuffer = new BufferBuilder(coneByteBuf, PrimitiveTopology.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
 
         coneBuffer.addVertex(matrix, 0, (float) (radius / 2), 0).setColor(255, 255, 255, 128);
 
@@ -134,9 +140,37 @@ public class Hat extends Module {
             Color clr = colors[i % colors.length];
             coneBuffer.addVertex(matrix, (float) pos[0], 0, (float) pos[1]).setColor(clr.getRed(), clr.getGreen(), clr.getBlue(), 128);
         }
-        RenderTypes.debugTriangleFan().draw(coneBuffer.buildOrThrow());
+        drawMesh(coneBuffer);
 
         stack.popPose();
+    }
+
+    private static void drawMesh(BufferBuilder buffer) {
+        MeshData mesh = buffer.buildOrThrow();
+        if (mesh != null) {
+            try {
+                MeshData.DrawState drawState = mesh.drawState();
+                RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(drawState.primitiveTopology());
+                GpuBuffer indexBuf = autoIndices.getBuffer(drawState.indexCount());
+
+                GpuBuffer vertexBuf = RenderSystem.getDevice().createBuffer(
+                        () -> "hat_vb", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, mesh.vertexBuffer().remaining());
+                RenderSystem.getDevice().createCommandEncoder().writeToBuffer(
+                        vertexBuf.slice(), mesh.vertexBuffer());
+
+                RenderType renderType;
+                if (drawState.primitiveTopology() == PrimitiveTopology.LINES) {
+                    renderType = RenderTypes.lines();
+                } else {
+                    renderType = RenderTypes.debugTriangleFan();
+                }
+                PreparedRenderType prepared = renderType.prepare();
+                prepared.drawFromBuffer(vertexBuf, indexBuf, drawState.indexType(), 0, 0, drawState.indexCount());
+                vertexBuf.close();
+            } finally {
+                mesh.close();
+            }
+        }
     }
 
     private Color[] getColorMode() {
