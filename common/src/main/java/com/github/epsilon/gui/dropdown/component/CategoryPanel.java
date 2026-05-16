@@ -50,12 +50,6 @@ public class CategoryPanel {
         renderer.shadow().addShadow(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_SHADOW_BLUR, DropdownTheme.panelShadow());
         renderer.roundRect().addRoundRect(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.panelBackground());
 
-        float contentShown = visibleHeight * expand;
-        float headerBottomR = contentShown < 1.0f ? DropdownTheme.PANEL_RADIUS : 0.0f;
-        renderer.roundRect().addRoundRect(x, y, width, DropdownTheme.PANEL_HEADER_HEIGHT,
-                DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_RADIUS, headerBottomR, headerBottomR,
-                DropdownTheme.panelHeader());
-
         float iconX = x + 5.0f;
         float textX = iconX + 10.0f;
         float textY = y + (DropdownTheme.PANEL_HEADER_HEIGHT - renderer.text().getHeight(DropdownTheme.HEADER_TEXT_SCALE)) * 0.5f;

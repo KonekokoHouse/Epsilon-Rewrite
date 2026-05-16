@@ -32,12 +32,11 @@ public class ModuleButton extends Component {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static SettingWidget<?> createWidget(Setting<?> setting) {
         if (setting instanceof BoolSetting s) return new BoolWidget(s);
         if (setting instanceof IntSetting s) return new IntSliderWidget(s);
         if (setting instanceof DoubleSetting s) return new DoubleSliderWidget(s);
-        if (setting instanceof EnumSetting<?> s) return new EnumWidget((EnumSetting<?>) s);
+        if (setting instanceof EnumSetting<?> s) return new EnumWidget(s);
         if (setting instanceof ColorSetting s) return new ColorWidget(s);
         if (setting instanceof KeybindSetting s) return new KeybindWidget(s);
         if (setting instanceof StringSetting s) return new StringWidget(s);
