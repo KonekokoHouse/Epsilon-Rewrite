@@ -68,7 +68,7 @@ public class ModuleButton extends Component {
         float toggle = toggleAnim.getValue();
 
         java.awt.Color bg = MD3Theme.lerp(DropdownTheme.moduleDisabled(hover), DropdownTheme.moduleEnabled(hover), toggle);
-        renderer.roundRect().addRoundRect(x + 2.0f, y, width - 4.0f, DropdownTheme.MODULE_HEIGHT, DropdownTheme.MODULE_RADIUS, bg);
+        renderer.rect().addRect(x + 2.0f, y, width - 4.0f, DropdownTheme.MODULE_HEIGHT, bg);
 
         java.awt.Color textColor = MD3Theme.lerp(DropdownTheme.moduleTextDisabled(hover), DropdownTheme.moduleTextEnabled(), toggle);
         float textY = y + (DropdownTheme.MODULE_HEIGHT - renderer.text().getHeight(DropdownTheme.MODULE_TEXT_SCALE)) * 0.5f;

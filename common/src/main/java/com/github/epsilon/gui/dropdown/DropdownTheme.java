@@ -61,6 +61,8 @@ public final class DropdownTheme {
 
     public static final float SCROLL_SPEED = 12.0f;
 
+    public static final float PANEL_BOTTOM_PADDING = 6.0f;
+
     public static final long ANIM_OPEN = 200L;
     public static final long ANIM_TOGGLE = 180L;
     public static final long ANIM_HOVER = 120L;

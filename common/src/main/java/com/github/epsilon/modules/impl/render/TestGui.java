@@ -14,6 +14,10 @@ public class TestGui extends Module {
 
     @Override
     protected void onEnable() {
+        if (nullCheck()) {
+            toggle();
+            return;
+        }
         mc.setScreen(DropdownScreen.INSTANCE);
     }
 

@@ -42,13 +42,19 @@ public class CategoryPanel {
 
     public void drawBackground(DropdownRenderer renderer) {
         openAnim.run(opened ? 1.0f : 0.0f);
+        float expand = openAnim.getValue();
         float contentHeight = computeContentHeight();
         float visibleHeight = Math.min(contentHeight, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT);
-        float panelHeight = DropdownTheme.PANEL_HEADER_HEIGHT + visibleHeight * openAnim.getValue();
+        float panelHeight = DropdownTheme.PANEL_HEADER_HEIGHT + visibleHeight * expand;
 
         renderer.shadow().addShadow(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_SHADOW_BLUR, DropdownTheme.panelShadow());
         renderer.roundRect().addRoundRect(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.panelBackground());
-        renderer.roundRect().addRoundRect(x, y, width, DropdownTheme.PANEL_HEADER_HEIGHT, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_RADIUS, 0.0f, 0.0f, DropdownTheme.panelHeader());
+
+        float contentShown = visibleHeight * expand;
+        float headerBottomR = contentShown < 1.0f ? DropdownTheme.PANEL_RADIUS : 0.0f;
+        renderer.roundRect().addRoundRect(x, y, width, DropdownTheme.PANEL_HEADER_HEIGHT,
+                DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_RADIUS, headerBottomR, headerBottomR,
+                DropdownTheme.panelHeader());
 
         float iconX = x + 5.0f;
         float textX = iconX + 10.0f;
@@ -115,7 +121,7 @@ public class CategoryPanel {
         for (ModuleButton button : moduleButtons) {
             total += button.getHeight();
         }
-        return total;
+        return total + DropdownTheme.PANEL_BOTTOM_PADDING;
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

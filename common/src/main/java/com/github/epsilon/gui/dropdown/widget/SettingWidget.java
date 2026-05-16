@@ -18,5 +18,5 @@ public abstract class SettingWidget<S extends Setting<?>> extends Component {
     public boolean isVisible() {
         return setting.isAvailable();
     }
-    
+
 }
