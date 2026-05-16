@@ -115,13 +115,13 @@ public class MainMenuScreen extends Screen {
         String title = "EPSILON";
         String subtitle = Epsilon.VERSION;
 
-        float titleHeight = textRenderer.getHeight(layout.titleScale, StaticFontLoader.JURA);
+        float titleHeight = textRenderer.getHeight(layout.titleScale, StaticFontLoader.JURA_LIGHT);
 
         rectRenderer.addRect(layout.titleX, layout.titleY + titleHeight + layout.titleAccentGap, layout.titleAccentWidth, layout.titleAccentHeight, accentColor);
 
-        float subtitleY = layout.titleY + textRenderer.getLineHeight(layout.titleScale, StaticFontLoader.JURA) + layout.titleSubtitleGap;
+        float subtitleY = layout.titleY + textRenderer.getLineHeight(layout.titleScale, StaticFontLoader.JURA_LIGHT) + layout.titleSubtitleGap;
 
-        textRenderer.addText(title, layout.titleX, layout.titleY, layout.titleScale, titleColor, StaticFontLoader.JURA);
+        textRenderer.addText(title, layout.titleX, layout.titleY, layout.titleScale, titleColor, StaticFontLoader.JURA_LIGHT);
         textRenderer.addText(subtitle, layout.titleX, subtitleY, layout.subtitleScale, subtitleColor);
 
         for (int i = 0; i < entries.size(); i++) {

@@ -105,19 +105,24 @@ public class ModuleButton extends Component {
         float kbHover = keybindHoverAnim.getValue();
 
         String keyText = listeningKeybind ? "..." : formatCompactKeybind(module.getKeyBind());
-        float textScale = keyText.length() >= 3 ? 0.44f : 0.5f;
+        float textScale = keyText.length() >= 3 ? 0.46f : 0.52f;
         float textW = renderer.text().getWidth(keyText, textScale);
         float textH = renderer.text().getHeight(textScale);
-        Color surface = listeningKeybind
-                ? MD3Theme.PRIMARY_CONTAINER
-                : MD3Theme.lerp(DropdownTheme.keybindSurface(false), MD3Theme.lerp(DropdownTheme.keybindSurface(false), MD3Theme.PRIMARY, 0.15f), kbHover);
-        Color text = listeningKeybind
-                ? MD3Theme.ON_PRIMARY_CONTAINER
-                : MD3Theme.lerp(MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.moduleTextEnabled(), toggle), MD3Theme.ON_PRIMARY_CONTAINER, kbHover * 0.3f);
-        int outlineAlpha = listeningKeybind ? 150 : (int) (120 + 60 * kbHover);
+
+        Color surface;
+        Color text;
+        if (listeningKeybind) {
+            surface = MD3Theme.PRIMARY;
+            text = MD3Theme.ON_PRIMARY;
+        } else {
+            Color lerped = MD3Theme.lerp(MD3Theme.PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.55f);
+            Color baseSurface = new Color(lerped.getRed(), lerped.getGreen(), lerped.getBlue(), 255);
+            surface = MD3Theme.lerp(baseSurface, MD3Theme.PRIMARY, kbHover * 0.4f);
+            text = MD3Theme.ON_PRIMARY_CONTAINER;
+        }
 
         renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, radius, surface);
-        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(text, outlineAlpha));
+        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(listeningKeybind ? MD3Theme.PRIMARY : MD3Theme.ON_PRIMARY_CONTAINER, listeningKeybind ? 200 : 140));
 
         float textX = btnX + (btnW - textW) * 0.5f;
         float textY = btnY + (btnH - textH) * 0.5f - 0.5f;

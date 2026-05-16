@@ -9,7 +9,7 @@ public class StaticFontLoader {
 
     public static final TtfFontLoader ICONS = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/icon.ttf"));
 
-    public static final TtfFontLoader JURA = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/jura-light.ttf"));
+    public static final TtfFontLoader JURA_LIGHT = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/jura-light.ttf"));
 
     public static final TtfFontLoader OSAKA_CHIPS = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/osakachips.ttf"));
 
