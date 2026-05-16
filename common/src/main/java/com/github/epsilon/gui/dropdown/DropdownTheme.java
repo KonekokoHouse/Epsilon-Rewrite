@@ -6,70 +6,69 @@ import java.awt.*;
 
 public final class DropdownTheme {
 
-    public static final float PANEL_WIDTH = 120.0f;
-    public static final float PANEL_HEADER_HEIGHT = 20.0f;
-    public static final float PANEL_RADIUS = 8.0f;
-    public static final float PANEL_GAP = 12.0f;
+    public static final float PANEL_WIDTH = 140.0f;
+    public static final float PANEL_HEADER_HEIGHT = 24.0f;
+    public static final float PANEL_RADIUS = 10.0f;
+    public static final float PANEL_GAP = 14.0f;
     public static final float PANEL_MARGIN_X = 20.0f;
     public static final float PANEL_MARGIN_Y = 20.0f;
-    public static final float PANEL_SHADOW_BLUR = 14.0f;
+    public static final float PANEL_SHADOW_BLUR = 16.0f;
 
-    public static final float MODULE_HEIGHT = 16.0f;
-    public static final float MODULE_RADIUS = 4.0f;
-    public static final float MODULE_PADDING_X = 6.0f;
-    public static final float MODULE_TEXT_SCALE = 0.52f;
+    public static final float MODULE_HEIGHT = 19.0f;
+    public static final float MODULE_PADDING_X = 7.0f;
+    public static final float MODULE_TEXT_SCALE = 0.62f;
 
     public static final float SETTING_PADDING_X = 6.0f;
-    public static final float SETTING_HEIGHT = 14.0f;
-    public static final float SETTING_TEXT_SCALE = 0.46f;
-    public static final float SETTING_GAP = 2.0f;
-    public static final float SETTING_INDENT = 4.0f;
+    public static final float SETTING_HEIGHT = 16.0f;
+    public static final float SETTING_TEXT_SCALE = 0.54f;
+    public static final float SETTING_GAP = 3.0f;
+    public static final float SETTING_INDENT = 5.0f;
 
-    public static final float SWITCH_WIDTH = 20.0f;
-    public static final float SWITCH_HEIGHT = 10.0f;
-    public static final float SWITCH_RADIUS = 5.0f;
-    public static final float SWITCH_KNOB_OFF = 4.0f;
-    public static final float SWITCH_KNOB_ON = 5.0f;
-    public static final float SWITCH_KNOB_INSET_OFF = 3.0f;
-    public static final float SWITCH_KNOB_INSET_ON = 2.5f;
+    public static final float SWITCH_WIDTH = 22.0f;
+    public static final float SWITCH_HEIGHT = 12.0f;
+    public static final float SWITCH_RADIUS = 6.0f;
+    public static final float SWITCH_KNOB_OFF = 5.0f;
+    public static final float SWITCH_KNOB_ON = 6.0f;
+    public static final float SWITCH_KNOB_INSET_OFF = 4.0f;
+    public static final float SWITCH_KNOB_INSET_ON = 3.0f;
 
-    public static final float SLIDER_HEIGHT = 4.0f;
-    public static final float SLIDER_RADIUS = 2.0f;
-    public static final float SLIDER_KNOB_RADIUS = 3.5f;
+    public static final float SLIDER_HEIGHT = 5.0f;
+    public static final float SLIDER_RADIUS = 2.5f;
+    public static final float SLIDER_KNOB_RADIUS = 4.5f;
 
-    public static final float CHIP_HEIGHT = 12.0f;
-    public static final float CHIP_RADIUS = 6.0f;
-    public static final float CHIP_PADDING_X = 5.0f;
-    public static final float CHIP_GAP = 3.0f;
-    public static final float CHIP_TEXT_SCALE = 0.40f;
+    public static final float CHIP_HEIGHT = 14.0f;
+    public static final float CHIP_RADIUS = 7.0f;
+    public static final float CHIP_PADDING_X = 6.0f;
+    public static final float CHIP_GAP = 4.0f;
+    public static final float CHIP_TEXT_SCALE = 0.48f;
 
-    public static final float COLOR_PREVIEW_SIZE = 10.0f;
-    public static final float COLOR_PICKER_HEIGHT = 50.0f;
-    public static final float COLOR_HUE_HEIGHT = 6.0f;
-    public static final float COLOR_ALPHA_HEIGHT = 6.0f;
-    public static final float COLOR_RADIUS = 4.0f;
+    public static final float COLOR_PREVIEW_SIZE = 12.0f;
+    public static final float COLOR_PICKER_HEIGHT = 60.0f;
+    public static final float COLOR_HUE_HEIGHT = 7.0f;
+    public static final float COLOR_ALPHA_HEIGHT = 7.0f;
+    public static final float COLOR_RADIUS = 5.0f;
 
-    public static final float KEYBIND_WIDTH = 40.0f;
-    public static final float KEYBIND_HEIGHT = 12.0f;
-    public static final float KEYBIND_RADIUS = 4.0f;
+    public static final float KEYBIND_WIDTH = 46.0f;
+    public static final float KEYBIND_HEIGHT = 14.0f;
+    public static final float KEYBIND_RADIUS = 5.0f;
 
-    public static final float INPUT_HEIGHT = 14.0f;
-    public static final float INPUT_RADIUS = 4.0f;
+    public static final float INPUT_HEIGHT = 16.0f;
+    public static final float INPUT_RADIUS = 5.0f;
 
-    public static final float BUTTON_HEIGHT = 14.0f;
-    public static final float BUTTON_RADIUS = 4.0f;
+    public static final float BUTTON_HEIGHT = 16.0f;
+    public static final float BUTTON_RADIUS = 5.0f;
 
-    public static final float SCROLL_SPEED = 12.0f;
+    public static final float SCROLL_SPEED = 14.0f;
 
-    public static final float PANEL_BOTTOM_PADDING = 6.0f;
+    public static final float PANEL_BOTTOM_PADDING = 8.0f;
 
     public static final long ANIM_OPEN = 200L;
     public static final long ANIM_TOGGLE = 180L;
     public static final long ANIM_HOVER = 120L;
     public static final long ANIM_EXPAND = 220L;
 
-    public static final float HEADER_TEXT_SCALE = 0.60f;
-    public static final float HEADER_ICON_SCALE = 0.70f;
+    public static final float HEADER_TEXT_SCALE = 0.72f;
+    public static final float HEADER_ICON_SCALE = 0.84f;
 
     private DropdownTheme() {
     }
@@ -78,12 +77,12 @@ public final class DropdownTheme {
         return MD3Theme.SURFACE_CONTAINER;
     }
 
-    public static Color panelHeader() {
-        return MD3Theme.SURFACE_CONTAINER_HIGH;
-    }
-
     public static Color panelShadow() {
         return MD3Theme.withAlpha(MD3Theme.SHADOW, 48);
+    }
+
+    public static Color moduleDivider() {
+        return MD3Theme.withAlpha(MD3Theme.OUTLINE, 48);
     }
 
     public static Color moduleEnabled(float hoverProgress) {
