@@ -16,11 +16,8 @@ import com.github.epsilon.utils.render.animation.Easing;
 import org.jspecify.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class ModuleButton extends Component {
 

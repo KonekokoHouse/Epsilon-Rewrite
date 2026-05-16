@@ -1,9 +1,9 @@
 package com.github.epsilon.mixins;
 
-import com.github.epsilon.managers.RotationManager;
+import com.github.epsilon.events.bus.EventBus;
+import com.github.epsilon.events.impl.AttackYawEvent;
 import com.github.epsilon.modules.impl.movement.AutoSprint;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,12 +14,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Player.class)
 public class MixinPlayer {
 
-    @WrapOperation(method = "causeExtraKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getYRot()F"))
-    private float modifyExtraKnockbackYaw(Player player, Operation<Float> original) {
-        if (player == Minecraft.getInstance().player) {
-            return RotationManager.INSTANCE.getYaw();
-        }
-        return original.call(player);
+    @ModifyExpressionValue(method = {"causeExtraKnockback", "doSweepAttack"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getYRot()F"))
+    private float modifyAttackYaw(float original) {
+        AttackYawEvent event = EventBus.INSTANCE.post(new AttackYawEvent(original));
+        return event.getYaw();
     }
 
     @Inject(method = "causeExtraKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;setSprinting(Z)V", shift = At.Shift.AFTER))

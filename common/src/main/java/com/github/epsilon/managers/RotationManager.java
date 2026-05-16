@@ -224,6 +224,33 @@ public class RotationManager {
     }
 
     @EventHandler
+    private void onSendPosition(SendPositionEvent event) {
+        if (active && rotations != null) {
+            float yaw = rotations.x;
+            float pitch = rotations.y;
+
+            if (!Float.isNaN(yaw) && !Float.isNaN(pitch)) {
+                event.setYaw(yaw);
+                event.setPitch(pitch);
+            }
+
+            if (Math.abs((rotations.x - mc.player.getYRot()) % 360) < 1 && Math.abs((rotations.y - mc.player.getXRot())) < 1) {
+                active = false;
+                correctDisabledRotations();
+            }
+
+            lastRotations = rotations;
+        } else {
+            lastRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+        }
+
+        lastAnimationRotation = animationRotation;
+        animationRotation = new Vector2f(event.getYaw(), event.getPitch());
+        targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+        smoothed = false;
+    }
+
+    @EventHandler
     private void onRaytrace(RaytraceEvent event) {
         if (active && rotations != null) {
             event.setYaw(rotations.x);
@@ -254,37 +281,25 @@ public class RotationManager {
     }
 
     @EventHandler
-    public void onFallFlying(FallFlyingEvent event) {
+    private void onItemRayTrace(UseItemRayTraceEvent event) {
+        if (rotations != null && active) {
+            event.setYaw(rotations.x);
+            event.setPitch(rotations.y);
+        }
+    }
+
+    @EventHandler
+    private void onFallFlying(FallFlyingEvent event) {
         if (active && MovementFix.INSTANCE.isEnabled() && rotations != null) {
             event.setPitch(rotations.y);
         }
     }
 
     @EventHandler
-    private void onSendPosition(SendPositionEvent event) {
-        if (active && rotations != null) {
-            float yaw = rotations.x;
-            float pitch = rotations.y;
-
-            if (!Float.isNaN(yaw) && !Float.isNaN(pitch)) {
-                event.setYaw(yaw);
-                event.setPitch(pitch);
-            }
-
-            if (Math.abs((rotations.x - mc.player.getYRot()) % 360) < 1 && Math.abs((rotations.y - mc.player.getXRot())) < 1) {
-                active = false;
-                correctDisabledRotations();
-            }
-
-            lastRotations = rotations;
-        } else {
-            lastRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+    private void onAttack(AttackYawEvent event) {
+        if (rotations != null) {
+            event.setYaw(rotations.x);
         }
-
-        lastAnimationRotation = animationRotation;
-        animationRotation = new Vector2f(event.getYaw(), event.getPitch());
-        targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-        smoothed = false;
     }
 
     private void correctDisabledRotations() {
