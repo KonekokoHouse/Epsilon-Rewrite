@@ -1,6 +1,8 @@
 package com.github.epsilon.modules.impl;
 
+import com.github.epsilon.gui.dropdown.DropdownScreen;
 import com.github.epsilon.gui.hudeditor.HudEditorScreen;
+import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.gui.screen.MainMenuScreen;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.SettingGroup;
@@ -48,7 +50,13 @@ public class ClientSetting extends Module {
     private final SettingGroup sgNotification = settingGroup("Notification");
 
     // General
-    public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown);
+    public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown, _ -> {
+        if (mc.screen instanceof PanelScreen) {
+            mc.setScreen(DropdownScreen.INSTANCE);
+        } else if (mc.screen instanceof DropdownScreen) {
+            mc.setScreen(PanelScreen.INSTANCE);
+        }
+    });
 
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
