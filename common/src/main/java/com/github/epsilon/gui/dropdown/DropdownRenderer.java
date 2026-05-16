@@ -41,7 +41,7 @@ public final class DropdownRenderer {
 
     public TriangleRenderer triangle() {
         Slot slot = current();
-        if (slot.triangle == null) slot.triangle = new TriangleRenderer();
+        if (slot.triangle == null) slot.triangle = TriangleRenderer.create();
         return slot.triangle;
     }
 

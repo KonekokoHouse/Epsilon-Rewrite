@@ -81,7 +81,8 @@ public class ModuleButton extends Component {
     }
 
     private float computeSettingsHeight() {
-        float height = 0.0f;
+        if (sections.isEmpty()) return 0.0f;
+        float height = DropdownTheme.SETTING_GAP;
         for (SettingSection section : sections) {
             if (section.isGroup()) {
                 height += DropdownTheme.GROUP_HEADER_HEIGHT;
@@ -150,11 +151,21 @@ public class ModuleButton extends Component {
         drawKeybindButton(renderer, mouseX, mouseY, toggle);
 
         float expand = expandAnim.getValue();
+
+        for (SettingSection section : sections) {
+            if (section.isGroup()) {
+                runGroupAnimations(section);
+            }
+        }
+
         if (expand > 0.01f) {
             float settingY = y + DropdownTheme.MODULE_HEIGHT + DropdownTheme.SETTING_GAP;
             for (SettingSection section : sections) {
+                float sectionH = getSectionHeight(section);
                 if (section.isGroup()) {
-                    settingY = drawGroupSection(renderer, mouseX, mouseY, section, settingY, expand);
+                    if (expand > 0.5f) {
+                        drawGroupSection(renderer, mouseX, mouseY, section, settingY);
+                    }
                 } else {
                     for (SettingWidget<?> widget : section.widgets()) {
                         if (!widget.isVisible()) continue;
@@ -165,24 +176,30 @@ public class ModuleButton extends Component {
                         settingY += widget.getHeight() + DropdownTheme.SETTING_GAP;
                     }
                 }
+                settingY += sectionH;
             }
         }
     }
 
-    private float drawGroupSection(DropdownRenderer renderer, int mouseX, int mouseY, SettingSection section, float sectionY, float expand) {
+    private void runGroupAnimations(SettingSection section) {
         SettingGroup group = section.group();
-        Animation hoverAnim = groupHoverAnimations.computeIfAbsent(group, k -> createGroupAnimation(120L, 0.0f));
         Animation expandAnimG = groupExpandAnimations.computeIfAbsent(group, k -> createGroupAnimation(180L, group.isCollapsed() ? 0.0f : 1.0f));
+        expandAnimG.run(group.isCollapsed() ? 0.0f : 1.0f);
+    }
+
+    private void drawGroupSection(DropdownRenderer renderer, int mouseX, int mouseY, SettingSection section, float sectionY) {
+        SettingGroup group = section.group();
 
         float headerW = width - DropdownTheme.SETTING_INDENT * 2.0f;
         float headerX = x + DropdownTheme.SETTING_INDENT;
         float headerH = DropdownTheme.GROUP_HEADER_HEIGHT;
-        boolean headerHovered = isHovered(mouseX, mouseY, headerX, sectionY, headerW, headerH);
-        hoverAnim.run(headerHovered ? 1.0f : 0.0f);
+
+        Animation hoverAnim = groupHoverAnimations.computeIfAbsent(group, k -> createGroupAnimation(120L, 0.0f));
+        hoverAnim.run(isHovered(mouseX, mouseY, headerX, sectionY, headerW, headerH) ? 1.0f : 0.0f);
         float hoverProgress = hoverAnim.getValue();
 
-        expandAnimG.run(group.isCollapsed() ? 0.0f : 1.0f);
-        float expandProgress = expandAnimG.getValue();
+        Animation expandAnimG = groupExpandAnimations.get(group);
+        float expandProgress = expandAnimG != null ? expandAnimG.getValue() : (group.isCollapsed() ? 0.0f : 1.0f);
 
         Color headerBg = MD3Theme.lerp(DropdownTheme.groupBackground(), DropdownTheme.groupBackgroundHover(), hoverProgress);
         float headerRadius = DropdownTheme.BUTTON_RADIUS;
@@ -206,10 +223,8 @@ public class ModuleButton extends Component {
         float chevronCenterY = sectionY + headerH * 0.5f;
         renderer.triangle().addChevronTriangle(chevronCenterX, chevronCenterY, chevronSize, expandProgress, DropdownTheme.groupChevron(hoverProgress));
 
-        float nextY = sectionY + headerH + DropdownTheme.SETTING_GAP;
-
-        if (!group.isCollapsed() && expand > 0.5f) {
-            float childY = nextY + DropdownTheme.GROUP_INSET;
+        if (!group.isCollapsed()) {
+            float childY = sectionY + headerH + DropdownTheme.SETTING_GAP + DropdownTheme.GROUP_INSET;
             float childX = x + DropdownTheme.SETTING_INDENT + DropdownTheme.GROUP_INSET;
             float childW = width - (DropdownTheme.SETTING_INDENT + DropdownTheme.GROUP_INSET) * 2.0f;
             for (SettingWidget<?> widget : section.widgets()) {
@@ -218,10 +233,7 @@ public class ModuleButton extends Component {
                 widget.draw(renderer, mouseX, mouseY);
                 childY += widget.getHeight() + DropdownTheme.SETTING_GAP;
             }
-            nextY = childY;
         }
-
-        return nextY;
     }
 
     private Animation createGroupAnimation(long duration, float startValue) {

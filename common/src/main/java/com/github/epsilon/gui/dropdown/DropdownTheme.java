@@ -14,6 +14,13 @@ public final class DropdownTheme {
     public static final float PANEL_MARGIN_Y = 20.0f;
     public static final float PANEL_SHADOW_BLUR = 16.0f;
 
+    public static final float GROUP_HEADER_HEIGHT = 18.0f;
+    public static final float GROUP_INSET = 4.0f;
+    public static final float GROUP_HEADER_TEXT_SCALE = 0.52f;
+    public static final float GROUP_COUNT_CHIP_HEIGHT = 11.0f;
+    public static final float GROUP_COUNT_CHIP_PADDING = 6.0f;
+    public static final float GROUP_COUNT_TEXT_SCALE = 0.42f;
+
     public static final float MODULE_HEIGHT = 19.0f;
     public static final float MODULE_PADDING_X = 7.0f;
     public static final float MODULE_TEXT_SCALE = 0.62f;
