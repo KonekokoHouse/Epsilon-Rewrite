@@ -142,11 +142,11 @@ public final class DropdownTheme {
     }
 
     public static Color keybindSurface(boolean listening) {
-        return listening ? MD3Theme.PRIMARY_CONTAINER : MD3Theme.SURFACE_CONTAINER_HIGH;
+        return listening ? MD3Theme.PRIMARY_CONTAINER : MD3Theme.SURFACE_CONTAINER_HIGHEST;
     }
 
     public static Color keybindText(boolean listening) {
-        return listening ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_SECONDARY;
+        return listening ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY;
     }
 
     public static Color inputSurface(boolean focused) {

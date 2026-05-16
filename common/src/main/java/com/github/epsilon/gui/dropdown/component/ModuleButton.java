@@ -22,6 +22,7 @@ public class ModuleButton extends Component {
     private final Animation expandAnim = new Animation(Easing.EASE_IN_OUT_CUBIC, DropdownTheme.ANIM_EXPAND);
     private final Animation toggleAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_TOGGLE);
     private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
+    private final Animation keybindHoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
     private boolean expanded;
     private boolean listeningKeybind;
 
@@ -77,7 +78,7 @@ public class ModuleButton extends Component {
         float textY = y + (DropdownTheme.MODULE_HEIGHT - renderer.text().getHeight(DropdownTheme.MODULE_TEXT_SCALE)) * 0.5f;
         renderer.text().addText(module.getTranslatedName(), x + DropdownTheme.MODULE_PADDING_X, textY, DropdownTheme.MODULE_TEXT_SCALE, textColor);
 
-        drawKeybindButton(renderer, toggle);
+        drawKeybindButton(renderer, mouseX, mouseY, toggle);
 
         float expand = expandAnim.getValue();
         if (expand > 0.01f) {
@@ -93,21 +94,30 @@ public class ModuleButton extends Component {
         }
     }
 
-    private void drawKeybindButton(DropdownRenderer renderer, float toggle) {
+    private void drawKeybindButton(DropdownRenderer renderer, int mouseX, int mouseY, float toggle) {
         float btnW = DropdownTheme.KEYBIND_WIDTH;
         float btnH = DropdownTheme.KEYBIND_HEIGHT;
         float btnX = x + width - DropdownTheme.MODULE_PADDING_X - btnW;
         float btnY = y + (DropdownTheme.MODULE_HEIGHT - btnH) * 0.5f;
         float radius = DropdownTheme.KEYBIND_RADIUS;
+        boolean btnHovered = isHovered(mouseX, mouseY, btnX, btnY, btnW, btnH);
+        keybindHoverAnim.run(btnHovered ? 1.0f : 0.0f);
+        float kbHover = keybindHoverAnim.getValue();
+
         String keyText = listeningKeybind ? "..." : formatCompactKeybind(module.getKeyBind());
         float textScale = keyText.length() >= 3 ? 0.44f : 0.5f;
         float textW = renderer.text().getWidth(keyText, textScale);
         float textH = renderer.text().getHeight(textScale);
-        Color surface = listeningKeybind ? MD3Theme.PRIMARY_CONTAINER : DropdownTheme.keybindSurface(false);
-        Color text = listeningKeybind ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.moduleTextEnabled(), toggle);
+        Color surface = listeningKeybind
+                ? MD3Theme.PRIMARY_CONTAINER
+                : MD3Theme.lerp(DropdownTheme.keybindSurface(false), MD3Theme.lerp(DropdownTheme.keybindSurface(false), MD3Theme.PRIMARY, 0.15f), kbHover);
+        Color text = listeningKeybind
+                ? MD3Theme.ON_PRIMARY_CONTAINER
+                : MD3Theme.lerp(MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.moduleTextEnabled(), toggle), MD3Theme.ON_PRIMARY_CONTAINER, kbHover * 0.3f);
+        int outlineAlpha = listeningKeybind ? 150 : (int) (120 + 60 * kbHover);
 
         renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, radius, surface);
-        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(text, listeningKeybind ? 150 : 88));
+        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(text, outlineAlpha));
 
         float textX = btnX + (btnW - textW) * 0.5f;
         float textY = btnY + (btnH - textH) * 0.5f - 0.5f;
