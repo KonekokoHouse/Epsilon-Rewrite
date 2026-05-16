@@ -1,8 +1,8 @@
 package com.github.epsilon.gui.dropdown;
 
-import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.assets.i18n.EpsilonTranslateComponent;
 import com.github.epsilon.assets.i18n.TranslateComponent;
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.gui.dropdown.component.*;
 import com.github.epsilon.gui.dropdown.widget.DropdownTextField;
 import com.github.epsilon.gui.panel.MD3Theme;
