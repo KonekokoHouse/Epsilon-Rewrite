@@ -25,9 +25,11 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     private static final TranslateComponent collapseComponent = EpsilonTranslateComponent.create("gui", "dropdown.collapse_all");
 
     private static final float HEADER_HEIGHT = 12.0f;
-    private static final float ICON_SIZE = 24.0f;
-    private static final float ICON_GAP = 5.0f;
+    private static final float ICON_SIZE = 30.0f;
+    private static final float ICON_GAP = 7.0f;
+    private static final float ICON_SCALE = 0.88f;
     private static final float CONTENT_PADDING = 7.0f;
+    private static final int ICON_COLUMNS = 4;
 
     private final List<Entry> entries = new ArrayList<>();
     private final SettingsContent settingsContent;
@@ -55,8 +57,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
 
     @Override
     protected float computeContentHeight() {
-        int columns = 4;
-        int rows = (int) Math.ceil(entries.size() / (float) columns);
+        int rows = getIconRows();
         return HEADER_HEIGHT + CONTENT_PADDING + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING + settingsContent.computeContentHeight();
     }
 
@@ -66,15 +67,11 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
         drawBrandHeader(renderer, currentY);
         currentY += HEADER_HEIGHT + CONTENT_PADDING;
 
-        float iconAreaX = x + CONTENT_PADDING;
-        float iconStep = ICON_SIZE + ICON_GAP;
-        int columns = 4;
         for (int index = 0; index < entries.size(); index++) {
             Entry entry = entries.get(index);
-            int col = index % columns;
-            int row = index / columns;
-            float iconX = iconAreaX + col * iconStep;
-            float iconY = currentY + row * iconStep;
+            float iconX = getIconX(index);
+            int row = index / ICON_COLUMNS;
+            float iconY = currentY + row * (ICON_SIZE + ICON_GAP);
             boolean hovered = isHovered(mouseX, mouseY, iconX, iconY, ICON_SIZE, ICON_SIZE);
             boolean active = entry.isActive();
             entry.hoverAnim.run(hovered ? 1.0f : 0.0f);
@@ -82,7 +79,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
             renderer.roundRect().addRoundRect(iconX, iconY, ICON_SIZE, ICON_SIZE,
                     DropdownTheme.BUTTON_RADIUS,
                     MD3Theme.lerp(active ? MD3Theme.PRIMARY_CONTAINER : MD3Theme.SURFACE_CONTAINER_HIGH, MD3Theme.PRIMARY_CONTAINER, hover * 0.5f));
-            float iconScale = 0.70f;
+            float iconScale = ICON_SCALE;
             float iconW = renderer.text().getWidth(entry.icon, iconScale, StaticFontLoader.ICONS);
             float iconH = renderer.text().getHeight(iconScale, StaticFontLoader.ICONS);
             renderer.text().addText(entry.icon, iconX + (ICON_SIZE - iconW) * 0.5f, iconY + (ICON_SIZE - iconH) * 0.5f - 1.0f, iconScale, active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY, StaticFontLoader.ICONS);
@@ -94,7 +91,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
                 renderer.text().addText(label, labelX, iconY + ICON_SIZE + 1.0f, labelScale, MD3Theme.TEXT_MUTED);
             }
         }
-        int rows = (int) Math.ceil(entries.size() / (float) columns);
+        int rows = getIconRows();
         currentY += rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING;
         renderer.rect().addRect(x + CONTENT_PADDING, currentY - 3.0f, width - CONTENT_PADDING * 2.0f, 0.7f, MD3Theme.withAlpha(MD3Theme.OUTLINE, 55));
         settingsContent.draw(renderer, mouseX, mouseY, x, currentY, width);
@@ -109,21 +106,16 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     protected boolean mouseClickedContent(double mouseX, double mouseY, int button) {
         if (button != 0) return false;
         float currentY = y + DropdownTheme.PANEL_HEADER_HEIGHT - scroll + HEADER_HEIGHT + CONTENT_PADDING;
-        float iconAreaX = x + CONTENT_PADDING;
-        float iconStep = ICON_SIZE + ICON_GAP;
-        int columns = 4;
         for (int index = 0; index < entries.size(); index++) {
             Entry entry = entries.get(index);
-            int col = index % columns;
-            int row = index / columns;
-            float iconX = iconAreaX + col * iconStep;
-            float iconY = currentY + row * iconStep;
+            float iconX = getIconX(index);
+            float iconY = currentY + (index / ICON_COLUMNS) * (ICON_SIZE + ICON_GAP);
             if (isHovered(mouseX, mouseY, iconX, iconY, ICON_SIZE, ICON_SIZE)) {
                 entry.action.accept(entry.panelId);
                 return true;
             }
         }
-        int rows = (int) Math.ceil(entries.size() / (float) columns);
+        int rows = getIconRows();
         float settingsY = currentY + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING;
         return settingsContent.mouseClicked(mouseX, mouseY, button, x, settingsY, width);
     }
@@ -150,9 +142,20 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     }
 
     private float getSettingsY() {
-        int columns = 4;
-        int rows = (int) Math.ceil(entries.size() / (float) columns);
+        int rows = getIconRows();
         return y + DropdownTheme.PANEL_HEADER_HEIGHT - scroll + HEADER_HEIGHT + CONTENT_PADDING + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING;
+    }
+
+    private int getIconRows() {
+        return (int) Math.ceil(entries.size() / (float) ICON_COLUMNS);
+    }
+
+    private float getIconX(int index) {
+        int rowStart = (index / ICON_COLUMNS) * ICON_COLUMNS;
+        int rowCount = Math.min(ICON_COLUMNS, entries.size() - rowStart);
+        float rowWidth = rowCount * ICON_SIZE + Math.max(0, rowCount - 1) * ICON_GAP;
+        float rowX = x + (width - rowWidth) * 0.5f;
+        return rowX + (index - rowStart) * (ICON_SIZE + ICON_GAP);
     }
 
     @FunctionalInterface

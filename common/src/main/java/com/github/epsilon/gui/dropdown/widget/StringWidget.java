@@ -6,7 +6,7 @@ import com.github.epsilon.settings.impl.StringSetting;
 
 public class StringWidget extends SettingWidget<StringSetting> {
 
-    private boolean focused;
+    private final DropdownTextField inputField = new DropdownTextField(100);
 
     public StringWidget(StringSetting setting) {
         super(setting);
@@ -26,18 +26,10 @@ public class StringWidget extends SettingWidget<StringSetting> {
         float fieldW = width - DropdownTheme.SETTING_PADDING_X * 2.0f;
         float fieldH = DropdownTheme.INPUT_HEIGHT;
 
-        renderer.roundRect().addRoundRect(fieldX, fieldY, fieldW, fieldH, DropdownTheme.INPUT_RADIUS, DropdownTheme.inputSurface(focused));
-
-        String displayText = setting.getValue();
-        if (displayText.isEmpty() && !focused) {
-            displayText = "...";
+        if (!inputField.isFocused() && !inputField.getText().equals(setting.getValue())) {
+            inputField.setText(setting.getValue());
         }
-        if (focused && System.currentTimeMillis() % 1000 > 500) {
-            displayText = displayText + "|";
-        }
-
-        float textY = fieldY + (fieldH - renderer.text().getHeight(DropdownTheme.SETTING_TEXT_SCALE)) * 0.5f;
-        renderer.text().addText(displayText, fieldX + 4.0f, textY, DropdownTheme.SETTING_TEXT_SCALE, DropdownTheme.inputText());
+        inputField.draw(renderer, fieldX, fieldY, fieldW, fieldH, mouseX, mouseY, "...", DropdownTheme.SETTING_TEXT_SCALE);
     }
 
     @Override
@@ -47,29 +39,34 @@ public class StringWidget extends SettingWidget<StringSetting> {
         float fieldW = width - DropdownTheme.SETTING_PADDING_X * 2.0f;
         float fieldH = DropdownTheme.INPUT_HEIGHT;
 
-        if (button == 0 && isHovered(mouseX, mouseY, fieldX, fieldY, fieldW, fieldH)) {
-            focused = !focused;
+        if (button == 0 && inputField.focusIfContains(mouseX, mouseY, fieldX, fieldY, fieldW, fieldH)) {
+            inputField.setText(setting.getValue());
+            inputField.setCursorToEnd();
             return true;
         }
-        if (focused) {
-            focused = false;
+        if (inputField.isFocused()) {
+            syncSetting();
+            inputField.blur();
         }
         return false;
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!focused) return false;
+        if (!inputField.isFocused()) return false;
 
-        if (keyCode == 259) {
-            String current = setting.getValue();
-            if (!current.isEmpty()) {
-                setting.setValue(current.substring(0, current.length() - 1));
-            }
+        if (keyCode == 257 || keyCode == 335) {
+            syncSetting();
+            inputField.blur();
             return true;
         }
         if (keyCode == 256) {
-            focused = false;
+            inputField.setText(setting.getValue());
+            inputField.blur();
+            return true;
+        }
+        if (inputField.keyPressed(keyCode)) {
+            syncSetting();
             return true;
         }
         return false;
@@ -77,17 +74,19 @@ public class StringWidget extends SettingWidget<StringSetting> {
 
     @Override
     public boolean charTyped(String typedText) {
-        if (!focused || typedText.isEmpty()) return false;
-
-        String current = setting.getValue();
-        if (current.length() < 100) {
-            setting.setValue(current + typedText);
+        if (inputField.charTyped(typedText)) {
+            syncSetting();
+            return true;
         }
-        return true;
+        return false;
     }
 
     public boolean isFocused() {
-        return focused;
+        return inputField.isFocused();
+    }
+
+    private void syncSetting() {
+        setting.setValue(inputField.getText());
     }
 
 }

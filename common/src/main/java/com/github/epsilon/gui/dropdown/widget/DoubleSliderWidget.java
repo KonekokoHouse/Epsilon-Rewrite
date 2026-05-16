@@ -7,14 +7,18 @@ import com.github.epsilon.settings.impl.DoubleSetting;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 import net.minecraft.util.Mth;
+import org.lwjgl.glfw.GLFW;
 
 import java.text.DecimalFormat;
 
 public class DoubleSliderWidget extends SettingWidget<DoubleSetting> {
 
     private static final DecimalFormat FORMAT = new DecimalFormat("#0.00");
+    private static final float VALUE_FIELD_WIDTH = 40.0f;
+    private static final float VALUE_FIELD_HEIGHT = 12.0f;
 
     private final Animation slideAnim = new Animation(Easing.EASE_OUT_CUBIC, 100L);
+    private final DropdownTextField inputField = new DropdownTextField(16, value -> value.matches("[0-9.\\-]"));
     private boolean dragging;
 
     public DoubleSliderWidget(DoubleSetting setting) {
@@ -36,9 +40,12 @@ public class DoubleSliderWidget extends SettingWidget<DoubleSetting> {
 
         renderer.text().addText(setting.getDisplayName(), x + DropdownTheme.SETTING_PADDING_X, y + 1.0f, DropdownTheme.SETTING_TEXT_SCALE, DropdownTheme.settingLabel());
 
-        String valueStr = setting.isPercentageMode() ? FORMAT.format(setting.getValue() * 100) + "%" : FORMAT.format(setting.getValue());
-        float valueWidth = renderer.text().getWidth(valueStr, DropdownTheme.SETTING_TEXT_SCALE);
-        renderer.text().addText(valueStr, x + width - DropdownTheme.SETTING_PADDING_X - valueWidth, y + 1.0f, DropdownTheme.SETTING_TEXT_SCALE, MD3Theme.PRIMARY);
+        String valueStr = inputField.isFocused() ? inputField.getText() : formatPlainValue();
+        if (!inputField.isFocused() && setting.isPercentageMode()) valueStr += "%";
+        if (!inputField.isFocused() && !inputField.getText().equals(valueStr)) {
+            inputField.setText(valueStr);
+        }
+        inputField.draw(renderer, getFieldX(), getFieldY(), VALUE_FIELD_WIDTH, VALUE_FIELD_HEIGHT, mouseX, mouseY, valueStr, DropdownTheme.SETTING_TEXT_SCALE);
 
         float trackX = x + DropdownTheme.SETTING_PADDING_X;
         float trackY = y + DropdownTheme.SETTING_HEIGHT;
@@ -69,6 +76,17 @@ public class DoubleSliderWidget extends SettingWidget<DoubleSetting> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
+            String plainValue = formatPlainValue();
+            if (inputField.focusIfContains(mouseX, mouseY, getFieldX(), getFieldY(), VALUE_FIELD_WIDTH, VALUE_FIELD_HEIGHT)) {
+                inputField.setText(plainValue);
+                inputField.setCursorToEnd();
+                dragging = false;
+                return true;
+            }
+            if (inputField.isFocused()) {
+                commitInput();
+                inputField.blur();
+            }
             float trackX = x + DropdownTheme.SETTING_PADDING_X;
             float trackY = y + DropdownTheme.SETTING_HEIGHT - 3.0f;
             float trackW = width - DropdownTheme.SETTING_PADDING_X * 2.0f;
@@ -86,7 +104,85 @@ public class DoubleSliderWidget extends SettingWidget<DoubleSetting> {
             dragging = false;
             return true;
         }
+        if (button == 0 && inputField.isFocused()) {
+            if (isHovered(mouseX, mouseY, getFieldX(), getFieldY(), VALUE_FIELD_WIDTH, VALUE_FIELD_HEIGHT)) {
+                return true;
+            }
+            commitInput();
+            inputField.blur();
+            return true;
+        }
         return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (!inputField.isFocused()) return false;
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            commitInput();
+            inputField.blur();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            inputField.setText(formatPlainValue());
+            inputField.blur();
+            return true;
+        }
+        if (inputField.keyPressed(keyCode)) {
+            syncInputValue();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean charTyped(String typedText) {
+        if (inputField.charTyped(typedText)) {
+            syncInputValue();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isFocused() {
+        return inputField.isFocused();
+    }
+
+    private String formatPlainValue() {
+        return FORMAT.format(setting.getValue());
+    }
+
+    private void commitInput() {
+        String text = inputField.getText();
+        if (text == null || text.isBlank() || "-".equals(text) || ".".equals(text)) {
+            inputField.setText(formatPlainValue());
+            return;
+        }
+        try {
+            double value = Double.parseDouble(text);
+            setting.setValue(Mth.clamp(value, setting.getMin(), setting.getMax()));
+        } catch (NumberFormatException ignored) {
+        }
+        inputField.setText(formatPlainValue());
+        inputField.setCursorToEnd();
+    }
+
+    private void syncInputValue() {
+        String text = inputField.getText();
+        if (text == null || text.isBlank() || "-".equals(text) || ".".equals(text)) return;
+        try {
+            double value = Double.parseDouble(text);
+            setting.setValue(Mth.clamp(value, setting.getMin(), setting.getMax()));
+        } catch (NumberFormatException ignored) {
+        }
+    }
+
+    private float getFieldX() {
+        return x + width - DropdownTheme.SETTING_PADDING_X - VALUE_FIELD_WIDTH;
+    }
+
+    private float getFieldY() {
+        return y + 2.0f;
     }
 
 }

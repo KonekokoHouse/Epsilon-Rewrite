@@ -4,6 +4,7 @@ import com.github.epsilon.assets.i18n.EpsilonTranslateComponent;
 import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.gui.dropdown.DropdownRenderer;
 import com.github.epsilon.gui.dropdown.DropdownTheme;
+import com.github.epsilon.gui.dropdown.widget.DropdownTextField;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.managers.FriendManager;
@@ -22,8 +23,7 @@ public class FriendDropdownPanel extends AbstractDropdownPanel {
     private static final float GAP = 4.0f;
     private static final float PADDING = 6.0f;
 
-    private final StringBuilder input = new StringBuilder();
-    private boolean focused;
+    private final DropdownTextField inputField = new DropdownTextField(32);
 
     public FriendDropdownPanel(int panelIndex) {
         super("friend", titleComponent, "", panelIndex);
@@ -40,12 +40,7 @@ public class FriendDropdownPanel extends AbstractDropdownPanel {
         float fieldX = x + PADDING;
         float fieldY = y + DropdownTheme.PANEL_HEADER_HEIGHT + PADDING - scroll;
         float fieldW = width - PADDING * 2.0f - 24.0f;
-        renderer.roundRect().addRoundRect(fieldX, fieldY, fieldW, FIELD_HEIGHT, DropdownTheme.INPUT_RADIUS, DropdownTheme.inputSurface(focused));
-        String text = input.isEmpty() && !focused ? placeholderComponent.getTranslatedName() : input.toString();
-        if (focused && System.currentTimeMillis() % 1000 > 500) text += "|";
-        renderer.text().addText(trimToWidth(text, DropdownTheme.SETTING_TEXT_SCALE, fieldW - 8.0f, renderer),
-                fieldX + 4.0f, fieldY + (FIELD_HEIGHT - renderer.text().getHeight(DropdownTheme.SETTING_TEXT_SCALE)) * 0.5f,
-                DropdownTheme.SETTING_TEXT_SCALE, input.isEmpty() && !focused ? MD3Theme.TEXT_MUTED : MD3Theme.TEXT_PRIMARY);
+        inputField.draw(renderer, fieldX, fieldY, fieldW, FIELD_HEIGHT, mouseX, mouseY, placeholderComponent.getTranslatedName(), DropdownTheme.SETTING_TEXT_SCALE);
 
         float addX = fieldX + fieldW + GAP;
         renderer.roundRect().addRoundRect(addX, fieldY, 20.0f, FIELD_HEIGHT, DropdownTheme.BUTTON_RADIUS,
@@ -78,16 +73,14 @@ public class FriendDropdownPanel extends AbstractDropdownPanel {
         float fieldX = x + PADDING;
         float fieldY = y + DropdownTheme.PANEL_HEADER_HEIGHT + PADDING - scroll;
         float fieldW = width - PADDING * 2.0f - 24.0f;
-        if (isHovered(mouseX, mouseY, fieldX, fieldY, fieldW, FIELD_HEIGHT)) {
-            focused = true;
+        if (inputField.focusIfContains(mouseX, mouseY, fieldX, fieldY, fieldW, FIELD_HEIGHT)) {
             return true;
         }
         if (isHovered(mouseX, mouseY, fieldX + fieldW + GAP, fieldY, 20.0f, FIELD_HEIGHT)) {
             addFriend();
-            focused = true;
             return true;
         }
-        focused = false;
+        inputField.blur();
 
         float rowY = fieldY + FIELD_HEIGHT + GAP;
         for (String name : FriendManager.INSTANCE.getFriends().stream().sorted(String.CASE_INSENSITIVE_ORDER).toList()) {
@@ -104,41 +97,35 @@ public class FriendDropdownPanel extends AbstractDropdownPanel {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!focused) return false;
+        if (!inputField.isFocused()) return false;
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
             addFriend();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE && !input.isEmpty()) {
-            input.deleteCharAt(input.length() - 1);
-            return true;
-        }
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            focused = false;
+            inputField.blur();
             return true;
         }
-        return false;
+        return inputField.keyPressed(keyCode);
     }
 
     @Override
     public boolean charTyped(String typedText) {
-        if (!focused || typedText.isEmpty() || input.length() >= 32) return false;
-        input.append(typedText);
-        return true;
+        return inputField.charTyped(typedText);
     }
 
     @Override
     public boolean hasActiveInput() {
-        return focused;
+        return inputField.isFocused();
     }
 
     private void addFriend() {
-        String name = input.toString().trim();
+        String name = inputField.getText().trim();
         if (!name.isEmpty() && !FriendManager.INSTANCE.isFriend(name)) {
             FriendManager.INSTANCE.addFriend(name);
             ConfigManager.INSTANCE.saveNow();
         }
-        input.setLength(0);
+        inputField.clear();
     }
 
 }

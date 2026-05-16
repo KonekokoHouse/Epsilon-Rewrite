@@ -13,6 +13,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
 
     private final Category category;
     private final List<ModuleButton> moduleButtons = new ArrayList<>();
+    private String searchQuery = "";
 
     public CategoryPanel(Category category, int panelIndex) {
         super("category:" + category, category::getName, category.icon, panelIndex);
@@ -30,6 +31,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
         float expand = openAnim.getValue();
         float currentY = y + DropdownTheme.PANEL_HEADER_HEIGHT - scroll;
         for (ModuleButton button : moduleButtons) {
+            if (!matchesSearch(button)) continue;
             button.setPosition(x, currentY, width);
             float btnH = button.getHeight();
 
@@ -47,6 +49,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
     protected float computeContentHeight() {
         float total = 0.0f;
         for (ModuleButton button : moduleButtons) {
+            if (!matchesSearch(button)) continue;
             total += button.getHeight();
         }
         return total;
@@ -60,6 +63,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
     @Override
     protected boolean mouseClickedContent(double mouseX, double mouseY, int button) {
         for (ModuleButton mb : moduleButtons) {
+            if (!matchesSearch(mb)) continue;
             if (mb.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
@@ -70,6 +74,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
     @Override
     protected boolean mouseReleasedContent(double mouseX, double mouseY, int button) {
         for (ModuleButton mb : moduleButtons) {
+            if (!matchesSearch(mb)) continue;
             if (mb.mouseReleased(mouseX, mouseY, button)) {
                 return true;
             }
@@ -80,6 +85,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         for (ModuleButton mb : moduleButtons) {
+            if (!matchesSearch(mb)) continue;
             if (mb.keyPressed(keyCode, scanCode, modifiers)) {
                 return true;
             }
@@ -90,6 +96,7 @@ public class CategoryPanel extends AbstractDropdownPanel {
     @Override
     public boolean charTyped(String typedText) {
         for (ModuleButton mb : moduleButtons) {
+            if (!matchesSearch(mb)) continue;
             if (mb.charTyped(typedText)) {
                 return true;
             }
@@ -101,12 +108,31 @@ public class CategoryPanel extends AbstractDropdownPanel {
         return category;
     }
 
+    public void setSearchQuery(String searchQuery) {
+        this.searchQuery = searchQuery == null ? "" : searchQuery.trim().toLowerCase();
+        scroll = 0.0f;
+    }
+
     @Override
     public boolean hasActiveInput() {
         for (ModuleButton mb : moduleButtons) {
+            if (!matchesSearch(mb)) continue;
             if (mb.hasListeningKeybind() || mb.hasFocusedInput()) return true;
         }
         return false;
+    }
+
+    private boolean matchesSearch(ModuleButton button) {
+        if (searchQuery.isBlank()) return true;
+        Module module = button.getModule();
+        String translated = module.getTranslatedName() == null ? "" : module.getTranslatedName();
+        String name = module.getName() == null ? "" : module.getName();
+        String categoryName = module.getCategory() == null ? "" : module.getCategory().getName();
+        String addon = module.getAddonId() == null ? "" : module.getAddonId();
+        return translated.toLowerCase().contains(searchQuery)
+                || name.toLowerCase().contains(searchQuery)
+                || categoryName.toLowerCase().contains(searchQuery)
+                || addon.toLowerCase().contains(searchQuery);
     }
 
 }

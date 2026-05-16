@@ -4,9 +4,9 @@ import com.github.epsilon.assets.i18n.EpsilonTranslateComponent;
 import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.gui.dropdown.DropdownRenderer;
 import com.github.epsilon.gui.dropdown.DropdownTheme;
+import com.github.epsilon.gui.dropdown.widget.DropdownTextField;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.managers.ConfigManager;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,8 +33,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
     private static final float GAP = 4.0f;
     private static final float PADDING = 6.0f;
 
-    private final StringBuilder input = new StringBuilder();
-    private boolean focused;
+    private final DropdownTextField inputField = new DropdownTextField(160);
     private String status = "";
 
     public ConfigDropdownPanel(int panelIndex) {
@@ -55,12 +54,8 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
         float contentX = x + PADDING;
         float contentW = width - PADDING * 2.0f;
 
-        renderer.roundRect().addRoundRect(contentX, currentY, contentW, FIELD_HEIGHT, DropdownTheme.INPUT_RADIUS, DropdownTheme.inputSurface(focused));
-        String inputText = input.isEmpty() && !focused ? ConfigManager.INSTANCE.getActiveConfigName() : input.toString();
-        if (focused && System.currentTimeMillis() % 1000 > 500) inputText += "|";
-        renderer.text().addText(trimToWidth(inputText, DropdownTheme.SETTING_TEXT_SCALE, contentW - 8.0f, renderer),
-                contentX + 4.0f, currentY + 4.0f, DropdownTheme.SETTING_TEXT_SCALE,
-                input.isEmpty() && !focused ? MD3Theme.TEXT_MUTED : MD3Theme.TEXT_PRIMARY);
+        String placeholder = ConfigManager.INSTANCE.getActiveConfigName();
+        inputField.draw(renderer, contentX, currentY, contentW, FIELD_HEIGHT, mouseX, mouseY, placeholder, DropdownTheme.SETTING_TEXT_SCALE);
         currentY += FIELD_HEIGHT + GAP;
 
         String[] actions = {
@@ -115,12 +110,14 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
         float currentY = y + DropdownTheme.PANEL_HEADER_HEIGHT + PADDING - scroll;
         float contentX = x + PADDING;
         float contentW = width - PADDING * 2.0f;
-        if (isHovered(mouseX, mouseY, contentX, currentY, contentW, FIELD_HEIGHT)) {
-            if (input.isEmpty()) input.append(ConfigManager.INSTANCE.getActiveConfigName());
-            focused = true;
+        if (inputField.focusIfContains(mouseX, mouseY, contentX, currentY, contentW, FIELD_HEIGHT)) {
+            if (inputField.getText().isEmpty()) {
+                inputField.setText(ConfigManager.INSTANCE.getActiveConfigName());
+                inputField.setCursorToEnd();
+            }
             return true;
         }
-        focused = false;
+        inputField.blur();
         currentY += FIELD_HEIGHT + GAP;
 
         for (int row = 0; row < 2; row++) {
@@ -152,8 +149,8 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
             if (isHovered(mouseX, mouseY, contentX, currentY, contentW, ROW_HEIGHT)) {
                 try {
                     ConfigManager.INSTANCE.switchConfig(name);
-                    input.setLength(0);
-                    input.append(name);
+                    inputField.setText(name);
+                    inputField.setCursorToEnd();
                     status = switchedComponent.getTranslatedName() + " " + name;
                 } catch (Exception e) {
                     status = errorText(e);
@@ -166,14 +163,14 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
     }
 
     private void runAction(int index) {
-        String value = input.toString().trim();
+        String value = inputField.getText().trim();
         try {
             switch (index) {
                 case 0 -> {
                     if (!value.isEmpty()) {
                         String saved = ConfigManager.INSTANCE.saveAsConfig(value);
-                        input.setLength(0);
-                        input.append(saved);
+                        inputField.setText(saved);
+                        inputField.setCursorToEnd();
                         status = savedComponent.getTranslatedName() + " " + saved;
                     }
                 }
@@ -187,8 +184,8 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                 case 3 -> {
                     if (!value.isEmpty()) {
                         String imported = ConfigManager.INSTANCE.importConfigFromZip(value);
-                        input.setLength(0);
-                        input.append(imported);
+                        inputField.setText(imported);
+                        inputField.setCursorToEnd();
                         status = importedComponent.getTranslatedName() + " " + imported;
                     }
                 }
@@ -202,28 +199,22 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!focused) return false;
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE && !input.isEmpty()) {
-            input.deleteCharAt(input.length() - 1);
+        if (!inputField.isFocused()) return false;
+        if (keyCode == 256) {
+            inputField.blur();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            focused = false;
-            return true;
-        }
-        return false;
+        return inputField.keyPressed(keyCode);
     }
 
     @Override
     public boolean charTyped(String typedText) {
-        if (!focused || typedText.isEmpty() || input.length() >= 160) return false;
-        input.append(typedText);
-        return true;
+        return inputField.charTyped(typedText);
     }
 
     @Override
     public boolean hasActiveInput() {
-        return focused;
+        return inputField.isFocused();
     }
 
     private String errorText(Exception e) {

@@ -1,16 +1,22 @@
 package com.github.epsilon.gui.dropdown;
 
 import com.github.epsilon.graphics.LuminRenderSystem;
+import com.github.epsilon.assets.i18n.EpsilonTranslateComponent;
+import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.gui.dropdown.component.*;
+import com.github.epsilon.gui.dropdown.widget.DropdownTextField;
 import com.github.epsilon.gui.panel.MD3Theme;
+import com.github.epsilon.gui.panel.utils.IMEFocusHelper;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.IMEPreeditOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import net.minecraft.network.chat.Component;
 
 import java.awt.*;
@@ -20,12 +26,15 @@ import java.util.List;
 public class DropdownScreen extends Screen {
 
     public static final DropdownScreen INSTANCE = new DropdownScreen();
+    private static final TranslateComponent searchComponent = EpsilonTranslateComponent.create("gui", "search");
 
     private final List<DropdownPanel> panels = new ArrayList<>();
     private final DropdownRenderer renderer = new DropdownRenderer();
     private final Animation scrimAnim = new Animation(Easing.EASE_OUT_SINE, 200L);
+    private final DropdownTextField searchField = new DropdownTextField(64);
 
     private LuminRenderSystem.LuminRenderTarget renderTarget;
+    private IMEPreeditOverlay preeditOverlay;
     private boolean initialized;
 
     private DropdownScreen() {
@@ -64,6 +73,10 @@ public class DropdownScreen extends Screen {
         drawGui(mouseX, mouseY);
 
         LuminRenderSystem.setActiveTarget(null);
+        if (preeditOverlay != null) {
+            preeditOverlay.updateInputPosition((int) IMEFocusHelper.activeCursorX, (int) IMEFocusHelper.activeCursorY);
+            graphics.setPreeditOverlay(preeditOverlay);
+        }
         graphics.blit(renderTarget.getIdentifier(), 0, 0, window.getGuiScaledWidth(), window.getGuiScaledHeight(), 0, 1, 1, 0);
     }
 
@@ -114,6 +127,16 @@ public class DropdownScreen extends Screen {
 
             panel.setPosition(panel.getX(), origY);
         }
+
+        drawSearch(mouseX, mouseY);
+    }
+
+    private void drawSearch(int mouseX, int mouseY) {
+        renderer.beginPass();
+        float searchX = getSearchX();
+        float searchY = getSearchY();
+        searchField.draw(renderer, searchX, searchY, getSearchWidth(), getSearchHeight(), mouseX, mouseY, searchComponent.getTranslatedName(), 0.58f);
+        renderer.flush();
     }
 
     @Override
@@ -121,6 +144,12 @@ public class DropdownScreen extends Screen {
         double mx = event.x();
         double my = event.y();
         int button = event.button();
+
+        if (button == 0 && searchField.focusIfContains(mx, my, getSearchX(), getSearchY(), getSearchWidth(), getSearchHeight())) {
+            return true;
+        } else if (button == 0 && searchField.isFocused()) {
+            searchField.blur();
+        }
 
         for (int i = panels.size() - 1; i >= 0; i--) {
             DropdownPanel panel = panels.get(i);
@@ -172,6 +201,17 @@ public class DropdownScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (searchField.isFocused()) {
+            if (event.isEscape()) {
+                searchField.blur();
+                return true;
+            }
+            if (searchField.keyPressed(event)) {
+                syncSearchQuery();
+                return true;
+            }
+        }
+
         boolean hasActiveInput = panels.stream().filter(DropdownPanel::isVisible).anyMatch(DropdownPanel::hasActiveInput);
 
         if (hasActiveInput) {
@@ -199,6 +239,10 @@ public class DropdownScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
+        if (searchField.charTyped(event)) {
+            syncSearchQuery();
+            return true;
+        }
         for (DropdownPanel panel : panels) {
             if (!panel.isVisible()) continue;
             String typed = event.codepointAsString();
@@ -211,8 +255,15 @@ public class DropdownScreen extends Screen {
 
     @Override
     public void onClose() {
+        IMEFocusHelper.deactivate();
         DropdownLayoutState.save(panels);
         super.onClose();
+    }
+
+    @Override
+    public boolean preeditUpdated(PreeditEvent event) {
+        this.preeditOverlay = event != null ? new IMEPreeditOverlay(event, this.font, 10) : null;
+        return true;
     }
 
     @Override
@@ -298,6 +349,31 @@ public class DropdownScreen extends Screen {
             case "addon" -> Math.min(screenLimited, 260.0f);
             default -> Math.min(screenLimited, 350.0f);
         };
+    }
+
+    private void syncSearchQuery() {
+        String query = searchField.getText();
+        for (DropdownPanel panel : panels) {
+            if (panel instanceof CategoryPanel categoryPanel) {
+                categoryPanel.setSearchQuery(query);
+            }
+        }
+    }
+
+    private float getSearchX() {
+        return DropdownTheme.PANEL_MARGIN_X;
+    }
+
+    private float getSearchY() {
+        return height - DropdownTheme.PANEL_MARGIN_Y - getSearchHeight();
+    }
+
+    private float getSearchWidth() {
+        return Math.min(200.0f, Math.max(140.0f, width - DropdownTheme.PANEL_MARGIN_X * 2.0f));
+    }
+
+    private float getSearchHeight() {
+        return 20.0f;
     }
 
 }

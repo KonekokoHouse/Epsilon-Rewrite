@@ -27,30 +27,22 @@ public class SettingsContent {
     private final Map<SettingGroup, Animation> groupExpandAnimations = new HashMap<>();
 
     public SettingsContent(List<Setting<?>> settings, List<SettingGroup> orderedGroups) {
-        Map<SettingGroup, List<SettingWidget<?>>> groupedWidgets = new LinkedHashMap<>();
-        List<SettingWidget<?>> ungroupedWidgets = new ArrayList<>();
-
-        for (SettingGroup group : orderedGroups) {
-            if (group != null) groupedWidgets.put(group, new ArrayList<>());
-        }
+        Map<SettingGroup, SettingSection> groupedSections = new LinkedHashMap<>();
 
         for (Setting<?> setting : settings) {
             SettingWidget<?> widget = createWidget(setting);
             if (widget == null) continue;
             SettingGroup group = setting.getGroup();
             if (group != null) {
-                groupedWidgets.computeIfAbsent(group, ignored -> new ArrayList<>()).add(widget);
+                SettingSection section = groupedSections.get(group);
+                if (section == null) {
+                    section = new SettingSection(group, new ArrayList<>());
+                    groupedSections.put(group, section);
+                    sections.add(section);
+                }
+                section.widgets().add(widget);
             } else {
-                ungroupedWidgets.add(widget);
-            }
-        }
-
-        if (!ungroupedWidgets.isEmpty()) {
-            sections.add(new SettingSection(null, ungroupedWidgets));
-        }
-        for (Map.Entry<SettingGroup, List<SettingWidget<?>>> entry : groupedWidgets.entrySet()) {
-            if (!entry.getValue().isEmpty()) {
-                sections.add(new SettingSection(entry.getKey(), entry.getValue()));
+                sections.add(new SettingSection(null, new ArrayList<>(List.of(widget))));
             }
         }
     }
@@ -181,6 +173,8 @@ public class SettingsContent {
             for (SettingWidget<?> widget : section.widgets()) {
                 if (widget instanceof KeybindWidget kw && kw.isListening()) return true;
                 if (widget instanceof StringWidget sw && sw.isFocused()) return true;
+                if (widget instanceof IntSliderWidget iw && iw.isFocused()) return true;
+                if (widget instanceof DoubleSliderWidget dw && dw.isFocused()) return true;
             }
         }
         return false;

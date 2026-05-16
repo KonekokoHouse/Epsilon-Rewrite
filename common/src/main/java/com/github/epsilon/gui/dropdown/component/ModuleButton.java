@@ -1,11 +1,16 @@
 package com.github.epsilon.gui.dropdown.component;
 
+import com.github.epsilon.assets.i18n.EpsilonTranslateComponent;
+import com.github.epsilon.assets.i18n.TranslateComponent;
 import com.github.epsilon.gui.dropdown.DropdownRenderer;
 import com.github.epsilon.gui.dropdown.DropdownTheme;
 import com.github.epsilon.gui.dropdown.widget.*;
 import com.github.epsilon.gui.panel.MD3Theme;
+import com.github.epsilon.graphics.text.StaticFontLoader;
+import com.github.epsilon.managers.ConfigManager;
 import com.github.epsilon.managers.sound.SoundKey;
 import com.github.epsilon.managers.sound.SoundManager;
+import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.Setting;
 import com.github.epsilon.settings.SettingGroup;
@@ -21,6 +26,9 @@ import java.util.List;
 
 public class ModuleButton extends Component {
 
+    private static final TranslateComponent visibleComponent = EpsilonTranslateComponent.create("module", "visible");
+    private static final TranslateComponent hiddenComponent = EpsilonTranslateComponent.create("module", "hidden");
+
     private final Module module;
     private final List<SettingSection> sections = new ArrayList<>();
     private final Map<SettingGroup, Animation> groupHoverAnimations = new HashMap<>();
@@ -34,7 +42,7 @@ public class ModuleButton extends Component {
 
     public ModuleButton(Module module) {
         this.module = module;
-        Map<SettingGroup, List<SettingWidget<?>>> groupedWidgets = new HashMap<>();
+        Map<SettingGroup, List<SettingWidget<?>>> groupedWidgets = new LinkedHashMap<>();
         List<SettingWidget<?>> ungroupedWidgets = new ArrayList<>();
 
         for (Setting<?> setting : module.getSettings()) {
@@ -146,6 +154,7 @@ public class ModuleButton extends Component {
         renderer.text().addText(module.getTranslatedName(), x + DropdownTheme.MODULE_PADDING_X, textY, DropdownTheme.MODULE_TEXT_SCALE, textColor);
 
         drawKeybindButton(renderer, mouseX, mouseY, toggle);
+        drawHiddenButton(renderer, mouseX, mouseY);
 
         float expand = expandAnim.getValue();
 
@@ -322,6 +331,39 @@ public class ModuleButton extends Component {
         return isHovered(mouseX, mouseY, btnX, btnY, DropdownTheme.KEYBIND_WIDTH, DropdownTheme.KEYBIND_HEIGHT);
     }
 
+    private void drawHiddenButton(DropdownRenderer renderer, int mouseX, int mouseY) {
+        float btnW = 18.0f;
+        float btnH = DropdownTheme.KEYBIND_HEIGHT;
+        float btnX = x + width - DropdownTheme.MODULE_PADDING_X - DropdownTheme.KEYBIND_WIDTH - 4.0f - btnW;
+        float btnY = y + (DropdownTheme.MODULE_HEIGHT - btnH) * 0.5f;
+        boolean hovered = isHovered(mouseX, mouseY, btnX, btnY, btnW, btnH);
+        if (!module.isHidden()) {
+            renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, DropdownTheme.KEYBIND_RADIUS,
+                    MD3Theme.lerp(MD3Theme.SECONDARY_CONTAINER, MD3Theme.SECONDARY, hovered ? 0.12f : 0.0f));
+            String icon = Category.HUD.icon;
+            float scale = 0.58f;
+            float iconW = renderer.text().getWidth(icon, scale, StaticFontLoader.ICONS);
+            float iconH = renderer.text().getHeight(scale, StaticFontLoader.ICONS);
+            renderer.text().addText(icon, btnX + (btnW - iconW) * 0.5f, btnY + (btnH - iconH) * 0.5f - 1.0f,
+                    scale, MD3Theme.ON_SECONDARY_CONTAINER, StaticFontLoader.ICONS);
+        }
+        if (hovered) {
+            String hint = module.isHidden() ? hiddenComponent.getTranslatedName() : visibleComponent.getTranslatedName();
+            float hintScale = 0.42f;
+            float hintW = renderer.text().getWidth(hint, hintScale);
+            float hintX = Math.max(x + 2.0f, Math.min(btnX + (btnW - hintW) * 0.5f, x + width - hintW - 2.0f));
+            renderer.text().addText(hint, hintX, y + DropdownTheme.MODULE_HEIGHT + 1.0f, hintScale, MD3Theme.TEXT_MUTED);
+        }
+    }
+
+    private boolean isHiddenButtonHovered(double mouseX, double mouseY) {
+        float btnW = 18.0f;
+        float btnH = DropdownTheme.KEYBIND_HEIGHT;
+        float btnX = x + width - DropdownTheme.MODULE_PADDING_X - DropdownTheme.KEYBIND_WIDTH - 4.0f - btnW;
+        float btnY = y + (DropdownTheme.MODULE_HEIGHT - btnH) * 0.5f;
+        return isHovered(mouseX, mouseY, btnX, btnY, btnW, btnH);
+    }
+
     private boolean isGroupHeaderHovered(double mouseX, double mouseY, float headerX, float headerY) {
         float headerW = width - DropdownTheme.SETTING_INDENT * 2.0f;
         return isHovered(mouseX, mouseY, headerX, headerY, headerW, DropdownTheme.GROUP_HEADER_HEIGHT);
@@ -336,6 +378,11 @@ public class ModuleButton extends Component {
         }
 
         if (isHovered(mouseX, mouseY, x, y, width, DropdownTheme.MODULE_HEIGHT)) {
+            if (isHiddenButtonHovered(mouseX, mouseY)) {
+                module.setHidden(!module.isHidden());
+                ConfigManager.INSTANCE.saveNow();
+                return true;
+            }
             if (isKeybindButtonHovered(mouseX, mouseY)) {
                 if (button == 0) {
                     listeningKeybind = true;
@@ -461,6 +508,8 @@ public class ModuleButton extends Component {
         for (SettingSection section : sections) {
             for (SettingWidget<?> widget : section.widgets()) {
                 if (widget instanceof StringWidget sw && sw.isFocused()) return true;
+                if (widget instanceof IntSliderWidget iw && iw.isFocused()) return true;
+                if (widget instanceof DoubleSliderWidget dw && dw.isFocused()) return true;
             }
         }
         return false;
