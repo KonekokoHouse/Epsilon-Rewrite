@@ -10,7 +10,19 @@ import net.minecraft.util.Mth;
 
 public class BoolWidget extends SettingWidget<BoolSetting> {
 
+    private static final float SWITCH_WIDTH = 22.0f;
+    private static final float SWITCH_HEIGHT = 12.0f;
+    private static final float SWITCH_RADIUS = 6.0f;
+
+    private static final float KNOB_SIZE_OFF = 6.0f;
+    private static final float KNOB_SIZE_ON = 9.0f;
+    private static final float KNOB_INSET_OFF = 3.5f;
+    private static final float KNOB_INSET_ON = 2.0f;
+    private static final float STATE_LAYER_SIZE = 16.0f;
+
     private final Animation toggleAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_TOGGLE);
+    private final Animation knobBounceAnim = new Animation(Easing.EASE_OUT_ELASTIC, 320L);
+    private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
 
     public BoolWidget(BoolSetting setting) {
         super(setting);
@@ -23,37 +35,52 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
 
     @Override
     public void draw(DropdownRenderer renderer, int mouseX, int mouseY) {
-        toggleAnim.run(setting.getValue() ? 1.0f : 0.0f);
+        float target = setting.getValue() ? 1.0f : 0.0f;
+        toggleAnim.run(target);
+        knobBounceAnim.run(target);
         float t = toggleAnim.getValue();
+        float bounce = knobBounceAnim.getValue();
 
-        renderer.text().addText(setting.getDisplayName(), x + DropdownTheme.SETTING_PADDING_X, y + (getHeight() - renderer.text().getHeight(DropdownTheme.SETTING_TEXT_SCALE)) * 0.5f, DropdownTheme.SETTING_TEXT_SCALE, DropdownTheme.settingLabel());
-
-        float sw = DropdownTheme.SWITCH_WIDTH;
-        float sh = DropdownTheme.SWITCH_HEIGHT;
+        float sw = SWITCH_WIDTH;
+        float sh = SWITCH_HEIGHT;
         float sx = x + width - DropdownTheme.SETTING_PADDING_X - sw;
         float sy = y + (getHeight() - sh) * 0.5f;
 
-        renderer.roundRect().addRoundRect(sx, sy, sw, sh, DropdownTheme.SWITCH_RADIUS, MD3Theme.switchTrack(t));
+        boolean hovered = isHovered(mouseX, mouseY, sx - 2, sy - 2, sw + 4, sh + 4);
+        hoverAnim.run(hovered ? 1.0f : 0.0f);
+        float hoverProgress = hoverAnim.getValue();
+
+        renderer.text().addText(setting.getDisplayName(), x + DropdownTheme.SETTING_PADDING_X, y + (getHeight() - renderer.text().getHeight(DropdownTheme.SETTING_TEXT_SCALE)) * 0.5f, DropdownTheme.SETTING_TEXT_SCALE, DropdownTheme.settingLabel());
+
+        renderer.roundRect().addRoundRect(sx, sy, sw, sh, SWITCH_RADIUS, MD3Theme.switchTrack(t));
 
         float outlineW = MD3Theme.switchTrackOutlineWidth(t);
         if (outlineW > 0.01f) {
-            renderer.outline().addOutline(sx, sy, sw, sh, DropdownTheme.SWITCH_RADIUS, outlineW, MD3Theme.switchTrackOutline(t, 0.0f));
+            renderer.outline().addOutline(sx, sy, sw, sh, SWITCH_RADIUS, outlineW, MD3Theme.switchTrackOutline(t, hoverProgress));
         }
 
-        float knobSize = Mth.lerp(t, DropdownTheme.SWITCH_KNOB_OFF, DropdownTheme.SWITCH_KNOB_ON);
-        float inset = Mth.lerp(t, DropdownTheme.SWITCH_KNOB_INSET_OFF, DropdownTheme.SWITCH_KNOB_INSET_ON);
+        float knobSize = Mth.lerp(Mth.clamp(bounce, 0.0f, 1.35f), KNOB_SIZE_OFF, KNOB_SIZE_ON);
+        knobSize = Math.max(KNOB_SIZE_OFF * 0.85f, knobSize);
+        float inset = Mth.lerp(t, KNOB_INSET_OFF, KNOB_INSET_ON);
         float knobMinX = sx + inset + knobSize * 0.5f;
         float knobMaxX = sx + sw - inset - knobSize * 0.5f;
         float knobCx = Mth.lerp(t, knobMinX, knobMaxX);
         float knobCy = sy + sh * 0.5f;
+
+        if (hoverProgress > 0.02f) {
+            float haloX = knobCx - STATE_LAYER_SIZE * 0.5f;
+            float haloY = knobCy - STATE_LAYER_SIZE * 0.5f;
+            renderer.roundRect().addRoundRect(haloX, haloY, STATE_LAYER_SIZE, STATE_LAYER_SIZE, STATE_LAYER_SIZE * 0.5f, MD3Theme.stateLayer(MD3Theme.TEXT_PRIMARY, hoverProgress, 18));
+        }
+
         renderer.roundRect().addRoundRect(knobCx - knobSize * 0.5f, knobCy - knobSize * 0.5f, knobSize, knobSize, knobSize * 0.5f, MD3Theme.switchKnob(t));
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            float sw = DropdownTheme.SWITCH_WIDTH;
-            float sh = DropdownTheme.SWITCH_HEIGHT;
+            float sw = SWITCH_WIDTH;
+            float sh = SWITCH_HEIGHT;
             float sx = x + width - DropdownTheme.SETTING_PADDING_X - sw;
             float sy = y + (getHeight() - sh) * 0.5f;
             if (isHovered(mouseX, mouseY, sx - 2, sy - 2, sw + 4, sh + 4)) {

@@ -24,14 +24,6 @@ public final class DropdownTheme {
     public static final float SETTING_GAP = 3.0f;
     public static final float SETTING_INDENT = 5.0f;
 
-    public static final float SWITCH_WIDTH = 22.0f;
-    public static final float SWITCH_HEIGHT = 12.0f;
-    public static final float SWITCH_RADIUS = 6.0f;
-    public static final float SWITCH_KNOB_OFF = 5.0f;
-    public static final float SWITCH_KNOB_ON = 6.0f;
-    public static final float SWITCH_KNOB_INSET_OFF = 4.0f;
-    public static final float SWITCH_KNOB_INSET_ON = 3.0f;
-
     public static final float SLIDER_HEIGHT = 5.0f;
     public static final float SLIDER_RADIUS = 2.5f;
     public static final float SLIDER_KNOB_RADIUS = 4.5f;
