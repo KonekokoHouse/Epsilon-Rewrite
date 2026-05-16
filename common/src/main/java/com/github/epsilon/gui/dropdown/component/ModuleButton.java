@@ -89,7 +89,7 @@ public class ModuleButton extends Component {
                 if (expand > 0.5f) {
                     widget.draw(renderer, mouseX, mouseY);
                 }
-                settingY += (widget.getHeight() + DropdownTheme.SETTING_GAP) * expand;
+                settingY += widget.getHeight() + DropdownTheme.SETTING_GAP;
             }
         }
     }
