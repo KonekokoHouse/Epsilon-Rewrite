@@ -21,7 +21,7 @@ import java.util.OptionalInt;
 
 public class TriangleRenderer implements IRenderer {
 
-    private static final long BUFFER_SIZE = 256 * 1024;
+    private static final long BUFFER_SIZE = 64 * 1024;
     private static final int STRIDE = 16;
 
     private final LuminRingBuffer buffer = new LuminRingBuffer(BUFFER_SIZE, GpuBuffer.USAGE_VERTEX);

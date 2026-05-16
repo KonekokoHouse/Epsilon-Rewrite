@@ -17,7 +17,7 @@ import java.util.OptionalInt;
 
 public class ShadowRenderer implements IRenderer {
 
-    private static final long BUFFER_SIZE = 2 * 1024 * 1024;
+    private static final long BUFFER_SIZE = 256 * 1024;
     private final LuminRingBuffer buffer = new LuminRingBuffer(BUFFER_SIZE, GpuBuffer.USAGE_VERTEX);
 
     private boolean scissorEnabled = false;

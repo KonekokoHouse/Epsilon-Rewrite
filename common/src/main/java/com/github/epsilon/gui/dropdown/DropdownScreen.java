@@ -74,7 +74,9 @@ public class DropdownScreen extends Screen {
 
     private void drawGui(int mouseX, int mouseY) {
         openAnim.run(1.0f);
+        renderer.beginFrame();
 
+        renderer.beginPass();
         renderer.rect().addRect(0, 0, width, height, DropdownTheme.scrim());
         for (CategoryPanel panel : panels) {
             panel.drawBackground(renderer);
@@ -85,6 +87,7 @@ public class DropdownScreen extends Screen {
             float clipY = panel.getContentClipY();
             float clipH = panel.getContentClipHeight();
             if (clipH > 0.5f) {
+                renderer.beginPass();
                 renderer.setScissor(panel.getX(), clipY, panel.getWidth(), clipH, height);
                 panel.drawContent(renderer, mouseX, mouseY);
                 renderer.flush();

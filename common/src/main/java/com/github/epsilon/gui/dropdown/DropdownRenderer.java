@@ -5,35 +5,50 @@ import net.minecraft.client.Minecraft;
 
 public final class DropdownRenderer {
 
-    private final ShadowRenderer shadow = new ShadowRenderer();
-    private final RoundRectRenderer roundRect = new RoundRectRenderer();
-    private final RoundRectOutlineRenderer outline = new RoundRectOutlineRenderer();
-    private final RectRenderer rect = new RectRenderer();
-    private final TextRenderer text = new TextRenderer();
-    private final TriangleRenderer triangle = new TriangleRenderer();
+    private static final int MAX_SLOTS = 16;
+
+    private final Slot[] slots = new Slot[MAX_SLOTS];
+    private int slotIndex = -1;
+    private int slotCount;
+
+    private Slot current() {
+        return slots[slotIndex];
+    }
 
     public ShadowRenderer shadow() {
-        return shadow;
+        Slot slot = current();
+        if (slot.shadow == null) slot.shadow = new ShadowRenderer();
+        return slot.shadow;
     }
 
     public RoundRectRenderer roundRect() {
-        return roundRect;
+        Slot slot = current();
+        if (slot.roundRect == null) slot.roundRect = new RoundRectRenderer();
+        return slot.roundRect;
     }
 
     public RoundRectOutlineRenderer outline() {
-        return outline;
+        Slot slot = current();
+        if (slot.outline == null) slot.outline = new RoundRectOutlineRenderer();
+        return slot.outline;
     }
 
     public RectRenderer rect() {
-        return rect;
+        Slot slot = current();
+        if (slot.rect == null) slot.rect = new RectRenderer();
+        return slot.rect;
     }
 
     public TextRenderer text() {
-        return text;
+        Slot slot = current();
+        if (slot.text == null) slot.text = new TextRenderer();
+        return slot.text;
     }
 
     public TriangleRenderer triangle() {
-        return triangle;
+        Slot slot = current();
+        if (slot.triangle == null) slot.triangle = new TriangleRenderer();
+        return slot.triangle;
     }
 
     public void setScissor(float guiX, float guiY, float guiW, float guiH, int guiHeight) {
@@ -42,39 +57,91 @@ public final class DropdownRenderer {
         int y = Math.round((guiHeight - guiY - guiH) * scale);
         int w = Math.round(guiW * scale);
         int h = Math.round(guiH * scale);
-        shadow.setScissor(x, y, w, h);
-        roundRect.setScissor(x, y, w, h);
-        outline.setScissor(x, y, w, h);
-        rect.setScissor(x, y, w, h);
-        triangle.setScissor(x, y, w, h);
-        text.setScissor(x, y, w, h);
+        Slot slot = current();
+        setScissorOn(slot.shadow, x, y, w, h);
+        setScissorOn(slot.roundRect, x, y, w, h);
+        setScissorOn(slot.outline, x, y, w, h);
+        setScissorOn(slot.rect, x, y, w, h);
+        setScissorOn(slot.triangle, x, y, w, h);
+        setScissorOn(slot.text, x, y, w, h);
+    }
+
+    private static void setScissorOn(Object renderer, int x, int y, int w, int h) {
+        if (renderer instanceof ShadowRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof RoundRectRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof RoundRectOutlineRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof RectRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof TriangleRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof TextRenderer r) r.setScissor(x, y, w, h);
     }
 
     public void clearScissor() {
-        shadow.clearScissor();
-        roundRect.clearScissor();
-        outline.clearScissor();
-        rect.clearScissor();
-        triangle.clearScissor();
-        text.clearScissor();
+        Slot slot = current();
+        clearScissorOn(slot.shadow);
+        clearScissorOn(slot.roundRect);
+        clearScissorOn(slot.outline);
+        clearScissorOn(slot.rect);
+        clearScissorOn(slot.triangle);
+        clearScissorOn(slot.text);
+    }
+
+    private static void clearScissorOn(Object renderer) {
+        if (renderer instanceof ShadowRenderer r) r.clearScissor();
+        else if (renderer instanceof RoundRectRenderer r) r.clearScissor();
+        else if (renderer instanceof RoundRectOutlineRenderer r) r.clearScissor();
+        else if (renderer instanceof RectRenderer r) r.clearScissor();
+        else if (renderer instanceof TriangleRenderer r) r.clearScissor();
+        else if (renderer instanceof TextRenderer r) r.clearScissor();
+    }
+
+    public void beginFrame() {
+        slotIndex = -1;
+    }
+
+    public void beginPass() {
+        slotIndex++;
+        if (slotIndex >= slotCount) {
+            if (slotCount >= MAX_SLOTS) {
+                throw new IllegalStateException("exceeded max renderer slots: " + MAX_SLOTS);
+            }
+            slots[slotCount] = new Slot();
+            slotCount++;
+        }
+        slots[slotIndex].flushed = false;
     }
 
     public void flush() {
-        shadow.drawAndClear();
-        roundRect.drawAndClear();
-        outline.drawAndClear();
-        rect.drawAndClear();
-        triangle.drawAndClear();
-        text.drawAndClear();
+        Slot slot = current();
+        if (slot.flushed) return;
+        slot.flushed = true;
+        if (slot.shadow != null) slot.shadow.drawAndClear();
+        if (slot.roundRect != null) slot.roundRect.drawAndClear();
+        if (slot.outline != null) slot.outline.drawAndClear();
+        if (slot.rect != null) slot.rect.drawAndClear();
+        if (slot.triangle != null) slot.triangle.drawAndClear();
+        if (slot.text != null) slot.text.drawAndClear();
     }
 
     public void close() {
-        shadow.close();
-        roundRect.close();
-        outline.close();
-        rect.close();
-        text.close();
-        triangle.close();
+        for (int i = 0; i < slotCount; i++) {
+            Slot slot = slots[i];
+            if (slot.shadow != null) slot.shadow.close();
+            if (slot.roundRect != null) slot.roundRect.close();
+            if (slot.outline != null) slot.outline.close();
+            if (slot.rect != null) slot.rect.close();
+            if (slot.triangle != null) slot.triangle.close();
+            if (slot.text != null) slot.text.close();
+        }
+    }
+
+    private static final class Slot {
+        boolean flushed;
+        ShadowRenderer shadow;
+        RoundRectRenderer roundRect;
+        RoundRectOutlineRenderer outline;
+        RectRenderer rect;
+        TextRenderer text;
+        TriangleRenderer triangle;
     }
 
 }
