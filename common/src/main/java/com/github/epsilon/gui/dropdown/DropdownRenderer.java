@@ -17,31 +17,31 @@ public final class DropdownRenderer {
 
     public ShadowRenderer shadow() {
         Slot slot = current();
-        if (slot.shadow == null) slot.shadow = new ShadowRenderer();
+        if (slot.shadow == null) slot.shadow = ShadowRenderer.create();
         return slot.shadow;
     }
 
     public RoundRectRenderer roundRect() {
         Slot slot = current();
-        if (slot.roundRect == null) slot.roundRect = new RoundRectRenderer();
+        if (slot.roundRect == null) slot.roundRect = RoundRectRenderer.create();
         return slot.roundRect;
     }
 
     public RoundRectOutlineRenderer outline() {
         Slot slot = current();
-        if (slot.outline == null) slot.outline = new RoundRectOutlineRenderer();
+        if (slot.outline == null) slot.outline = RoundRectOutlineRenderer.create();
         return slot.outline;
     }
 
     public RectRenderer rect() {
         Slot slot = current();
-        if (slot.rect == null) slot.rect = new RectRenderer();
+        if (slot.rect == null) slot.rect = RectRenderer.create();
         return slot.rect;
     }
 
     public TextRenderer text() {
         Slot slot = current();
-        if (slot.text == null) slot.text = new TextRenderer();
+        if (slot.text == null) slot.text = TextRenderer.create();
         return slot.text;
     }
 
