@@ -23,12 +23,12 @@ import java.awt.*;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-public class TargetHud extends HudModule {
+public class TargetHUD extends HudModule {
 
-    public static final TargetHud INSTANCE = new TargetHud();
+    public static final TargetHUD INSTANCE = new TargetHUD();
 
-    private TargetHud() {
-        super("Target Hud", Category.HUD, 0f, 0f, 180f, 80f);
+    private TargetHUD() {
+        super("Target HUD", Category.HUD, 0f, 0f, 180f, 80f);
     }
 
     private final DoubleSetting scale = doubleSetting("Scale", 0.9, 0.5, 2.0, 0.1);

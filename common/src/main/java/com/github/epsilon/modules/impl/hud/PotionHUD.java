@@ -26,11 +26,11 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class PotionHud extends HudModule {
+public class PotionHUD extends HudModule {
 
-    public static final PotionHud INSTANCE = new PotionHud();
+    public static final PotionHUD INSTANCE = new PotionHUD();
 
-    private PotionHud() {
+    private PotionHUD() {
         super("Potion Hud", Category.HUD, 0f, 0f, 160f, 60f);
     }
 

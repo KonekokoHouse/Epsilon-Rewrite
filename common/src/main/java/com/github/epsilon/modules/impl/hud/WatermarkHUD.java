@@ -17,12 +17,12 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.awt.*;
 import java.util.function.Supplier;
 
-public class WatermarkHud extends HudModule {
+public class WatermarkHUD extends HudModule {
 
-    public static final WatermarkHud INSTANCE = new WatermarkHud();
+    public static final WatermarkHUD INSTANCE = new WatermarkHUD();
 
-    private WatermarkHud() {
-        super("Watermark Hud", Category.HUD, 0f, 0f, 200f, 28f);
+    private WatermarkHUD() {
+        super("Watermark HUD", Category.HUD, 0f, 0f, 200f, 28f);
     }
 
     private enum Mode {

@@ -59,7 +59,7 @@ public class ClientSetting extends Module {
     // Appearance
     public final EnumSetting<ThemeMode> themeMode = enumSetting("Theme Mode", ThemeMode.Dark).group(sgAppearance);
 
-    public final EnumSetting<ThemePreset> themePreset = enumSetting("Theme Preset", ThemePreset.Expressive).group(sgAppearance);
+    public final EnumSetting<ThemePreset> themePreset = enumSetting("Theme Preset", ThemePreset.TonalSpot).group(sgAppearance);
 
     public final BoolSetting customIcon = boolSetting("Custom Icon", true, _ -> {
         try {

@@ -15,11 +15,11 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.function.Supplier;
 
-public class NotificationsHud extends HudModule {
+public class NotificationsHUD extends HudModule {
 
-    public static final NotificationsHud INSTANCE = new NotificationsHud();
+    public static final NotificationsHUD INSTANCE = new NotificationsHUD();
 
-    private NotificationsHud() {
+    private NotificationsHUD() {
         super("Notifications Hud", Category.HUD, 4f, 4f, 150f, 35f);
     }
 

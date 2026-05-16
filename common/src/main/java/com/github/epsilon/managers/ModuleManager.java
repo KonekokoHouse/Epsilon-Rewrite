@@ -16,7 +16,7 @@ import com.github.epsilon.modules.Module;
 import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.combat.*;
 import com.github.epsilon.modules.impl.hud.*;
-import com.github.epsilon.modules.impl.hud.notification.NotificationsHud;
+import com.github.epsilon.modules.impl.hud.notification.NotificationsHUD;
 import com.github.epsilon.modules.impl.movement.*;
 import com.github.epsilon.modules.impl.player.*;
 import com.github.epsilon.modules.impl.render.*;
@@ -116,12 +116,12 @@ public class ModuleManager {
                 TestGui.INSTANCE,
 
                 // Hud
-                NotificationsHud.INSTANCE,
-                InventoryHud.INSTANCE,
-                ModuleListHud.INSTANCE,
-                PotionHud.INSTANCE,
-                TargetHud.INSTANCE,
-                WatermarkHud.INSTANCE
+                NotificationsHUD.INSTANCE,
+                InventoryHUD.INSTANCE,
+                ModuleListHUD.INSTANCE,
+                PotionHUD.INSTANCE,
+                TargetHUD.INSTANCE,
+                WatermarkHUD.INSTANCE
 
         ));
 

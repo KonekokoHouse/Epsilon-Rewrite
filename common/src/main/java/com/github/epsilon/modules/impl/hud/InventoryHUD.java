@@ -17,11 +17,11 @@ import net.minecraft.world.item.ItemStack;
 import java.awt.*;
 import java.util.function.Supplier;
 
-public class InventoryHud extends HudModule {
+public class InventoryHUD extends HudModule {
 
-    public static final InventoryHud INSTANCE = new InventoryHud();
+    public static final InventoryHUD INSTANCE = new InventoryHUD();
 
-    private InventoryHud() {
+    private InventoryHUD() {
         super("Inventory Hud", Category.HUD, 0f, 0f, 180f, 80f);
     }
 

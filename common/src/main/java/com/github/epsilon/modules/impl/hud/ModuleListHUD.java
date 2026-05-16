@@ -23,11 +23,11 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ModuleListHud extends HudModule {
+public class ModuleListHUD extends HudModule {
 
-    public static final ModuleListHud INSTANCE = new ModuleListHud();
+    public static final ModuleListHUD INSTANCE = new ModuleListHUD();
 
-    private ModuleListHud() {
+    private ModuleListHUD() {
         super("Module List Hud", Category.HUD, 0f, 0f, 50f, 50f);
     }
 
