@@ -50,16 +50,17 @@ public class CategoryPanel {
         renderer.shadow().addShadow(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_SHADOW_BLUR, DropdownTheme.panelShadow());
         renderer.roundRect().addRoundRect(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.panelBackground());
 
-        float iconX = x + 5.0f;
-        float textX = iconX + 10.0f;
+        float iconX = x + 7.5f;
+        float textX = iconX + 16.0f;
+        float iconY = y + (DropdownTheme.PANEL_HEADER_HEIGHT - renderer.text().getHeight(DropdownTheme.HEADER_ICON_SCALE)) * 0.5f;
         float textY = y + (DropdownTheme.PANEL_HEADER_HEIGHT - renderer.text().getHeight(DropdownTheme.HEADER_TEXT_SCALE)) * 0.5f;
-        renderer.text().addText(category.icon, iconX, textY, DropdownTheme.HEADER_ICON_SCALE, MD3Theme.PRIMARY, StaticFontLoader.ICONS);
+        renderer.text().addText(category.icon, iconX, iconY, DropdownTheme.HEADER_ICON_SCALE, MD3Theme.PRIMARY, StaticFontLoader.ICONS);
         renderer.text().addText(category.getName(), textX, textY, DropdownTheme.HEADER_TEXT_SCALE, MD3Theme.TEXT_PRIMARY);
 
-        if (contentHeight > visibleHeight && opened && openAnim.getValue() > 0.5f) {
+        if (contentHeight > visibleHeight && opened && expand > 0.5f) {
             float scrollbarX = x + width - 2.5f;
             float scrollbarTrackY = y + DropdownTheme.PANEL_HEADER_HEIGHT;
-            float scrollbarTrackH = visibleHeight * openAnim.getValue();
+            float scrollbarTrackH = visibleHeight * expand;
             float thumbRatio = visibleHeight / contentHeight;
             float thumbH = Math.max(10.0f, scrollbarTrackH * thumbRatio);
             float thumbY = scrollbarTrackY + (scrollbarTrackH - thumbH) * (maxScroll > 0 ? scroll / maxScroll : 0);

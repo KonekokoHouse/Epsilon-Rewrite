@@ -68,7 +68,7 @@ public final class DropdownTheme {
     public static final long ANIM_EXPAND = 220L;
 
     public static final float HEADER_TEXT_SCALE = 0.72f;
-    public static final float HEADER_ICON_SCALE = 0.84f;
+    public static final float HEADER_ICON_SCALE = 0.86f;
 
     private DropdownTheme() {
     }
