@@ -1,8 +1,11 @@
 package com.github.epsilon.modules.impl;
 
+import com.github.epsilon.assets.holders.TextureCacheHolder;
+import com.github.epsilon.assets.holders.TranslateHolder;
 import com.github.epsilon.gui.dropdown.DropdownScreen;
 import com.github.epsilon.gui.hudeditor.HudEditorScreen;
 import com.github.epsilon.gui.panel.PanelScreen;
+import com.github.epsilon.gui.panel.dsl.PanelUiTree;
 import com.github.epsilon.gui.screen.MainMenuScreen;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.SettingGroup;
@@ -62,7 +65,11 @@ public class ClientSetting extends Module {
 
     private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
 
-    public final BoolSetting i18nFallback = boolSetting("I18n Fallback", true).group(sgGeneral);
+    public final BoolSetting i18nFallback = boolSetting("I18n Fallback", true, _ -> {
+        TranslateHolder.INSTANCE.refresh();
+        PanelUiTree.clearMemoCache();
+        TextureCacheHolder.INSTANCE.clearCache();
+    }).group(sgGeneral);
 
     public final BoolSetting fontAntiAliasing = boolSetting("Font Anti Aliasing", true).group(sgGeneral);
 
