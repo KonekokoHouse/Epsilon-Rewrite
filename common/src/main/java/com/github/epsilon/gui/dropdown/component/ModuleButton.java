@@ -83,7 +83,7 @@ public class ModuleButton extends Component {
 
         float expand = expandAnim.getValue();
         if (expand > 0.01f) {
-            float settingY = y + DropdownTheme.MODULE_HEIGHT;
+            float settingY = y + DropdownTheme.MODULE_HEIGHT + DropdownTheme.SETTING_GAP;
             for (SettingWidget<?> widget : widgets) {
                 if (!widget.isVisible()) continue;
                 widget.setPosition(x + DropdownTheme.SETTING_INDENT, settingY, width - DropdownTheme.SETTING_INDENT * 2.0f);
