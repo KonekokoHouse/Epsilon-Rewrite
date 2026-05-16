@@ -163,6 +163,7 @@ public class ModuleButton extends Component {
                     if (expand > 0.5f) {
                         drawGroupSection(renderer, mouseX, mouseY, section, settingY);
                     }
+                    settingY += sectionH;
                 } else {
                     for (SettingWidget<?> widget : section.widgets()) {
                         if (!widget.isVisible()) continue;
@@ -173,7 +174,6 @@ public class ModuleButton extends Component {
                         settingY += widget.getHeight() + DropdownTheme.SETTING_GAP;
                     }
                 }
-                settingY += sectionH;
             }
         }
     }
