@@ -8,7 +8,13 @@ import java.awt.*;
 
 public class EnumWidget extends SettingWidget<EnumSetting<?>> {
 
-    private float computedHeight = DropdownTheme.SETTING_HEIGHT + DropdownTheme.CHIP_HEIGHT + 4.0f;
+    private static final float CHIP_HEIGHT = 14.0f;
+    private static final float CHIP_RADIUS = 7.0f;
+    private static final float CHIP_PADDING_X = 6.0f;
+    private static final float CHIP_GAP = 4.0f;
+    private static final float CHIP_TEXT_SCALE = 0.48f;
+
+    private float computedHeight = DropdownTheme.SETTING_HEIGHT - 1.0f + CHIP_HEIGHT + 1.0f;
     private float[] chipBoundsX;
     private float[] chipBoundsY;
     private float[] chipBoundsW;
@@ -34,17 +40,15 @@ public class EnumWidget extends SettingWidget<EnumSetting<?>> {
         float chipX = x + DropdownTheme.SETTING_PADDING_X;
         float chipY = y + DropdownTheme.SETTING_HEIGHT - 1.0f;
         float maxX = x + width - DropdownTheme.SETTING_PADDING_X;
-        float rowHeight = 0.0f;
 
         for (int i = 0; i < modes.length; i++) {
             String label = setting.getTranslatedValueByIndex(modes[i].ordinal());
-            float textW = renderer.text().getWidth(label, DropdownTheme.CHIP_TEXT_SCALE);
-            float chipW = textW + DropdownTheme.CHIP_PADDING_X * 2.0f;
+            float textW = renderer.text().getWidth(label, CHIP_TEXT_SCALE);
+            float chipW = textW + CHIP_PADDING_X * 2.0f;
 
             if (chipX + chipW > maxX && chipX > x + DropdownTheme.SETTING_PADDING_X) {
                 chipX = x + DropdownTheme.SETTING_PADDING_X;
-                chipY += DropdownTheme.CHIP_HEIGHT + DropdownTheme.CHIP_GAP;
-                rowHeight += DropdownTheme.CHIP_HEIGHT + DropdownTheme.CHIP_GAP;
+                chipY += CHIP_HEIGHT + CHIP_GAP;
             }
 
             chipBoundsX[i] = chipX;
@@ -55,13 +59,13 @@ public class EnumWidget extends SettingWidget<EnumSetting<?>> {
             Color bg = selected ? DropdownTheme.chipSelected() : DropdownTheme.chipUnselected();
             Color fg = selected ? DropdownTheme.chipSelectedText() : DropdownTheme.chipUnselectedText();
 
-            renderer.roundRect().addRoundRect(chipX, chipY, chipW, DropdownTheme.CHIP_HEIGHT, DropdownTheme.CHIP_RADIUS, bg);
-            renderer.text().addText(label, chipX + DropdownTheme.CHIP_PADDING_X, chipY + (DropdownTheme.CHIP_HEIGHT - renderer.text().getHeight(DropdownTheme.CHIP_TEXT_SCALE)) * 0.5f, DropdownTheme.CHIP_TEXT_SCALE, fg);
+            renderer.roundRect().addRoundRect(chipX, chipY, chipW, CHIP_HEIGHT, CHIP_RADIUS, bg);
+            renderer.text().addText(label, chipX + CHIP_PADDING_X, chipY + (CHIP_HEIGHT - renderer.text().getHeight(CHIP_TEXT_SCALE)) * 0.5f, CHIP_TEXT_SCALE, fg);
 
-            chipX += chipW + DropdownTheme.CHIP_GAP;
+            chipX += chipW + CHIP_GAP;
         }
 
-        computedHeight = DropdownTheme.SETTING_HEIGHT + DropdownTheme.CHIP_HEIGHT + rowHeight + 4.0f;
+        computedHeight = chipY - y + CHIP_HEIGHT + 1.0f;
     }
 
     @Override
@@ -70,7 +74,7 @@ public class EnumWidget extends SettingWidget<EnumSetting<?>> {
 
         Enum<?>[] modes = setting.getModes();
         for (int i = 0; i < modes.length; i++) {
-            if (isHovered(mouseX, mouseY, chipBoundsX[i], chipBoundsY[i], chipBoundsW[i], DropdownTheme.CHIP_HEIGHT)) {
+            if (isHovered(mouseX, mouseY, chipBoundsX[i], chipBoundsY[i], chipBoundsW[i], CHIP_HEIGHT)) {
                 setting.setMode(modes[i].name());
                 return true;
             }

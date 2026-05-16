@@ -35,12 +35,6 @@ public final class DropdownTheme {
     public static final float SLIDER_RADIUS = 2.5f;
     public static final float SLIDER_KNOB_RADIUS = 4.5f;
 
-    public static final float CHIP_HEIGHT = 14.0f;
-    public static final float CHIP_RADIUS = 7.0f;
-    public static final float CHIP_PADDING_X = 6.0f;
-    public static final float CHIP_GAP = 4.0f;
-    public static final float CHIP_TEXT_SCALE = 0.48f;
-
     public static final float COLOR_PREVIEW_SIZE = 12.0f;
     public static final float COLOR_PICKER_HEIGHT = 60.0f;
     public static final float COLOR_HUE_HEIGHT = 7.0f;
