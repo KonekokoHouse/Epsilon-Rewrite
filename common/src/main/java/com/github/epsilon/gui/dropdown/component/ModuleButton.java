@@ -116,15 +116,15 @@ public class ModuleButton extends Component {
         if (listeningKeybind) {
             surface = DropdownTheme.keybindSurface(true);
             text = DropdownTheme.keybindText(true);
-            outline = MD3Theme.withAlpha(MD3Theme.PRIMARY, 180);
+            outline = MD3Theme.withAlpha(MD3Theme.PRIMARY, 200);
         } else {
             Color idleSurface = DropdownTheme.keybindSurface(false);
-            Color activeSurface = MD3Theme.lerp(MD3Theme.PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.12f);
+            Color activeSurface = MD3Theme.lerp(MD3Theme.PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.38f);
             surface = MD3Theme.lerp(idleSurface, activeSurface, toggle);
-            surface = MD3Theme.lerp(surface, MD3Theme.SURFACE_CONTAINER_HIGHEST, kbHover * 0.35f);
-            text = MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.keybindText(true), toggle);
-            outline = MD3Theme.lerp(MD3Theme.withAlpha(MD3Theme.OUTLINE, 92), MD3Theme.withAlpha(MD3Theme.PRIMARY, 150), toggle);
-            outline = MD3Theme.lerp(outline, MD3Theme.withAlpha(MD3Theme.TEXT_PRIMARY, 150), kbHover * 0.4f);
+            surface = MD3Theme.lerp(surface, MD3Theme.lerp(MD3Theme.SURFACE_CONTAINER_HIGHEST, MD3Theme.PRIMARY, 0.15f), kbHover * 0.4f);
+            text = MD3Theme.lerp(DropdownTheme.keybindText(false), MD3Theme.lerp(MD3Theme.ON_PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.15f), toggle);
+            outline = MD3Theme.lerp(MD3Theme.withAlpha(MD3Theme.OUTLINE, 140), MD3Theme.withAlpha(MD3Theme.PRIMARY, 200), toggle);
+            outline = MD3Theme.lerp(outline, MD3Theme.withAlpha(MD3Theme.TEXT_PRIMARY, 180), kbHover * 0.45f);
         }
 
         renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, radius, surface);
