@@ -56,7 +56,7 @@ public class ClientSetting extends Module {
         } else if (mc.screen instanceof DropdownScreen) {
             mc.setScreen(PanelScreen.INSTANCE);
         }
-    });
+    }).group(sgGeneral);
 
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
