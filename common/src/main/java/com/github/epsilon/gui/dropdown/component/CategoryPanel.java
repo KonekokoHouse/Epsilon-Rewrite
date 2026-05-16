@@ -44,8 +44,8 @@ public class CategoryPanel {
         openAnim.run(opened ? 1.0f : 0.0f);
         float expand = openAnim.getValue();
         float contentHeight = computeContentHeight();
-        float visibleHeight = Math.min(contentHeight, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT);
-        float panelHeight = DropdownTheme.PANEL_HEADER_HEIGHT + visibleHeight * expand;
+        float visibleHeight = computeVisibleContentHeight(contentHeight);
+        float panelHeight = DropdownTheme.PANEL_HEADER_HEIGHT + (visibleHeight + DropdownTheme.PANEL_BOTTOM_PADDING) * expand;
 
         renderer.shadow().addShadow(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.PANEL_SHADOW_BLUR, DropdownTheme.panelShadow());
         renderer.roundRect().addRoundRect(x, y, width, panelHeight, DropdownTheme.PANEL_RADIUS, DropdownTheme.panelBackground());
@@ -74,7 +74,7 @@ public class CategoryPanel {
         if (expand < 0.01f) return;
 
         float contentHeight = computeContentHeight();
-        float visibleHeight = Math.min(contentHeight, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT);
+        float visibleHeight = computeVisibleContentHeight(contentHeight);
         maxScroll = Math.max(0.0f, contentHeight - visibleHeight);
         scroll = Math.max(0.0f, Math.min(scroll, maxScroll));
 
@@ -100,15 +100,15 @@ public class CategoryPanel {
     public float getContentClipHeight() {
         openAnim.run(opened ? 1.0f : 0.0f);
         float contentHeight = computeContentHeight();
-        float visibleHeight = Math.min(contentHeight, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT);
+        float visibleHeight = computeVisibleContentHeight(contentHeight);
         return visibleHeight * openAnim.getValue();
     }
 
     public float getPanelHeight() {
         openAnim.run(opened ? 1.0f : 0.0f);
         float contentHeight = computeContentHeight();
-        float visibleHeight = Math.min(contentHeight, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT);
-        return DropdownTheme.PANEL_HEADER_HEIGHT + visibleHeight * openAnim.getValue();
+        float visibleHeight = computeVisibleContentHeight(contentHeight);
+        return DropdownTheme.PANEL_HEADER_HEIGHT + (visibleHeight + DropdownTheme.PANEL_BOTTOM_PADDING) * openAnim.getValue();
     }
 
     private float computeContentHeight() {
@@ -116,7 +116,12 @@ public class CategoryPanel {
         for (ModuleButton button : moduleButtons) {
             total += button.getHeight();
         }
-        return total + DropdownTheme.PANEL_BOTTOM_PADDING;
+        return total;
+    }
+
+    private float computeVisibleContentHeight(float contentHeight) {
+        float maxContentHeight = Math.max(0.0f, maxPanelHeight - DropdownTheme.PANEL_HEADER_HEIGHT - DropdownTheme.PANEL_BOTTOM_PADDING);
+        return Math.min(contentHeight, maxContentHeight);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
