@@ -18,7 +18,7 @@ public class DoubleSettingRow extends SettingRow<DoubleSetting> {
     private final Animation hoverAnimation = new Animation(Easing.EASE_OUT_QUART, 150L);
     private final Animation pressAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);
     private final Animation indicatorAnimation = new Animation(Easing.EASE_OUT_QUART, 150L);
-    private final TextRenderer measureTextRenderer = new TextRenderer();
+    private final TextRenderer measureTextRenderer = TextRenderer.create();
     private boolean dragging;
     private boolean focused;
     private String inputBuffer;

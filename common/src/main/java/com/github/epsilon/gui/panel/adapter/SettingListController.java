@@ -34,7 +34,7 @@ public class SettingListController {
     private static final float GROUP_COUNT_CHIP_HEIGHT = 14.0f;
 
     private final PanelPopupHost popupHost;
-    private final TextRenderer measureTextRenderer = new TextRenderer();
+    private final TextRenderer measureTextRenderer = TextRenderer.create();
     private final Map<Setting<?>, SettingRow<?>> rowCache = new HashMap<>();
     private final Map<SettingGroup, Animation> groupHoverAnimations = new HashMap<>();
     private final Map<SettingGroup, Animation> groupExpandAnimations = new HashMap<>();

@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
@@ -30,6 +31,13 @@ public class TriangleRenderer implements IRenderer {
 
     private boolean scissorEnabled = false;
     private int scissorX, scissorY, scissorW, scissorH;
+
+    private TriangleRenderer() {
+    }
+
+    public static TriangleRenderer create() {
+        return RendererHolder.INSTANCE.register(new TriangleRenderer());
+    }
 
     public void addChevronTriangle(float centerX, float centerY, float size, float progress, Color color) {
         buffer.tryMap();

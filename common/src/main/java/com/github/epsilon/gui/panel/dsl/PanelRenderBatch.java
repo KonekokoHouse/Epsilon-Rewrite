@@ -13,15 +13,15 @@ public record PanelRenderBatch(ShadowRenderer shadowRenderer, RoundRectRenderer 
                                TriangleRenderer triangleRenderer, TextRenderer textRenderer) {
 
     public PanelRenderBatch() {
-        this(new ShadowRenderer(), new RoundRectRenderer(), new RoundRectOutlineRenderer(), new RectRenderer(),
-                new TriangleRenderer(), new TextRenderer());
+        this(ShadowRenderer.create(), RoundRectRenderer.create(), RoundRectOutlineRenderer.create(), RectRenderer.create(),
+                TriangleRenderer.create(), TextRenderer.create());
     }
 
     public PanelRenderBatch(ShadowRenderer shadowRenderer, RoundRectRenderer roundRectRenderer,
                             RoundRectOutlineRenderer roundRectOutlineRenderer, RectRenderer rectRenderer,
                             TextRenderer textRenderer) {
         this(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer,
-                new TriangleRenderer(), textRenderer);
+                TriangleRenderer.create(), textRenderer);
     }
 
     public void render(PanelUiTree tree) {

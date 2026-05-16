@@ -42,8 +42,8 @@ public class NameTags extends Module {
     private final BoolSetting showHands = boolSetting("Show Hands", true, showEquipment::getValue);
     private final BoolSetting showSelf = boolSetting("Show Self", true);
 
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<RectRenderer> rectRendererSupplier = Suppliers.memoize(RectRenderer::new);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<RectRenderer> rectRendererSupplier = Suppliers.memoize(RectRenderer::create);
 
     private NameTags() {
         super("Name Tags", Category.RENDER);

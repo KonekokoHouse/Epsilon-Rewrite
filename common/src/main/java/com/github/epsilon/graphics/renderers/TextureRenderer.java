@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.holders.TextureCacheHolder;
 import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.graphics.LuminRenderSystem;
@@ -37,6 +38,13 @@ public class TextureRenderer implements IRenderer {
     private static final long BUFFER_SIZE = 32 * 1024;
 
     private final Map<Object, Batch> batches = new LinkedHashMap<>();
+
+    private TextureRenderer() {
+    }
+
+    public static TextureRenderer create() {
+        return RendererHolder.INSTANCE.register(new TextureRenderer());
+    }
 
     public void addQuadTexture(LuminTexture texture, float x, float y, float width, float height, float u0, float v0, float u1, float v1, Color color) {
         addRoundedTexture(texture, x, y, width, height, 0f, u0, v0, u1, v1, color);

@@ -194,7 +194,7 @@ public class ZealotCrystalPlus extends Module {
     private float renderSelfDamageValue;
     private boolean renderHasTarget;
 
-    private final Supplier<TextRenderer> textRenderer = Suppliers.memoize(() -> new TextRenderer(128 * 1024));
+    private final Supplier<TextRenderer> textRenderer = Suppliers.memoize(() -> TextRenderer.create(128 * 1024));
     private final Deque<Integer> explosionSamples = new ArrayDeque<>();
     private int explosionsThisWindow;
 

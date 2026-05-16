@@ -55,11 +55,11 @@ public class TargetHud extends HudModule {
     private final DoubleSetting shadowBlur = doubleSetting("Shadow Blur", 4.5, 0.1, 32.0, 0.5, drawShadow::getValue);
     private final ColorSetting shadowColor = colorSetting("Shadow Color", new Color(0, 0, 0, 150), drawShadow::getValue);
 
-    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::new);
-    private final Supplier<RoundRectOutlineRenderer> roundRectOutlineRendererSupplier = Suppliers.memoize(RoundRectOutlineRenderer::new);
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<TextureRenderer> textureRendererSupplier = Suppliers.memoize(TextureRenderer::new);
-    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::new);
+    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::create);
+    private final Supplier<RoundRectOutlineRenderer> roundRectOutlineRendererSupplier = Suppliers.memoize(RoundRectOutlineRenderer::create);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<TextureRenderer> textureRendererSupplier = Suppliers.memoize(TextureRenderer::create);
+    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::create);
 
     private int lastTargetId = Integer.MIN_VALUE;
     private float displayedHealth = 0.0f;

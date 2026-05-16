@@ -6,6 +6,7 @@ import com.github.epsilon.events.impl.ClickEvent;
 import com.github.epsilon.events.impl.StartUseItemEvent;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.events.impl.WorldEvent;
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.player.MultiTask;
 import com.github.epsilon.modules.impl.player.UseCooldown;
@@ -96,6 +97,11 @@ public class MixinMinecraft {
     @Inject(method = "updateLevelInEngines(Lnet/minecraft/client/multiplayer/ClientLevel;Z)V", at = @At("HEAD"))
     private void onUpdateLevelInEngines(ClientLevel level, boolean stopSound, CallbackInfo ci) {
         EventBus.INSTANCE.post(new WorldEvent());
+    }
+
+    @Inject(method = "close", at = @At("HEAD"))
+    private void onClose(CallbackInfo ci) {
+        LuminRenderSystem.destroyAll();
     }
 
 }

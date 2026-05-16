@@ -27,8 +27,8 @@ public class NotificationsHud extends HudModule {
     private final IntSetting backgroundAlpha = intSetting("BackgroundAlpha", 201, 0, 255, 1);
     private final IntSetting displayTime = intSetting("DisplayTime", 2000, 500, 5000, 100);
 
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<RectRenderer> rectRendererSupplier = Suppliers.memoize(RectRenderer::new);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<RectRenderer> rectRendererSupplier = Suppliers.memoize(RectRenderer::create);
 
     @Override
     public void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {

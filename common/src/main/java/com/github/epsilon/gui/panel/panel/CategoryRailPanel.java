@@ -36,7 +36,7 @@ public class CategoryRailPanel {
     private final RectRenderer rectRenderer;
     private final RoundRectRenderer roundRectRenderer;
     private final TextRenderer textRenderer;
-    private final TextRenderer clippedTextRenderer = new TextRenderer();
+    private final TextRenderer clippedTextRenderer = TextRenderer.create();
     private final Animation expandAnimation = new Animation(Easing.EASE_OUT_CUBIC, 240L);
     private final Animation contentAnimation = new Animation(Easing.EASE_OUT_CUBIC, 180L);
     private final Animation menuHoverAnimation = new Animation(Easing.EASE_OUT_CUBIC, 120L);

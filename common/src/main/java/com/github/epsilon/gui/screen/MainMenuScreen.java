@@ -28,8 +28,8 @@ public class MainMenuScreen extends Screen {
 
     public static final MainMenuScreen INSTANCE = new MainMenuScreen();
 
-    private final RectRenderer rectRenderer = new RectRenderer();
-    private final TextRenderer textRenderer = new TextRenderer();
+    private final RectRenderer rectRenderer = RectRenderer.create();
+    private final TextRenderer textRenderer = TextRenderer.create();
 
     private final List<MenuEntry> entries = new ArrayList<>();
 

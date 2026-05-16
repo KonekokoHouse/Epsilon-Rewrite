@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
@@ -24,6 +25,13 @@ public class RoundRectOutlineRenderer implements IRenderer {
     private int scissorX, scissorY, scissorW, scissorH;
     private long currentOffset = 0;
     private int vertexCount = 0;
+
+    private RoundRectOutlineRenderer() {
+    }
+
+    public static RoundRectOutlineRenderer create() {
+        return RendererHolder.INSTANCE.register(new RoundRectOutlineRenderer());
+    }
 
     public void addOutline(float x, float y, float width, float height, float radius, float outlineWidth, Color color) {
         addOutline(x, y, width, height, radius, radius, radius, radius, outlineWidth, color);

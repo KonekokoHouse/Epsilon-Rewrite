@@ -17,14 +17,14 @@ import java.util.List;
  */
 public class PanelContentBuffer {
 
-    private final RoundRectRenderer roundRectRenderer = new RoundRectRenderer();
-    private final RoundRectOutlineRenderer roundRectOutlineRenderer = new RoundRectOutlineRenderer();
-    private final RectRenderer rectRenderer = new RectRenderer();
-    private final ShadowRenderer shadowRenderer = new ShadowRenderer();
-    private final TriangleRenderer triangleRenderer = new TriangleRenderer();
-    private final TextRenderer textRenderer = new TextRenderer();
-    private final RoundRectRenderer scrollBarRenderer = new RoundRectRenderer();
-    private final TextRenderer marqueeRenderer = new TextRenderer();
+    private final RoundRectRenderer roundRectRenderer = RoundRectRenderer.create();
+    private final RoundRectOutlineRenderer roundRectOutlineRenderer = RoundRectOutlineRenderer.create();
+    private final RectRenderer rectRenderer = RectRenderer.create();
+    private final ShadowRenderer shadowRenderer = ShadowRenderer.create();
+    private final TriangleRenderer triangleRenderer = TriangleRenderer.create();
+    private final TextRenderer textRenderer = TextRenderer.create();
+    private final RoundRectRenderer scrollBarRenderer = RoundRectRenderer.create();
+    private final TextRenderer marqueeRenderer = TextRenderer.create();
     private final List<MarqueeTextDraw> marqueeDraws = new ArrayList<>();
 
     private boolean pending;
