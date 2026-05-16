@@ -38,19 +38,19 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
         this.settingsContent = new SettingsContent(ClientSetting.INSTANCE.getSettings(), ClientSetting.INSTANCE.getSettingGroups());
         setVisible(true);
         setOpened(true);
-        add(Category.COMBAT::getName, Category.COMBAT.icon, true, "category:combat", togglePanel, panelVisibleResolver);
-        add(Category.PLAYER::getName, Category.PLAYER.icon, true, "category:player", togglePanel, panelVisibleResolver);
-        add(Category.MOVEMENT::getName, Category.MOVEMENT.icon, true, "category:movement", togglePanel, panelVisibleResolver);
-        add(Category.RENDER::getName, Category.RENDER.icon, true, "category:render", togglePanel, panelVisibleResolver);
-        add(Category.HUD::getName, Category.HUD.icon, true, "category:hud", togglePanel, panelVisibleResolver);
-        add(friendComponent::getTranslatedName, "Fr", false, "friend", togglePanel, panelVisibleResolver);
-        add(configComponent::getTranslatedName, "Cfg", false, "config", togglePanel, panelVisibleResolver);
-        add(addonComponent::getTranslatedName, "Add", false, "addon", togglePanel, panelVisibleResolver);
-        entries.add(new Entry(collapseComponent::getTranslatedName, "X", true, "__collapse_all__", togglePanel, anySubPanelVisible));
+        add(Category.COMBAT::getName, Category.COMBAT.icon, "category:combat", togglePanel, panelVisibleResolver);
+        add(Category.PLAYER::getName, Category.PLAYER.icon, "category:player", togglePanel, panelVisibleResolver);
+        add(Category.MOVEMENT::getName, Category.MOVEMENT.icon, "category:movement", togglePanel, panelVisibleResolver);
+        add(Category.RENDER::getName, Category.RENDER.icon, "category:render", togglePanel, panelVisibleResolver);
+        add(Category.HUD::getName, Category.HUD.icon, "category:hud", togglePanel, panelVisibleResolver);
+        add(friendComponent::getTranslatedName, "4", "friend", togglePanel, panelVisibleResolver);
+        add(configComponent::getTranslatedName, "O", "config", togglePanel, panelVisibleResolver);
+        add(addonComponent::getTranslatedName, "+", "addon", togglePanel, panelVisibleResolver);
+        entries.add(new Entry(collapseComponent::getTranslatedName, "X", "__collapse_all__", togglePanel, anySubPanelVisible));
     }
 
-    private void add(LabelSupplier labelSupplier, String icon, boolean iconFont, String panelId, Consumer<String> togglePanel, PanelVisibleResolver panelVisibleResolver) {
-        entries.add(new Entry(labelSupplier, icon, iconFont, panelId, togglePanel, () -> panelVisibleResolver.getAsBoolean(panelId)));
+    private void add(LabelSupplier labelSupplier, String icon, String panelId, Consumer<String> togglePanel, PanelVisibleResolver panelVisibleResolver) {
+        entries.add(new Entry(labelSupplier, icon, panelId, togglePanel, () -> panelVisibleResolver.getAsBoolean(panelId)));
     }
 
     @Override
@@ -82,20 +82,10 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
             renderer.roundRect().addRoundRect(iconX, iconY, ICON_SIZE, ICON_SIZE,
                     DropdownTheme.BUTTON_RADIUS,
                     MD3Theme.lerp(active ? MD3Theme.PRIMARY_CONTAINER : MD3Theme.SURFACE_CONTAINER_HIGH, MD3Theme.PRIMARY_CONTAINER, hover * 0.5f));
-            float iconScale = entry.iconFont ? 0.70f : 0.46f;
-            float iconW = entry.iconFont
-                    ? renderer.text().getWidth(entry.icon, iconScale, StaticFontLoader.ICONS)
-                    : renderer.text().getWidth(entry.icon, iconScale);
-            float iconH = entry.iconFont
-                    ? renderer.text().getHeight(iconScale, StaticFontLoader.ICONS)
-                    : renderer.text().getHeight(iconScale);
-            if (entry.iconFont) {
-                renderer.text().addText(entry.icon, iconX + (ICON_SIZE - iconW) * 0.5f, iconY + (ICON_SIZE - iconH) * 0.5f - 1.0f,
-                        iconScale, active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY, StaticFontLoader.ICONS);
-            } else {
-                renderer.text().addText(entry.icon, iconX + (ICON_SIZE - iconW) * 0.5f, iconY + (ICON_SIZE - iconH) * 0.5f - 1.0f,
-                        iconScale, active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY);
-            }
+            float iconScale = 0.70f;
+            float iconW = renderer.text().getWidth(entry.icon, iconScale, StaticFontLoader.ICONS);
+            float iconH = renderer.text().getHeight(iconScale, StaticFontLoader.ICONS);
+            renderer.text().addText(entry.icon, iconX + (ICON_SIZE - iconW) * 0.5f, iconY + (ICON_SIZE - iconH) * 0.5f - 1.0f, iconScale, active ? MD3Theme.ON_PRIMARY_CONTAINER : MD3Theme.TEXT_PRIMARY, StaticFontLoader.ICONS);
             if (hovered) {
                 String label = entry.labelSupplier.get();
                 float labelScale = 0.42f;
@@ -164,8 +154,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     private float getSettingsY() {
         int columns = 4;
         int rows = (int) Math.ceil(entries.size() / (float) columns);
-        return y + DropdownTheme.PANEL_HEADER_HEIGHT - scroll + HEADER_HEIGHT + CONTENT_PADDING
-                + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING;
+        return y + DropdownTheme.PANEL_HEADER_HEIGHT - scroll + HEADER_HEIGHT + CONTENT_PADDING + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING;
     }
 
     @FunctionalInterface
@@ -176,16 +165,14 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     private final class Entry {
         private final LabelSupplier labelSupplier;
         private final String icon;
-        private final boolean iconFont;
         private final String panelId;
         private final Consumer<String> action;
         private final BooleanSupplier activeSupplier;
         private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
 
-        private Entry(LabelSupplier labelSupplier, String icon, boolean iconFont, String panelId, Consumer<String> action, BooleanSupplier activeSupplier) {
+        private Entry(LabelSupplier labelSupplier, String icon, String panelId, Consumer<String> action, BooleanSupplier activeSupplier) {
             this.labelSupplier = labelSupplier;
             this.icon = icon;
-            this.iconFont = iconFont;
             this.panelId = panelId;
             this.action = action;
             this.activeSupplier = activeSupplier;

@@ -86,7 +86,8 @@ public class AddonDropdownPanel extends AbstractDropdownPanel {
         renderer.text().addText(trimToWidth(selected.getDisplayName(), 0.58f, contentW - 10.0f, renderer),
                 contentX + 6.0f, currentY + 5.0f, 0.58f, MD3Theme.TEXT_PRIMARY);
         String meta = modulesComponent.getTranslatedName() + " " + selected.getRegisteredModules().size();
-        if (!selected.getVersion().isBlank()) meta += "  " + versionComponent.getTranslatedName() + " " + selected.getVersion();
+        if (!selected.getVersion().isBlank())
+            meta += "  " + versionComponent.getTranslatedName() + " " + selected.getVersion();
         renderer.text().addText(trimToWidth(meta, 0.45f, contentW - 10.0f, renderer),
                 contentX + 6.0f, currentY + 18.0f, 0.45f, MD3Theme.TEXT_MUTED);
         currentY += INFO_HEIGHT + GAP;
