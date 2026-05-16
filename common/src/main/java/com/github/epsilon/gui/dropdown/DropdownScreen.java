@@ -95,7 +95,7 @@ public class DropdownScreen extends Screen {
             renderer.beginPass();
             renderer.setScissor(
                     panel.getX() - shadowPad, panel.getY() - shadowPad,
-                    panel.getWidth() + shadowPad * 2, revealedH + shadowPad,
+                    panel.getWidth() + shadowPad * 2, revealedH + shadowPad * 2,
                     height);
             panel.drawBackground(renderer);
             renderer.flush();

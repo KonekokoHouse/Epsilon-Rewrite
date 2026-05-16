@@ -46,7 +46,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
         add(friendComponent::getTranslatedName, "Fr", false, "friend", togglePanel, panelVisibleResolver);
         add(configComponent::getTranslatedName, "Cfg", false, "config", togglePanel, panelVisibleResolver);
         add(addonComponent::getTranslatedName, "Add", false, "addon", togglePanel, panelVisibleResolver);
-        entries.add(new Entry(collapseComponent::getTranslatedName, "X", false, "__collapse_all__", togglePanel, anySubPanelVisible));
+        entries.add(new Entry(collapseComponent::getTranslatedName, "X", true, "__collapse_all__", togglePanel, anySubPanelVisible));
     }
 
     private void add(LabelSupplier labelSupplier, String icon, boolean iconFont, String panelId, Consumer<String> togglePanel, PanelVisibleResolver panelVisibleResolver) {
@@ -57,8 +57,7 @@ public class MainDropdownPanel extends AbstractDropdownPanel {
     protected float computeContentHeight() {
         int columns = 4;
         int rows = (int) Math.ceil(entries.size() / (float) columns);
-        return HEADER_HEIGHT + CONTENT_PADDING + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING
-                + settingsContent.computeContentHeight();
+        return HEADER_HEIGHT + CONTENT_PADDING + rows * ICON_SIZE + Math.max(0, rows - 1) * ICON_GAP + 8.0f + CONTENT_PADDING + settingsContent.computeContentHeight();
     }
 
     @Override
