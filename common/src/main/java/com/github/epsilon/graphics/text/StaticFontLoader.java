@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.text;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.graphics.text.ttf.TtfFontLoader;
 
@@ -12,5 +13,12 @@ public class StaticFontLoader {
     public static final TtfFontLoader JURA = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/jura-light.ttf"));
 
     public static final TtfFontLoader OSAKA_CHIPS = new TtfFontLoader(ResourceLocationUtils.getIdentifier("fonts/osakachips.ttf"));
+
+    public static void destroyAll() {
+        DEFAULT.destroy();
+        ICONS.destroy();
+        JURA.destroy();
+        OSAKA_CHIPS.destroy();
+    }
 
 }

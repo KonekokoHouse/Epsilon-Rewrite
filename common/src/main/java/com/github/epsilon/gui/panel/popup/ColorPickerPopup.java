@@ -36,7 +36,7 @@ public class ColorPickerPopup implements PanelPopupHost.Popup {
     private final PanelLayout.Rect bounds;
     private final PanelLayout.Rect anchorBounds;
     private final ColorSetting setting;
-    private final TextRenderer textRenderer = new TextRenderer();
+    private final TextRenderer textRenderer = TextRenderer.create();
     private final Animation openAnimation = new Animation(Easing.EASE_OUT_CUBIC, 160L);
     private final Animation[] indicatorAnimations = new Animation[]{
             new Animation(Easing.EASE_OUT_CUBIC, 120L),

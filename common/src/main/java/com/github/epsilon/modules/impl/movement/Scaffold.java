@@ -76,7 +76,7 @@ public class Scaffold extends Module {
                         AABB renderBox = getRenderBox(box, scale);
 
                         Render3DUtils.drawFilledBox(renderBox, side);
-                        Render3DUtils.drawOutlineBox(event.getPoseStack(), renderBox, line);
+                        Render3DUtils.drawOutlineBox(event.getPoseStack(), renderBox, line.getRGB(), 3f);
                     }
                 }
         ));

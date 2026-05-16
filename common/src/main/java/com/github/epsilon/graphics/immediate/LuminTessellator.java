@@ -23,7 +23,7 @@ public final class LuminTessellator {
         return INSTANCE;
     }
 
-    public BufferBuilder begin(VertexFormat.Mode mode, VertexFormat format) {
+    public BufferBuilder begin(VertexFormat format) {
         return new BufferBuilder(this.allocator, mode, format);
     }
 }

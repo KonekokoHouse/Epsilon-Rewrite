@@ -29,7 +29,7 @@ public class ShadowRenderer implements IRenderer {
     }
 
     public static ShadowRenderer create() {
-        return RendererHolder.INSTANCE.register(new ShadowRenderer());
+        return RendererHolder.INSTANCE.register(ShadowRenderer.create());
     }
 
     public void addShadow(float x, float y, float width, float height, float radius, float blurRadius, Color color) {

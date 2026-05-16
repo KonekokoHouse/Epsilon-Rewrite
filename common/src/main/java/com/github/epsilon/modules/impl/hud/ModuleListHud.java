@@ -54,9 +54,9 @@ public class ModuleListHud extends HudModule {
 
     private final Map<Module, Float> moduleAlphaMap = new HashMap<>();
 
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::new);
-    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::new);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::create);
+    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::create);
 
     @Override
     public void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {

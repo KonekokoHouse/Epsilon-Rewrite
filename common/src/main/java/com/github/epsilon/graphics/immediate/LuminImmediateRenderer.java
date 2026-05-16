@@ -123,7 +123,6 @@ public final class LuminImmediateRenderer {
 
         private final LuminRingBuffer ringBuffer;
         private final VertexFormat format;
-        private final VertexFormat.Mode mode;
         private final int stride;
 
         private final int positionOffset;
@@ -144,17 +143,16 @@ public final class LuminImmediateRenderer {
         @Nullable
         private Identifier texture;
 
-        private Channel(VertexFormat format, VertexFormat.Mode mode) {
+        private Channel(VertexFormat format) {
             this.ringBuffer = new LuminRingBuffer(DEFAULT_BUFFER_SIZE, GpuBuffer.USAGE_VERTEX);
             this.format = format;
-            this.mode = mode;
             this.stride = format.getVertexSize();
 
-            this.positionOffset = resolveOffset(format, VertexFormatElement.POSITION);
-            this.colorOffset = resolveOffset(format, VertexFormatElement.COLOR);
-            this.uvOffset = resolveOffset(format, VertexFormatElement.UV0);
-            this.normalOffset = resolveOffset(format, VertexFormatElement.NORMAL);
-            this.lineWidthOffset = resolveOffset(format, VertexFormatElement.LINE_WIDTH);
+            this.positionOffset = resolveOffset(format);
+            this.colorOffset = resolveOffset(format);
+            this.uvOffset = resolveOffset(format);
+            this.normalOffset = resolveOffset(format);
+            this.lineWidthOffset = resolveOffset(format);
         }
 
         private Channel begin(RenderPipeline pipeline, @Nullable Identifier texture) {
@@ -315,13 +313,6 @@ public final class LuminImmediateRenderer {
                 this.pipeline = null;
                 this.texture = null;
             }
-        }
-
-        private static int resolveOffset(VertexFormat format, VertexFormatElement element) {
-            if (!format.contains(element)) {
-                return -1;
-            }
-            return format.getOffset(element);
         }
 
         private static byte packNormal(float value) {

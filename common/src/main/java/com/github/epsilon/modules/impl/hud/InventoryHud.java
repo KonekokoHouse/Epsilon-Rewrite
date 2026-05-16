@@ -37,8 +37,8 @@ public class InventoryHud extends HudModule {
 
     private final BoolSetting showCount = boolSetting("Show Count", true);
 
-    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::new);
-    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::new);
+    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::create);
+    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::create);
 
     private static final float SLOT_SIZE = 18.0f;
     private static final float SLOT_GAP = 2.0f;

@@ -29,7 +29,7 @@ public class RoundRectRenderer implements IRenderer {
     }
 
     public static RoundRectRenderer create() {
-        return RendererHolder.INSTANCE.register(new RoundRectRenderer());
+        return RendererHolder.INSTANCE.register(RoundRectRenderer.create());
     }
 
     public void addRoundRect(float x, float y, float width, float height, float radius, Color color) {

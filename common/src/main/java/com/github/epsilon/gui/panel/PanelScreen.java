@@ -33,11 +33,11 @@ public class PanelScreen extends Screen {
 
     private final PanelState state = new PanelState();
     private final PanelDirtyState dirtyState = new PanelDirtyState();
-    private final TextRenderer textRenderer = new TextRenderer();
-    private final RectRenderer rectRenderer = new RectRenderer();
-    private final RoundRectRenderer roundRectRenderer = new RoundRectRenderer();
-    private final RoundRectOutlineRenderer roundRectOutlineRenderer = new RoundRectOutlineRenderer();
-    private final ShadowRenderer shadowRenderer = new ShadowRenderer();
+    private final TextRenderer textRenderer = TextRenderer.create();
+    private final RectRenderer rectRenderer = RectRenderer.create();
+    private final RoundRectRenderer roundRectRenderer = RoundRectRenderer.create();
+    private final RoundRectOutlineRenderer roundRectOutlineRenderer = RoundRectOutlineRenderer.create();
+    private final ShadowRenderer shadowRenderer = ShadowRenderer.create();
     private final PanelRenderBatch renderBatch = new PanelRenderBatch(shadowRenderer, roundRectRenderer, roundRectOutlineRenderer, rectRenderer, textRenderer);
     private final PanelPopupHost popupHost = new PanelPopupHost();
     private final PanelInputRouter inputRouter = new PanelInputRouter();

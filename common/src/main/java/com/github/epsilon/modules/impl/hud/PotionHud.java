@@ -52,10 +52,10 @@ public class PotionHud extends HudModule {
     private final BoolSetting backgroundBlur = boolSetting("Background Blur", true);
     private final IntSetting blurStrength = intSetting("Blur Strength", 8, 1, 16, 1);
 
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::new);
-    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::new);
-    private final Supplier<TextureRenderer> textureRendererSupplier = Suppliers.memoize(TextureRenderer::new);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::create);
+    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::create);
+    private final Supplier<TextureRenderer> textureRendererSupplier = Suppliers.memoize(TextureRenderer::create);
 
     private static final float ROW_HEIGHT = 28.0f;
     private static final float ROW_SPACING = 4.0f;

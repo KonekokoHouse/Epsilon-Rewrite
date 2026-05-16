@@ -51,9 +51,9 @@ public class WatermarkHud extends HudModule {
     private final BoolSetting backgroundBlur = boolSetting("Background Blur", true, () -> mode.is(Mode.Modern));
     private final IntSetting blurStrength = intSetting("Blur Strength", 8, 1, 16, 1, () -> mode.is(Mode.Modern));
 
-    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::new);
-    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::new);
-    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::new);
+    private final Supplier<TextRenderer> textRendererSupplier = Suppliers.memoize(TextRenderer::create);
+    private final Supplier<RoundRectRenderer> roundRectRendererSupplier = Suppliers.memoize(RoundRectRenderer::create);
+    private final Supplier<ShadowRenderer> shadowRendererSupplier = Suppliers.memoize(ShadowRenderer::create);
 
     private static final float INNER_PADDING_X = 8.0f;
     private static final float INNER_PADDING_Y = 5.0f;

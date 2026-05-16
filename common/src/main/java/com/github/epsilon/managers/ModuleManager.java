@@ -144,7 +144,7 @@ public class ModuleManager {
     @EventHandler
     private void onRender2D(Render2DEvent.HUD event) {
         Minecraft mc = Minecraft.getInstance();
-        if (ClientUtils.isLoading() || mc.level == null || mc.screen instanceof HudEditorScreen) return;
+        if (ClientUtils.isLoading() || mc.level == null || mc.gui.screen() instanceof HudEditorScreen) return;
 
         for (Module m : modules) {
             if (m instanceof HudModule module && module.isEnabled()) {
@@ -158,13 +158,13 @@ public class ModuleManager {
     @EventHandler
     private void onKeyPress(KeyPressEvent event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.screen != null || event.getKey() == GLFW.GLFW_KEY_UNKNOWN) return;
+        if (mc.level == null || mc.gui.screen() != null || event.getKey() == GLFW.GLFW_KEY_UNKNOWN) return;
 
         int keyCode = event.getKey();
         int action = event.getAction();
 
         if (keyCode == ClientSetting.INSTANCE.guiKeybind.getValue() && action == InputConstants.PRESS) {
-            mc.setScreen(PanelScreen.INSTANCE);
+            mc.gui.setScreen(PanelScreen.INSTANCE);
         }
 
         dispatchKeyBind(keyCode, action);
@@ -173,7 +173,7 @@ public class ModuleManager {
     @EventHandler
     private void onMousePress(MousePressEvent event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.screen == null) {
+        if (mc.level != null && mc.gui.screen() == null) {
             dispatchKeyBind(KeybindUtils.encodeMouseButton(event.getButton()), event.getAction());
         }
     }

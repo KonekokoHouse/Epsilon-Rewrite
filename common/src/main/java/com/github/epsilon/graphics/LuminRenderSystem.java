@@ -5,8 +5,7 @@ import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
-import com.github.epsilon.modules.impl.combat.crystalaura.CrystalAura;
-import com.github.epsilon.modules.impl.world.ComputeTest;
+import com.github.epsilon.modules.impl.player.ComputeTest;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -42,7 +41,6 @@ public class LuminRenderSystem {
     }
 
     public static void destroyAll() {
-        CrystalAura.INSTANCE.destroy();
         ComputeTest.INSTANCE.destroy();
 
         guiProjectionMatrixBuffer.close();
@@ -166,7 +164,7 @@ public class LuminRenderSystem {
             this.colorTexture = new LuminTexture(colorTexture, colorView, sampler);
 
             Minecraft.getInstance().getTextureManager().register(
-                    identifier, getLuminTexture()
+                    identifier, getColorTexture()
             );
         }
 

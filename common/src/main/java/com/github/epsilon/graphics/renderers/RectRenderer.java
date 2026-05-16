@@ -32,7 +32,7 @@ public class RectRenderer implements IRenderer {
     }
 
     public static RectRenderer create() {
-        return RendererHolder.INSTANCE.register(new RectRenderer());
+        return RendererHolder.INSTANCE.register(RectRenderer.create());
     }
 
     public void addRect(float x, float y, float width, float height, Color color) {

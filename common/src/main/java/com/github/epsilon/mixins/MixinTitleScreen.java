@@ -16,7 +16,7 @@ public class MixinTitleScreen {
     private void redirectToMainMenu(CallbackInfo ci) {
         if (ClientSetting.INSTANCE.useMainMenu.getValue()) {
             ci.cancel();
-            Minecraft.getInstance().setScreen(MainMenuScreen.INSTANCE);
+            Minecraft.getInstance().gui.setScreen(MainMenuScreen.INSTANCE);
         }
     }
 

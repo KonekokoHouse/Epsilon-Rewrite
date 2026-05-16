@@ -63,7 +63,7 @@ public class FireflyESP {
     public static void render(PoseStack stack, LivingEntity target, int espLength, int factor, double shaking, double amplitude, Color color, ColorMode colorMode, Color secondColor, double colorMix, double colorSpeed, double rainbowSpeed, double rainbowSaturation, double rainbowBrightness) {
         boolean canSee = mc.player.hasLineOfSight(target);
 
-        Camera camera = mc.gameRenderer.getMainCamera();
+        Camera camera = mc.gameRenderer.mainCamera();
         float tickDelta = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
         double tPosX = Mth.lerp(tickDelta, target.xOld, target.getX()) - camera.position().x;

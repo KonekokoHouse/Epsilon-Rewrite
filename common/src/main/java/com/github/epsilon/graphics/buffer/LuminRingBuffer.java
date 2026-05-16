@@ -1,6 +1,7 @@
 package com.github.epsilon.graphics.buffer;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.MappableRingBuffer;
 
@@ -15,7 +16,7 @@ public class LuminRingBuffer {
 
     private final MappableRingBuffer ringBuffer;
 
-    private GpuBuffer.MappedView mappedBuffer;
+    private GpuBufferSlice.MappedView mappedBuffer;
 
     private boolean mapped;
 
@@ -41,8 +42,8 @@ public class LuminRingBuffer {
      */
     public void tryMap() {
         if (mapped) return;
-        mappedBuffer = RenderSystem.getDevice().createCommandEncoder().mapBuffer(
-                ringBuffer.currentBuffer(), false, true
+        mappedBuffer = ringBuffer.currentBuffer().map(
+                false, true
         );
         mapped = true;
     }

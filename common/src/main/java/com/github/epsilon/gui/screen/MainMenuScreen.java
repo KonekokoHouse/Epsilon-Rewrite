@@ -28,8 +28,8 @@ public class MainMenuScreen extends Screen {
 
     public static final MainMenuScreen INSTANCE = new MainMenuScreen();
 
-    private final RectRenderer rectRenderer = new RectRenderer();
-    private final TextRenderer textRenderer = new TextRenderer();
+    private final RectRenderer rectRenderer = RectRenderer.create();
+    private final TextRenderer textRenderer = TextRenderer.create();
 
     private final List<MenuEntry> entries = new ArrayList<>();
 
@@ -40,12 +40,12 @@ public class MainMenuScreen extends Screen {
 
     private MainMenuScreen() {
         super(Component.literal("MainMenuScreen"));
-        entries.add(new MenuEntry("Singleplayer", () -> minecraft.setScreen(new SelectWorldScreen(this))));
+        entries.add(new MenuEntry("Singleplayer", () -> minecraft.gui.setScreen(new SelectWorldScreen(this))));
         entries.add(new MenuEntry("Multiplayer", () -> {
             Screen screen = this.minecraft.options.skipMultiplayerWarning ? new JoinMultiplayerScreen(this) : new SafetyScreen(this);
-            this.minecraft.setScreen(screen);
+            this.minecraft.gui.setScreen(screen);
         }));
-        entries.add(new MenuEntry("Options", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options, false))));
+        entries.add(new MenuEntry("Options", () -> minecraft.gui.setScreen(new OptionsScreen(this, minecraft.options, false))));
         entries.add(new MenuEntry("Quit", minecraft::stop));
     }
 
