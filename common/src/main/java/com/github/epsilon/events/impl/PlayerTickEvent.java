@@ -1,11 +1,6 @@
 package com.github.epsilon.events.impl;
 
-public class PlayerTickEvent {
+import com.github.epsilon.events.Cancellable;
 
-    public static class Pre extends TickEvent {
-    }
-
-    public static class Post extends TickEvent {
-    }
-
+public class PlayerTickEvent extends Cancellable {
 }

@@ -36,7 +36,7 @@ public class AntiBot extends Module {
     }
 
     @EventHandler
-    public void onRespawn(PlayerTickEvent.Pre event) {
+    public void onRespawn(PlayerTickEvent event) {
         if (mc.player == null) return;
         if (mc.player.tickCount <= 1) {
             ids.clear();

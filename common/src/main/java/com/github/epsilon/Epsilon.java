@@ -18,8 +18,6 @@ public class Epsilon {
 
     public static final Logger LOGGER = LogManager.getLogger("Epsilon");
 
-    public static int skipTicks;
-
     public static void init() {
         LOGGER.info("Welcome to Epsilon.");
 

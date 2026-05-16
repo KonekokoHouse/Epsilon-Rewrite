@@ -266,7 +266,7 @@ public class Scaffold extends Module {
         if (!onAir()) return;
         if (!BlockUtils.canPlaceAt(currentBlockInfo.blockPos)) return;
 
-        boolean hasRotated = RaytraceUtils.overBlock(rotation, currentBlockInfo.position, currentBlockInfo.dir, sideCheck.getValue());
+        boolean hasRotated = RaytraceUtils.overBlock(rotation, currentBlockInfo.dir, currentBlockInfo.position, sideCheck.getValue());
         if (hasRotated) {
             switch (swapMode.getValue()) {
                 case Normal -> {
@@ -355,7 +355,7 @@ public class Scaffold extends Module {
     private Vector2f getRotation(BlockInfo blockCache) {
         Vector2f calculate = onAir() ? RotationUtils.calculate(blockCache.position, blockCache.dir) : RotationUtils.calculate(blockCache.position.getCenter());
         Vector2f reverseYaw = new Vector2f(Mth.wrapDegrees(mc.player.getYRot() - 180), calculate.y);
-        boolean hasRotated = RaytraceUtils.overBlock(reverseYaw, blockCache.position, blockCache.dir, false);
+        boolean hasRotated = RaytraceUtils.overBlock(reverseYaw, blockCache.position, blockCache.dir);
         if (hasRotated) return reverseYaw;
         else return calculate;
     }

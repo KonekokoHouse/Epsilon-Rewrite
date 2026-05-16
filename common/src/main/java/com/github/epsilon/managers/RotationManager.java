@@ -95,6 +95,10 @@ public class RotationManager {
         smoothed = false;
     }
 
+    public boolean isDone() {
+        return Math.abs(Mth.wrapDegrees(rotations.x - targetRotations.x)) <= 1 && Math.abs(Mth.wrapDegrees(rotations.y - targetRotations.y)) <= 1;
+    }
+
     private void smooth() {
         if (!smoothed) {
             float targetYaw = targetRotations.x;
@@ -144,6 +148,10 @@ public class RotationManager {
 
     public boolean isActive() {
         return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public float getYaw() {
@@ -259,7 +267,7 @@ public class RotationManager {
     }
 
     @EventHandler
-    private void onKeyboardInput(KeyboardInputEvent event) {
+    private void onKeyboardInput(MoveInputEvent event) {
         MovementFix moveFix = MovementFix.INSTANCE;
         if (active && moveFix.isEnabled() && rotations != null && !mc.player.isFallFlying()) {
             moveFix.fixMovement(event, rotations.x);

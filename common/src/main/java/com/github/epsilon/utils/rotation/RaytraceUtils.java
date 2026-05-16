@@ -100,25 +100,38 @@ public class RaytraceUtils {
         return distance <= rangeSquared && canSeePointFrom(cameraVec, entityHitResult.getLocation()) || distance <= wallsRangeSquared;
     }
 
-    public static boolean overBlock(Vector2f rotation, BlockPos pos, Direction direction, boolean strict) {
-        return overBlock(rotation, pos, direction, strict, 6.0);
-    }
+    public static boolean overBlock(Vector2f rotation, Direction dir, BlockPos pos, boolean strict) {
+        Vec3 lookVec = Vec3.directionFromRotation(rotation.y, rotation.x);
 
-    public static boolean overBlock(Vector2f rotation, BlockPos pos, Direction direction, boolean strict, double range) {
-        Vec3 cameraPos = mc.player.getEyePosition(1.0F);
-        Vec3 rotationVec = Vec3.directionFromRotation(rotation.y, rotation.x);
-        Vec3 reachVec = cameraPos.add(rotationVec.scale(range));
+        Vec3 eyePos = mc.player.getEyePosition(1.0F);
+        double reach = 4.5D;
+        Vec3 endVec = eyePos.add(lookVec.scale(reach));
 
-        BlockHitResult hitResult = mc.level.clip(new ClipContext(cameraPos, reachVec, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
+        BlockHitResult result = mc.level.clip(new ClipContext(
+                eyePos,
+                endVec,
+                ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.NONE,
+                mc.player
+        ));
 
-        if (hitResult.getType() == HitResult.Type.MISS) {
+        if (result.getType() == HitResult.Type.MISS) {
             return false;
         }
 
-        boolean samePos = hitResult.getBlockPos().equals(pos);
-        boolean sameSide = !strict || hitResult.getDirection() == direction;
+        return result.getBlockPos().equals(pos) && (!strict || result.getDirection() == dir);
+    }
 
-        return samePos && sameSide;
+    public static boolean overBlock(Vector2f rotation, BlockPos pos, boolean strict) {
+        return overBlock(rotation, Direction.UP, pos, strict);
+    }
+
+    public static boolean overBlock(Vector2f rotation, BlockPos pos) {
+        return overBlock(rotation, Direction.UP, pos, false);
+    }
+
+    public static boolean overBlock(Vector2f rotation, BlockPos pos, Direction enumFacing) {
+        return overBlock(rotation, enumFacing, pos, true);
     }
 
 }

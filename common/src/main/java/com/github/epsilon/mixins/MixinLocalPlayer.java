@@ -23,9 +23,10 @@ public class MixinLocalPlayer {
     @Unique
     private SendPositionEvent sakura$motionEvent;
 
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void onHeadTick(CallbackInfo ci) {
-        EventBus.INSTANCE.post(new PlayerTickEvent.Pre());
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;tick()V", shift = At.Shift.BEFORE, ordinal = 0), cancellable = true)
+    private void onTick(CallbackInfo ci) {
+        PlayerTickEvent event = EventBus.INSTANCE.post(new PlayerTickEvent());
+        if (event.isCancelled()) ci.cancel();
     }
 
     @Inject(method = "sendPosition", at = @At("HEAD"), cancellable = true)
