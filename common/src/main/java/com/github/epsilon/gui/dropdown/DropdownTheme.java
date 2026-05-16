@@ -58,6 +58,7 @@ public final class DropdownTheme {
     public static final long ANIM_TOGGLE = 180L;
     public static final long ANIM_HOVER = 120L;
     public static final long ANIM_EXPAND = 220L;
+    public static final long ANIM_GROUP = 180L;
 
     public static final float HEADER_TEXT_SCALE = 0.72f;
     public static final float HEADER_ICON_SCALE = 0.86f;
@@ -171,6 +172,34 @@ public final class DropdownTheme {
 
     public static Color scrim() {
         return new Color(0, 0, 0, 50);
+    }
+
+    public static Color groupBackground() {
+        return MD3Theme.withAlpha(MD3Theme.SURFACE_CONTAINER_LOW, 160);
+    }
+
+    public static Color groupBackgroundHover() {
+        return MD3Theme.SURFACE_CONTAINER;
+    }
+
+    public static Color groupText() {
+        return MD3Theme.TEXT_PRIMARY;
+    }
+
+    public static Color groupCountChip() {
+        return MD3Theme.withAlpha(MD3Theme.SECONDARY_CONTAINER, 210);
+    }
+
+    public static Color groupCountText() {
+        return MD3Theme.ON_SECONDARY_CONTAINER;
+    }
+
+    public static Color groupChevron(float hoverProgress) {
+        return MD3Theme.lerp(MD3Theme.TEXT_MUTED, MD3Theme.PRIMARY, hoverProgress);
+    }
+
+    public static Color groupDivider() {
+        return MD3Theme.withAlpha(MD3Theme.OUTLINE, 48);
     }
 
 }

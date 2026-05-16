@@ -6,7 +6,7 @@ public class SettingGroup {
 
     private final String name;
     private TranslateComponent translateComponent;
-    private boolean collapsed;
+    private boolean collapsed = true;
 
     public SettingGroup(String name) {
         this.name = name;

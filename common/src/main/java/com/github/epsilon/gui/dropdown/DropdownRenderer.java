@@ -39,6 +39,12 @@ public final class DropdownRenderer {
         return slot.rect;
     }
 
+    public TriangleRenderer triangle() {
+        Slot slot = current();
+        if (slot.triangle == null) slot.triangle = new TriangleRenderer();
+        return slot.triangle;
+    }
+
     public TextRenderer text() {
         Slot slot = current();
         if (slot.text == null) slot.text = TextRenderer.create();
@@ -56,6 +62,7 @@ public final class DropdownRenderer {
         setScissorOn(slot.roundRect, x, y, w, h);
         setScissorOn(slot.outline, x, y, w, h);
         setScissorOn(slot.rect, x, y, w, h);
+        setScissorOn(slot.triangle, x, y, w, h);
         setScissorOn(slot.text, x, y, w, h);
     }
 
@@ -64,6 +71,7 @@ public final class DropdownRenderer {
         else if (renderer instanceof RoundRectRenderer r) r.setScissor(x, y, w, h);
         else if (renderer instanceof RoundRectOutlineRenderer r) r.setScissor(x, y, w, h);
         else if (renderer instanceof RectRenderer r) r.setScissor(x, y, w, h);
+        else if (renderer instanceof TriangleRenderer r) r.setScissor(x, y, w, h);
         else if (renderer instanceof TextRenderer r) r.setScissor(x, y, w, h);
     }
 
@@ -73,6 +81,7 @@ public final class DropdownRenderer {
         clearScissorOn(slot.roundRect);
         clearScissorOn(slot.outline);
         clearScissorOn(slot.rect);
+        clearScissorOn(slot.triangle);
         clearScissorOn(slot.text);
     }
 
@@ -81,6 +90,7 @@ public final class DropdownRenderer {
         else if (renderer instanceof RoundRectRenderer r) r.clearScissor();
         else if (renderer instanceof RoundRectOutlineRenderer r) r.clearScissor();
         else if (renderer instanceof RectRenderer r) r.clearScissor();
+        else if (renderer instanceof TriangleRenderer r) r.clearScissor();
         else if (renderer instanceof TextRenderer r) r.clearScissor();
     }
 
@@ -108,6 +118,7 @@ public final class DropdownRenderer {
         if (slot.roundRect != null) slot.roundRect.drawAndClear();
         if (slot.outline != null) slot.outline.drawAndClear();
         if (slot.rect != null) slot.rect.drawAndClear();
+        if (slot.triangle != null) slot.triangle.drawAndClear();
         if (slot.text != null) slot.text.drawAndClear();
     }
 
@@ -118,6 +129,7 @@ public final class DropdownRenderer {
             if (slot.roundRect != null) slot.roundRect.close();
             if (slot.outline != null) slot.outline.close();
             if (slot.rect != null) slot.rect.close();
+            if (slot.triangle != null) slot.triangle.close();
             if (slot.text != null) slot.text.close();
         }
     }
@@ -128,6 +140,7 @@ public final class DropdownRenderer {
         RoundRectRenderer roundRect;
         RoundRectOutlineRenderer outline;
         RectRenderer rect;
+        TriangleRenderer triangle;
         TextRenderer text;
     }
 

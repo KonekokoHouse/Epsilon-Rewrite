@@ -4,22 +4,30 @@ import com.github.epsilon.gui.dropdown.DropdownRenderer;
 import com.github.epsilon.gui.dropdown.DropdownTheme;
 import com.github.epsilon.gui.dropdown.widget.*;
 import com.github.epsilon.gui.panel.MD3Theme;
+import com.github.epsilon.managers.sound.SoundKey;
+import com.github.epsilon.managers.sound.SoundManager;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.Setting;
+import com.github.epsilon.settings.SettingGroup;
 import com.github.epsilon.settings.impl.*;
 import com.github.epsilon.utils.client.KeybindUtils;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
+import org.jspecify.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ModuleButton extends Component {
 
     private final Module module;
-    private final List<SettingWidget<?>> widgets = new ArrayList<>();
+    private final List<SettingSection> sections = new ArrayList<>();
+    private final Map<SettingGroup, Animation> groupHoverAnimations = new HashMap<>();
+    private final Map<SettingGroup, Animation> groupExpandAnimations = new HashMap<>();
     private final Animation expandAnim = new Animation(Easing.EASE_IN_OUT_CUBIC, DropdownTheme.ANIM_EXPAND);
     private final Animation toggleAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_TOGGLE);
     private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
@@ -29,11 +37,27 @@ public class ModuleButton extends Component {
 
     public ModuleButton(Module module) {
         this.module = module;
+        Map<SettingGroup, List<SettingWidget<?>>> groupedWidgets = new HashMap<>();
+        List<SettingWidget<?>> ungroupedWidgets = new ArrayList<>();
+
         for (Setting<?> setting : module.getSettings()) {
             SettingWidget<?> widget = createWidget(setting);
-            if (widget != null) {
-                widgets.add(widget);
+            if (widget == null) continue;
+
+            SettingGroup group = setting.getGroup();
+            if (group != null) {
+                groupedWidgets.computeIfAbsent(group, k -> new ArrayList<>()).add(widget);
+            } else {
+                ungroupedWidgets.add(widget);
             }
+        }
+
+        for (SettingWidget<?> widget : ungroupedWidgets) {
+            sections.add(new SettingSection(null, List.of(widget)));
+        }
+
+        for (Map.Entry<SettingGroup, List<SettingWidget<?>>> entry : groupedWidgets.entrySet()) {
+            sections.add(new SettingSection(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -52,13 +76,57 @@ public class ModuleButton extends Component {
     @Override
     public float getHeight() {
         expandAnim.run(expanded ? 1.0f : 0.0f);
-        float settingsHeight = 0.0f;
-        for (SettingWidget<?> widget : widgets) {
-            if (widget.isVisible()) {
-                settingsHeight += widget.getHeight() + DropdownTheme.SETTING_GAP;
+        float settingsHeight = computeSettingsHeight();
+        return DropdownTheme.MODULE_HEIGHT + settingsHeight * expandAnim.getValue();
+    }
+
+    private float computeSettingsHeight() {
+        float height = 0.0f;
+        for (SettingSection section : sections) {
+            if (section.isGroup()) {
+                height += DropdownTheme.GROUP_HEADER_HEIGHT;
+                if (!section.group().isCollapsed()) {
+                    height += DropdownTheme.GROUP_INSET;
+                    for (SettingWidget<?> widget : section.widgets()) {
+                        if (widget.isVisible()) {
+                            height += widget.getHeight() + DropdownTheme.SETTING_GAP;
+                        }
+                    }
+                }
+                height += DropdownTheme.SETTING_GAP;
+            } else {
+                for (SettingWidget<?> widget : section.widgets()) {
+                    if (widget.isVisible()) {
+                        height += widget.getHeight() + DropdownTheme.SETTING_GAP;
+                    }
+                }
             }
         }
-        return DropdownTheme.MODULE_HEIGHT + settingsHeight * expandAnim.getValue();
+        return height;
+    }
+
+    private float getSectionHeight(SettingSection section) {
+        if (!section.isGroup()) {
+            float h = 0.0f;
+            for (SettingWidget<?> widget : section.widgets()) {
+                if (widget.isVisible()) {
+                    h += widget.getHeight() + DropdownTheme.SETTING_GAP;
+                }
+            }
+            return h;
+        }
+
+        if (section.group().isCollapsed()) {
+            return DropdownTheme.GROUP_HEADER_HEIGHT + DropdownTheme.SETTING_GAP;
+        }
+
+        float h = DropdownTheme.GROUP_HEADER_HEIGHT + DropdownTheme.SETTING_GAP + DropdownTheme.GROUP_INSET;
+        for (SettingWidget<?> widget : section.widgets()) {
+            if (widget.isVisible()) {
+                h += widget.getHeight() + DropdownTheme.SETTING_GAP;
+            }
+        }
+        return h;
     }
 
     @Override
@@ -84,15 +152,95 @@ public class ModuleButton extends Component {
         float expand = expandAnim.getValue();
         if (expand > 0.01f) {
             float settingY = y + DropdownTheme.MODULE_HEIGHT + DropdownTheme.SETTING_GAP;
-            for (SettingWidget<?> widget : widgets) {
-                if (!widget.isVisible()) continue;
-                widget.setPosition(x + DropdownTheme.SETTING_INDENT, settingY, width - DropdownTheme.SETTING_INDENT * 2.0f);
-                if (expand > 0.5f) {
-                    widget.draw(renderer, mouseX, mouseY);
+            for (SettingSection section : sections) {
+                if (section.isGroup()) {
+                    settingY = drawGroupSection(renderer, mouseX, mouseY, section, settingY, expand);
+                } else {
+                    for (SettingWidget<?> widget : section.widgets()) {
+                        if (!widget.isVisible()) continue;
+                        widget.setPosition(x + DropdownTheme.SETTING_INDENT, settingY, width - DropdownTheme.SETTING_INDENT * 2.0f);
+                        if (expand > 0.5f) {
+                            widget.draw(renderer, mouseX, mouseY);
+                        }
+                        settingY += widget.getHeight() + DropdownTheme.SETTING_GAP;
+                    }
                 }
-                settingY += widget.getHeight() + DropdownTheme.SETTING_GAP;
             }
         }
+    }
+
+    private float drawGroupSection(DropdownRenderer renderer, int mouseX, int mouseY, SettingSection section, float sectionY, float expand) {
+        SettingGroup group = section.group();
+        Animation hoverAnim = groupHoverAnimations.computeIfAbsent(group, k -> createGroupAnimation(120L, 0.0f));
+        Animation expandAnimG = groupExpandAnimations.computeIfAbsent(group, k -> createGroupAnimation(180L, group.isCollapsed() ? 0.0f : 1.0f));
+
+        float headerW = width - DropdownTheme.SETTING_INDENT * 2.0f;
+        float headerX = x + DropdownTheme.SETTING_INDENT;
+        float headerH = DropdownTheme.GROUP_HEADER_HEIGHT;
+        boolean headerHovered = isHovered(mouseX, mouseY, headerX, sectionY, headerW, headerH);
+        hoverAnim.run(headerHovered ? 1.0f : 0.0f);
+        float hoverProgress = hoverAnim.getValue();
+
+        expandAnimG.run(group.isCollapsed() ? 0.0f : 1.0f);
+        float expandProgress = expandAnimG.getValue();
+
+        Color headerBg = MD3Theme.lerp(DropdownTheme.groupBackground(), DropdownTheme.groupBackgroundHover(), hoverProgress);
+        float headerRadius = DropdownTheme.BUTTON_RADIUS;
+        renderer.roundRect().addRoundRect(headerX, sectionY, headerW, headerH, headerRadius, headerBg);
+
+        String label = trimToWidth(group.getDisplayName(), DropdownTheme.GROUP_HEADER_TEXT_SCALE, headerW - 74.0f, renderer);
+        float labelY = sectionY + (headerH - renderer.text().getHeight(DropdownTheme.GROUP_HEADER_TEXT_SCALE)) * 0.5f;
+        renderer.text().addText(label, headerX + DropdownTheme.SETTING_PADDING_X, labelY, DropdownTheme.GROUP_HEADER_TEXT_SCALE, DropdownTheme.groupText());
+
+        String countLabel = Integer.toString(section.widgets().size());
+        float countWidth = renderer.text().getWidth(countLabel, DropdownTheme.GROUP_COUNT_TEXT_SCALE) + DropdownTheme.GROUP_COUNT_CHIP_PADDING * 2.0f;
+        float countX = headerX + headerW - DropdownTheme.SETTING_PADDING_X - countWidth - 12.0f;
+        float chipH = DropdownTheme.GROUP_COUNT_CHIP_HEIGHT;
+        float countY = sectionY + (headerH - chipH) * 0.5f;
+        renderer.roundRect().addRoundRect(countX, countY, countWidth, chipH, chipH / 2.0f, DropdownTheme.groupCountChip());
+        float countTextY = countY + (chipH - renderer.text().getHeight(DropdownTheme.GROUP_COUNT_TEXT_SCALE)) * 0.5f;
+        renderer.text().addText(countLabel, countX + DropdownTheme.GROUP_COUNT_CHIP_PADDING, countTextY, DropdownTheme.GROUP_COUNT_TEXT_SCALE, DropdownTheme.groupCountText());
+
+        float chevronSize = 2.5f;
+        float chevronCenterX = headerX + headerW - DropdownTheme.SETTING_PADDING_X - chevronSize;
+        float chevronCenterY = sectionY + headerH * 0.5f;
+        renderer.triangle().addChevronTriangle(chevronCenterX, chevronCenterY, chevronSize, expandProgress, DropdownTheme.groupChevron(hoverProgress));
+
+        float nextY = sectionY + headerH + DropdownTheme.SETTING_GAP;
+
+        if (!group.isCollapsed() && expand > 0.5f) {
+            float childY = nextY + DropdownTheme.GROUP_INSET;
+            float childX = x + DropdownTheme.SETTING_INDENT + DropdownTheme.GROUP_INSET;
+            float childW = width - (DropdownTheme.SETTING_INDENT + DropdownTheme.GROUP_INSET) * 2.0f;
+            for (SettingWidget<?> widget : section.widgets()) {
+                if (!widget.isVisible()) continue;
+                widget.setPosition(childX, childY, childW);
+                widget.draw(renderer, mouseX, mouseY);
+                childY += widget.getHeight() + DropdownTheme.SETTING_GAP;
+            }
+            nextY = childY;
+        }
+
+        return nextY;
+    }
+
+    private Animation createGroupAnimation(long duration, float startValue) {
+        Animation anim = new Animation(Easing.EASE_OUT_CUBIC, duration);
+        anim.setStartValue(startValue);
+        return anim;
+    }
+
+    private String trimToWidth(String value, float scale, float maxWidth, DropdownRenderer renderer) {
+        if (value == null || value.isEmpty()) return "";
+        if (renderer.text().getWidth(value, scale) <= maxWidth) return value;
+        String ellipsis = "...";
+        float ellipsisWidth = renderer.text().getWidth(ellipsis, scale);
+        if (ellipsisWidth >= maxWidth) return ellipsis;
+        for (int len = value.length() - 1; len >= 0; len--) {
+            String candidate = value.substring(0, len) + ellipsis;
+            if (renderer.text().getWidth(candidate, scale) <= maxWidth) return candidate;
+        }
+        return ellipsis;
     }
 
     private void drawKeybindButton(DropdownRenderer renderer, int mouseX, int mouseY, float toggle) {
@@ -165,6 +313,11 @@ public class ModuleButton extends Component {
         return isHovered(mouseX, mouseY, btnX, btnY, DropdownTheme.KEYBIND_WIDTH, DropdownTheme.KEYBIND_HEIGHT);
     }
 
+    private boolean isGroupHeaderHovered(double mouseX, double mouseY, float headerX, float headerY) {
+        float headerW = width - DropdownTheme.SETTING_INDENT * 2.0f;
+        return isHovered(mouseX, mouseY, headerX, headerY, headerW, DropdownTheme.GROUP_HEADER_HEIGHT);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (listeningKeybind) {
@@ -195,11 +348,32 @@ public class ModuleButton extends Component {
         }
 
         if (expanded && expandAnim.getValue() > 0.5f) {
-            for (SettingWidget<?> widget : widgets) {
-                if (!widget.isVisible()) continue;
-                if (widget.mouseClicked(mouseX, mouseY, button)) {
-                    return true;
+            float settingY = y + DropdownTheme.MODULE_HEIGHT + DropdownTheme.SETTING_GAP;
+            for (SettingSection section : sections) {
+                if (section.isGroup()) {
+                    float headerX = x + DropdownTheme.SETTING_INDENT;
+                    if (isGroupHeaderHovered(mouseX, mouseY, headerX, settingY)) {
+                        section.group().toggleCollapsed();
+                        SoundManager.INSTANCE.playInUi(section.group().isCollapsed() ? SoundKey.SETTINGS_CLOSE : SoundKey.SETTINGS_OPEN);
+                        return true;
+                    }
+                    if (!section.group().isCollapsed()) {
+                        for (SettingWidget<?> widget : section.widgets()) {
+                            if (!widget.isVisible()) continue;
+                            if (widget.mouseClicked(mouseX, mouseY, button)) {
+                                return true;
+                            }
+                        }
+                    }
+                } else {
+                    for (SettingWidget<?> widget : section.widgets()) {
+                        if (!widget.isVisible()) continue;
+                        if (widget.mouseClicked(mouseX, mouseY, button)) {
+                            return true;
+                        }
+                    }
                 }
+                settingY += getSectionHeight(section);
             }
         }
         return false;
@@ -208,10 +382,12 @@ public class ModuleButton extends Component {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (expanded) {
-            for (SettingWidget<?> widget : widgets) {
-                if (!widget.isVisible()) continue;
-                if (widget.mouseReleased(mouseX, mouseY, button)) {
-                    return true;
+            for (SettingSection section : sections) {
+                for (SettingWidget<?> widget : section.widgets()) {
+                    if (!widget.isVisible()) continue;
+                    if (widget.mouseReleased(mouseX, mouseY, button)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -227,10 +403,12 @@ public class ModuleButton extends Component {
         }
 
         if (expanded) {
-            for (SettingWidget<?> widget : widgets) {
-                if (!widget.isVisible()) continue;
-                if (widget.keyPressed(keyCode, scanCode, modifiers)) {
-                    return true;
+            for (SettingSection section : sections) {
+                for (SettingWidget<?> widget : section.widgets()) {
+                    if (!widget.isVisible()) continue;
+                    if (widget.keyPressed(keyCode, scanCode, modifiers)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -240,10 +418,12 @@ public class ModuleButton extends Component {
     @Override
     public boolean charTyped(String typedText) {
         if (expanded) {
-            for (SettingWidget<?> widget : widgets) {
-                if (!widget.isVisible()) continue;
-                if (widget.charTyped(typedText)) {
-                    return true;
+            for (SettingSection section : sections) {
+                for (SettingWidget<?> widget : section.widgets()) {
+                    if (!widget.isVisible()) continue;
+                    if (widget.charTyped(typedText)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -260,17 +440,27 @@ public class ModuleButton extends Component {
 
     public boolean hasListeningKeybind() {
         if (listeningKeybind) return true;
-        for (SettingWidget<?> widget : widgets) {
-            if (widget instanceof KeybindWidget kw && kw.isListening()) return true;
+        for (SettingSection section : sections) {
+            for (SettingWidget<?> widget : section.widgets()) {
+                if (widget instanceof KeybindWidget kw && kw.isListening()) return true;
+            }
         }
         return false;
     }
 
     public boolean hasFocusedInput() {
-        for (SettingWidget<?> widget : widgets) {
-            if (widget instanceof StringWidget sw && sw.isFocused()) return true;
+        for (SettingSection section : sections) {
+            for (SettingWidget<?> widget : section.widgets()) {
+                if (widget instanceof StringWidget sw && sw.isFocused()) return true;
+            }
         }
         return false;
+    }
+
+    private record SettingSection(@Nullable SettingGroup group, List<SettingWidget<?>> widgets) {
+        private boolean isGroup() {
+            return group != null;
+        }
     }
 
 }
