@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.vulkan.descriptor;
 
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.mojang.blaze3d.vulkan.VulkanUtils;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
@@ -47,6 +48,7 @@ public final class DescriptorLayout implements AutoCloseable {
 
             var pDescriptorSetLayout = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreateDescriptorSetLayout(device, createInfo, null, pDescriptorSetLayout),
                     "Can't create descriptor set layout for SSBO(std430)"
             );

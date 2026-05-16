@@ -1,18 +1,19 @@
 package com.github.epsilon.graphics.renderers;
 
+import com.github.epsilon.assets.holders.RendererHolder;
 import com.github.epsilon.assets.holders.TextureCacheHolder;
 import com.github.epsilon.graphics.LuminRenderPipelines;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.LuminTexture;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
 import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -27,8 +28,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 public class TextureRenderer implements IRenderer {
 
@@ -38,6 +39,13 @@ public class TextureRenderer implements IRenderer {
     private static final long BUFFER_SIZE = 32 * 1024;
 
     private final Map<Object, Batch> batches = new LinkedHashMap<>();
+
+    public static TextureRenderer create() {
+        return RendererHolder.INSTANCE.register(new TextureRenderer());
+    }
+
+    private TextureRenderer() {
+    }
 
     public void addQuadTexture(LuminTexture texture, float x, float y, float width, float height, float u0, float v0, float u1, float v1, Color color) {
         addRoundedTexture(texture, x, y, width, height, 0f, u0, v0, u1, v1, color);
@@ -155,7 +163,7 @@ public class TextureRenderer implements IRenderer {
             }
 
             int indexCount = (batch.vertexCount / 4) * 6;
-            RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+            RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
             GpuBuffer ibo = autoIndices.getBuffer(indexCount);
 
             LuminTexture texture;
@@ -171,7 +179,7 @@ public class TextureRenderer implements IRenderer {
 
             try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                     () -> "Rounded Texture Draw",
-                    colorView, OptionalInt.empty(),
+                    colorView, Optional.empty(),
                     null, OptionalDouble.empty())
             ) {
                 pass.setPipeline(LuminRenderPipelines.TEXTURE);
@@ -179,12 +187,11 @@ public class TextureRenderer implements IRenderer {
                 RenderSystem.bindDefaultUniforms(pass);
                 pass.setUniform("DynamicTransforms", dynamicUniforms);
 
-                // 使用 RingBuffer 当前指向的 GpuBuffer
-                pass.setVertexBuffer(0, batch.buffer.getGpuBuffer());
+                pass.setVertexBuffer(0, new GpuBufferSlice(batch.buffer.getGpuBuffer(), 0, batch.buffer.getGpuBuffer().size()));
                 pass.setIndexBuffer(ibo, autoIndices.type());
                 pass.bindTexture("Sampler0", texture.getTextureView(), texture.getSampler());
 
-                pass.drawIndexed(0, 0, indexCount, 1);
+                pass.drawIndexed(indexCount, 1, 0, 0, 0);
             }
         }
     }

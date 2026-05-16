@@ -22,6 +22,7 @@ import static org.lwjgl.vulkan.VK10.*;
  */
 public class LuminVulkanContext {
 
+    private @Nullable VulkanDevice blz3dDevice;
     private @Nullable VkDevice device;
     private long vma;
 
@@ -39,6 +40,7 @@ public class LuminVulkanContext {
 
         VulkanDevice blz3dDevice = (VulkanDevice) RenderSystem.getDevice().backend;
 
+        this.blz3dDevice = blz3dDevice;
         this.device = blz3dDevice.vkDevice();
         this.vma = blz3dDevice.vma();
 
@@ -55,7 +57,7 @@ public class LuminVulkanContext {
 
             final var cmdPool = stack.callocLong(1);
 
-            VulkanUtils.crashIfFailure(
+            VulkanUtils.crashIfFailure(blz3dDevice,
                     vkCreateCommandPool(device, poolInfo, null, cmdPool),
                     "Failed to create command pool"
             );
@@ -76,6 +78,16 @@ public class LuminVulkanContext {
             throw new IllegalStateException("Vulkan device is not initialized. Make sure to initialize the Vulkan context properly.");
         }
         return this.device;
+    }
+
+    /**
+     * 获取 Blaze3D VulkanDevice 引用。
+     */
+    public VulkanDevice blz3dDevice() {
+        if (this.blz3dDevice == null) {
+            throw new IllegalStateException("VulkanDevice is not initialized. Make sure to initialize the Vulkan context properly.");
+        }
+        return this.blz3dDevice;
     }
 
     /**

@@ -27,7 +27,7 @@ public class TextRenderer implements IRenderer {
     }
 
     public static TextRenderer create() {
-        return RendererHolder.INSTANCE.register(TextRenderer.create());
+        return RendererHolder.INSTANCE.register(new TextRenderer());
     }
 
     public void addText(String text, float x, float y, float scale, Color color, TtfFontLoader fontLoader) {

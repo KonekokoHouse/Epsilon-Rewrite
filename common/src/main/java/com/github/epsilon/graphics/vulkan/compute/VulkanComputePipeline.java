@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.vulkan.compute;
 
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.vulkan.descriptor.DescriptorLayout;
 import com.github.epsilon.graphics.vulkan.descriptor.DescriptorLayoutSpec;
 import com.mojang.blaze3d.vulkan.VulkanUtils;
@@ -99,6 +100,7 @@ public final class VulkanComputePipeline implements AutoCloseable {
 
             var pShaderModule = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreateShaderModule(device, createInfo, null, pShaderModule),
                     "Can't create compute shader module"
             );
@@ -116,6 +118,7 @@ public final class VulkanComputePipeline implements AutoCloseable {
 
             var pPipelineLayout = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreatePipelineLayout(device, createInfo, null, pPipelineLayout),
                     "Can't create compute pipeline layout"
             );
@@ -138,6 +141,7 @@ public final class VulkanComputePipeline implements AutoCloseable {
 
             var pPipeline = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreateComputePipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pPipeline),
                     "Can't create compute pipeline"
             );

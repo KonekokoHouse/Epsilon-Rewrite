@@ -1,5 +1,6 @@
 package com.github.epsilon.graphics.vulkan.descriptor;
 
+import com.github.epsilon.graphics.LuminRenderSystem;
 import com.mojang.blaze3d.vulkan.VulkanUtils;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -105,6 +106,7 @@ public final class VulkanResourceManager implements AutoCloseable {
 
             var pPool = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreateDescriptorPool(device, poolInfo, null, pPool),
                     "Can't create reusable descriptor pool"
             );
@@ -122,6 +124,7 @@ public final class VulkanResourceManager implements AutoCloseable {
 
             var pSet = stack.mallocLong(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkAllocateDescriptorSets(device, allocInfo, pSet),
                     "Can't allocate descriptor set"
             );
@@ -193,6 +196,7 @@ public final class VulkanResourceManager implements AutoCloseable {
     private void freeDescriptorSet(DescriptorPoolState pool, long descriptorSet) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkFreeDescriptorSets(device, pool.pool, stack.longs(descriptorSet)),
                     "Can't free descriptor set"
             );

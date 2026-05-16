@@ -1,9 +1,12 @@
 package com.github.epsilon.graphics.shaders;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -18,7 +21,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 import java.awt.*;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 public class FilterShader {
 
@@ -46,8 +49,8 @@ public class FilterShader {
                     .withLocation(ResourceLocationUtils.getIdentifier("pipeline/filter"))
                     .withVertexShader(vertexShader)
                     .withFragmentShader(fragmentShader)
-                    .withUniform("FilterColor", UniformType.UNIFORM_BUFFER)
-                    .withSampler("InputSampler")
+                    .withBindGroupLayout(BindGroupLayout.builder().withUniform("FilterColor", UniformType.UNIFORM_BUFFER).build())
+                    .withBindGroupLayout(BindGroupLayout.builder().withSampler("InputSampler").build())
                     .withCull(false)
                     .build();
         }
@@ -58,7 +61,7 @@ public class FilterShader {
         int fbHeight = framebuffer.height;
 
         if (this.input == null) {
-            this.input = new TextureTarget("Epsilon Filter Input", fbWidth, fbHeight, false);
+            this.input = new TextureTarget("Epsilon Filter Input", fbWidth, fbHeight, false, GpuFormat.RGBA8_UNORM);
         }
 
         if (this.input.width != fbWidth || this.input.height != fbHeight) {
@@ -67,7 +70,7 @@ public class FilterShader {
     }
 
     public void renderMainTarget(Color color) {
-        render(this.mc.getMainRenderTarget(), color);
+        render(mc.gameRenderer.mainRenderTarget(), color);
     }
 
     public void render(RenderTarget framebuffer, Color color) {
@@ -95,7 +98,7 @@ public class FilterShader {
                 framebuffer.width, framebuffer.height
         );
 
-        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.currentBuffer(), false, true)) {
+        try (GpuBufferSlice.MappedView view = this.uniforms.currentBuffer().map(false, true)) {
             Std140Builder.intoBuffer(view.data())
                     .putVec4(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
         }
@@ -103,13 +106,13 @@ public class FilterShader {
         try (RenderPass renderPass = encoder.createRenderPass(
                 () -> "Epsilon Filter",
                 framebuffer.getColorTextureView(),
-                OptionalInt.empty()
+                Optional.empty()
         )) {
             renderPass.setPipeline(this.pipeline);
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.setUniform("FilterColor", this.uniforms.currentBuffer());
             renderPass.bindTexture("InputSampler", this.input.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-            renderPass.draw(0, 6);
+            renderPass.draw(6, 1, 0, 0);
         }
 
         this.uniforms.rotate();

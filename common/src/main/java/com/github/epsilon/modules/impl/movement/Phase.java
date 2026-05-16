@@ -23,6 +23,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -202,7 +203,7 @@ public class Phase extends Module {
                     return;
                 }
 
-                Vector2f angle = RotationUtils.calculate(block.getCenter());
+                Vector2f angle = RotationUtils.calculate(Vec3.atCenterOf(block));
                 FindItemResult result = swapMode.is(SwapMode.Silent) ? InvUtils.findInHotbar(Items.ENDER_PEARL) : InvUtils.find(Items.ENDER_PEARL);
                 if (result.found()) {
                     float prevYaw = mc.player.getYRot();

@@ -7,6 +7,7 @@ import com.github.epsilon.graphics.buffer.LuminRingBuffer;
 import com.github.epsilon.graphics.text.GlyphDescriptor;
 import com.github.epsilon.graphics.text.ITextRenderer;
 import com.github.epsilon.modules.impl.ClientSetting;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
@@ -14,7 +15,6 @@ import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.util.ARGB;
 import org.joml.Vector3f;
@@ -24,8 +24,8 @@ import org.lwjgl.system.MemoryUtil;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 public class TtfTextRenderer implements ITextRenderer {
 
@@ -108,7 +108,7 @@ public class TtfTextRenderer implements ITextRenderer {
             ttfInfoUniformBuf = RenderSystem.getDevice().createBuffer(() -> "Lumin TTF UBO", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, size);
         }
 
-        try (GpuBuffer.MappedView mappedView = RenderSystem.getDevice().createCommandEncoder().mapBuffer(ttfInfoUniformBuf, false, true)) {
+        try (GpuBufferSlice.MappedView mappedView = ttfInfoUniformBuf.map(false, true)) {
             Std140Builder.intoBuffer(mappedView.data()).putFloat(0.5f).putFloat(ClientSetting.INSTANCE.fontAntiAliasing.getValue() ? 1.0f : 0.0f);
         }
 
@@ -135,12 +135,12 @@ public class TtfTextRenderer implements ITextRenderer {
             int indexCount = (vertexCount / 4) * 6;
 
             RenderSystem.AutoStorageIndexBuffer autoIndices =
-                    RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+                    RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
             GpuBuffer ibo = autoIndices.getBuffer(indexCount);
 
             try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                     () -> "Lumin TTF Draw",
-                    colorView, OptionalInt.empty(),
+                    colorView, Optional.empty(),
                     depthView, OptionalDouble.empty())
             ) {
                 pass.setPipeline(LuminRenderPipelines.TTF_FONT);
@@ -152,11 +152,11 @@ public class TtfTextRenderer implements ITextRenderer {
                 pass.setUniform("DynamicTransforms", dynamicUniforms);
                 pass.setUniform("TtfInfo", ttfInfoUniformBuf);
 
-                pass.setVertexBuffer(0, batch.buffer.getGpuBuffer());
+                pass.setVertexBuffer(0, new GpuBufferSlice(batch.buffer.getGpuBuffer(), 0, batch.buffer.getGpuBuffer().size()));
                 pass.setIndexBuffer(ibo, autoIndices.type());
                 pass.bindTexture("Sampler0", atlas.getTexture().getTextureView(), atlas.getTexture().getSampler());
 
-                pass.drawIndexed(0, 0, indexCount, 1);
+                pass.drawIndexed(indexCount, 1, 0, 0, 0);
             }
         }
     }

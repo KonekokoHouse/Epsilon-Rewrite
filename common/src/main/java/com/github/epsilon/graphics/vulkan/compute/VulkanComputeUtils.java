@@ -67,6 +67,7 @@ public final class VulkanComputeUtils implements AutoCloseable {
                     .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
                     .flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkBeginCommandBuffer(cmdBuf, beginInfo),
                     "Failed to begin command buffer"
             );
@@ -122,6 +123,7 @@ public final class VulkanComputeUtils implements AutoCloseable {
             output.copyToReadback(cmdBuf, readbackBytes);
 
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkEndCommandBuffer(cmdBuf),
                     "Failed to end command buffer"
             );
@@ -130,10 +132,12 @@ public final class VulkanComputeUtils implements AutoCloseable {
                     .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
                     .pCommandBuffers(stack.pointers(cmdBuf));
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkQueueSubmit(queue, submitInfo, fence),
                     "Failed to submit compute queue"
             );
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkWaitForFences(device, stack.longs(fence), true, Long.MAX_VALUE),
                     "Failed to wait for compute fence"
             );
@@ -191,6 +195,7 @@ public final class VulkanComputeUtils implements AutoCloseable {
                     .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                     .commandBufferCount(1);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkAllocateCommandBuffers(device, allocInfo, pCmd),
                     "Failed to allocate compute command buffer"
             );
@@ -204,6 +209,7 @@ public final class VulkanComputeUtils implements AutoCloseable {
             var info = VkFenceCreateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             VulkanUtils.crashIfFailure(
+                    LuminRenderSystem.vulkanContext.blz3dDevice(),
                     vkCreateFence(device, info, null, pFence),
                     "Failed to create compute fence"
             );

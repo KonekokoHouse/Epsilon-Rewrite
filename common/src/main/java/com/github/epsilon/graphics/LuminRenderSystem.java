@@ -7,12 +7,12 @@ import com.github.epsilon.graphics.text.StaticFontLoader;
 import com.github.epsilon.graphics.vulkan.LuminVulkanContext;
 import com.github.epsilon.modules.impl.player.ComputeTest;
 import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
@@ -93,7 +93,7 @@ public class LuminRenderSystem {
         final var indexCount = vertexCount / 4 * 6;
 
         RenderSystem.AutoStorageIndexBuffer autoIndices =
-                RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+                RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
         GpuBuffer ibo = autoIndices.getBuffer(indexCount);
 
         GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(
@@ -182,7 +182,7 @@ public class LuminRenderSystem {
 
         public void clear() {
             var encoder = RenderSystem.getDevice().createCommandEncoder();
-            encoder.clearColorAndDepthTextures(colorTexture.getTexture(), 0, depthTexture, 1.0);
+            encoder.clearColorAndDepthTextures(colorTexture.getTexture(), new Vector4f(0, 0, 0, 0), depthTexture, 1.0);
         }
 
         public GpuTextureView colorView() {

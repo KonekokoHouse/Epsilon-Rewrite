@@ -6,14 +6,15 @@ import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
 import com.github.epsilon.graphics.elements.RectElement;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.util.ARGB;
 import org.lwjgl.system.MemoryUtil;
 
 import java.awt.*;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 public class RectRenderer implements IRenderer {
 
@@ -32,7 +33,7 @@ public class RectRenderer implements IRenderer {
     }
 
     public static RectRenderer create() {
-        return RendererHolder.INSTANCE.register(RectRenderer.create());
+        return RendererHolder.INSTANCE.register(new RectRenderer());
     }
 
     public void addRect(float x, float y, float width, float height, Color color) {
@@ -125,7 +126,7 @@ public class RectRenderer implements IRenderer {
 
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                 () -> "Rect Draw",
-                info.colorView(), OptionalInt.empty(),
+                info.colorView(), Optional.empty(),
                 info.depthView(), OptionalDouble.empty())
         ) {
             pass.setPipeline(LuminRenderPipelines.RECTANGLE);
@@ -136,9 +137,9 @@ public class RectRenderer implements IRenderer {
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", info.dynamicUniforms());
 
-            pass.setVertexBuffer(0, buffer.getGpuBuffer());
+            pass.setVertexBuffer(0, new GpuBufferSlice(buffer.getGpuBuffer(), 0, buffer.getGpuBuffer().size()));
             pass.setIndexBuffer(info.ibo(), info.autoIndices().type());
-            pass.drawIndexed(0, 0, info.indexCount(), 1);
+            pass.drawIndexed(info.indexCount(), 1, 0, 0, 0);
         }
     }
 
