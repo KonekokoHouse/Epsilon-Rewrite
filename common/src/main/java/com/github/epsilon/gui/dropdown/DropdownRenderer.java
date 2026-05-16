@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 
 public final class DropdownRenderer {
 
-    private static final int MAX_SLOTS = 16;
+    private static final int MAX_SLOTS = 32;
 
     private final Slot[] slots = new Slot[MAX_SLOTS];
     private int slotIndex = -1;

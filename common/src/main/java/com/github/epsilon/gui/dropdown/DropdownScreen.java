@@ -1,7 +1,7 @@
 package com.github.epsilon.gui.dropdown;
 
 import com.github.epsilon.graphics.LuminRenderSystem;
-import com.github.epsilon.gui.dropdown.component.CategoryPanel;
+import com.github.epsilon.gui.dropdown.component.*;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.impl.render.TestGui;
@@ -22,7 +22,7 @@ public class DropdownScreen extends Screen {
 
     public static final DropdownScreen INSTANCE = new DropdownScreen();
 
-    private final List<CategoryPanel> panels = new ArrayList<>();
+    private final List<DropdownPanel> panels = new ArrayList<>();
     private final DropdownRenderer renderer = new DropdownRenderer();
     private final Animation scrimAnim = new Animation(Easing.EASE_OUT_SINE, 200L);
 
@@ -41,19 +41,11 @@ public class DropdownScreen extends Screen {
         scrimAnim.run(1.0f);
 
         if (!initialized) {
-            panels.clear();
-            float offsetX = DropdownTheme.PANEL_MARGIN_X;
-            int index = 0;
-            for (Category category : Category.values()) {
-                CategoryPanel panel = new CategoryPanel(category, index++);
-                panel.setPosition(offsetX, DropdownTheme.PANEL_MARGIN_Y);
-                panels.add(panel);
-                offsetX += panel.getWidth() + DropdownTheme.PANEL_GAP;
-            }
+            buildPanels();
             initialized = true;
         }
 
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
             panel.setMaxPanelHeight(height * 0.82f);
             panel.startIntro();
         }
@@ -88,7 +80,8 @@ public class DropdownScreen extends Screen {
 
         float shadowPad = DropdownTheme.PANEL_SHADOW_BLUR + 4.0f;
 
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             float intro = panel.getIntroValue();
             if (intro < 0.001f) continue;
 
@@ -131,7 +124,10 @@ public class DropdownScreen extends Screen {
         int button = event.button();
 
         for (int i = panels.size() - 1; i >= 0; i--) {
-            if (panels.get(i).mouseClicked(mx, my, button)) {
+            DropdownPanel panel = panels.get(i);
+            if (!panel.isVisible()) continue;
+            if (panel.mouseClicked(mx, my, button)) {
+                DropdownLayoutState.save(panels);
                 return true;
             }
         }
@@ -144,8 +140,10 @@ public class DropdownScreen extends Screen {
         double my = event.y();
         int button = event.button();
 
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             if (panel.mouseReleased(mx, my, button)) {
+                DropdownLayoutState.save(panels);
                 return true;
             }
         }
@@ -154,15 +152,18 @@ public class DropdownScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double mouseX, double mouseY) {
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             panel.mouseDragged(event.x(), event.y());
         }
+        DropdownLayoutState.save(panels);
         return super.mouseDragged(event, event.x(), event.y());
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             if (panel.mouseScrolled(mouseX, mouseY, scrollY)) {
                 return true;
             }
@@ -172,10 +173,11 @@ public class DropdownScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        boolean hasActiveInput = panels.stream().anyMatch(CategoryPanel::hasActiveInput);
+        boolean hasActiveInput = panels.stream().filter(DropdownPanel::isVisible).anyMatch(DropdownPanel::hasActiveInput);
 
         if (hasActiveInput) {
-            for (CategoryPanel panel : panels) {
+            for (DropdownPanel panel : panels) {
+                if (!panel.isVisible()) continue;
                 if (panel.keyPressed(event.key(), event.scancode(), event.modifiers())) {
                     return true;
                 }
@@ -187,7 +189,8 @@ public class DropdownScreen extends Screen {
             return true;
         }
 
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             if (panel.keyPressed(event.key(), event.scancode(), event.modifiers())) {
                 return true;
             }
@@ -197,7 +200,8 @@ public class DropdownScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
-        for (CategoryPanel panel : panels) {
+        for (DropdownPanel panel : panels) {
+            if (!panel.isVisible()) continue;
             String typed = event.codepointAsString();
             if (!typed.isEmpty() && panel.charTyped(typed)) {
                 return true;
@@ -208,6 +212,7 @@ public class DropdownScreen extends Screen {
 
     @Override
     public void onClose() {
+        DropdownLayoutState.save(panels);
         TestGui.INSTANCE.setEnabled(false);
         super.onClose();
     }
@@ -224,6 +229,67 @@ public class DropdownScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private void buildPanels() {
+        panels.clear();
+        int index = 0;
+        MainDropdownPanel mainPanel = new MainDropdownPanel(index++, this::handleMainPanelAction, this::anySubPanelVisible, this::isPanelVisible);
+        mainPanel.setPosition(DropdownTheme.PANEL_MARGIN_X, DropdownTheme.PANEL_MARGIN_Y);
+        panels.add(mainPanel);
+
+        float x = DropdownTheme.PANEL_MARGIN_X + mainPanel.getWidth() + DropdownTheme.PANEL_GAP;
+        float y = DropdownTheme.PANEL_MARGIN_Y;
+        for (Category category : Category.values()) {
+            panels.add(createSubPanel(new CategoryPanel(category, index++), x, y));
+            y += DropdownTheme.PANEL_HEADER_HEIGHT + DropdownTheme.PANEL_GAP;
+        }
+
+        panels.add(createSubPanel(new FriendDropdownPanel(index++), x, y));
+        y += DropdownTheme.PANEL_HEADER_HEIGHT + DropdownTheme.PANEL_GAP;
+        panels.add(createSubPanel(new ConfigDropdownPanel(index++), x, y));
+        y += DropdownTheme.PANEL_HEADER_HEIGHT + DropdownTheme.PANEL_GAP;
+        panels.add(createSubPanel(new AddonDropdownPanel(index), x, y));
+
+        DropdownLayoutState.load(panels);
+    }
+
+    private DropdownPanel createSubPanel(DropdownPanel panel, float x, float y) {
+        panel.setPosition(x, y);
+        panel.setVisible(false);
+        panel.setOpened(false);
+        return panel;
+    }
+
+    private void handleMainPanelAction(String panelId) {
+        if ("__collapse_all__".equals(panelId)) {
+            for (DropdownPanel panel : panels) {
+                if (!"main".equals(panel.getId())) {
+                    panel.setVisible(false);
+                    panel.setOpened(false);
+                }
+            }
+            DropdownLayoutState.save(panels);
+            return;
+        }
+
+        for (DropdownPanel panel : panels) {
+            if (panel.getId().equals(panelId)) {
+                boolean nextVisible = !panel.isVisible();
+                panel.setVisible(nextVisible);
+                panel.setOpened(false);
+                DropdownLayoutState.save(panels);
+                return;
+            }
+        }
+    }
+
+    private boolean anySubPanelVisible() {
+        return panels.stream().anyMatch(panel -> !"main".equals(panel.getId()) && panel.isVisible());
+    }
+
+    private boolean isPanelVisible(String panelId) {
+        return panels.stream().anyMatch(panel -> panel.getId().equals(panelId) && panel.isVisible());
     }
 
 }
