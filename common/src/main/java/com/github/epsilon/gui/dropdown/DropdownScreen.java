@@ -4,6 +4,7 @@ import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.gui.dropdown.component.CategoryPanel;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.modules.Category;
+import com.github.epsilon.modules.impl.render.TestGui;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -13,6 +14,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class DropdownScreen extends Screen {
 
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final DropdownRenderer renderer = new DropdownRenderer();
-    private final Animation openAnim = new Animation(Easing.EASE_OUT_CUBIC, 300L);
+    private final Animation scrimAnim = new Animation(Easing.EASE_OUT_SINE, 200L);
 
     private LuminRenderSystem.LuminRenderTarget renderTarget;
     private boolean initialized;
@@ -34,14 +36,16 @@ public class DropdownScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        openAnim.setStartValue(0.0f);
-        openAnim.run(1.0f);
+        scrimAnim.setStartValue(0.0f);
+        scrimAnim.run(0.0f);
+        scrimAnim.run(1.0f);
 
         if (!initialized) {
             panels.clear();
             float offsetX = DropdownTheme.PANEL_MARGIN_X;
+            int index = 0;
             for (Category category : Category.values()) {
-                CategoryPanel panel = new CategoryPanel(category);
+                CategoryPanel panel = new CategoryPanel(category, index++);
                 panel.setPosition(offsetX, DropdownTheme.PANEL_MARGIN_Y);
                 panels.add(panel);
                 offsetX += panel.getWidth() + DropdownTheme.PANEL_GAP;
@@ -49,9 +53,9 @@ public class DropdownScreen extends Screen {
             initialized = true;
         }
 
-        float maxH = height * 0.82f;
         for (CategoryPanel panel : panels) {
-            panel.setMaxPanelHeight(maxH);
+            panel.setMaxPanelHeight(height * 0.82f);
+            panel.startIntro();
         }
     }
 
@@ -73,26 +77,50 @@ public class DropdownScreen extends Screen {
     }
 
     private void drawGui(int mouseX, int mouseY) {
-        openAnim.run(1.0f);
+        scrimAnim.run(1.0f);
         renderer.beginFrame();
 
         renderer.beginPass();
-        renderer.rect().addRect(0, 0, width, height, DropdownTheme.scrim());
-        for (CategoryPanel panel : panels) {
-            panel.drawBackground(renderer);
-        }
+        Color scrim = DropdownTheme.scrim();
+        float scrimAlpha = scrimAnim.getValue();
+        renderer.rect().addRect(0, 0, width, height, new Color(scrim.getRed(), scrim.getGreen(), scrim.getBlue(), (int) (scrim.getAlpha() * scrimAlpha)));
         renderer.flush();
 
+        float shadowPad = DropdownTheme.PANEL_SHADOW_BLUR + 4.0f;
+
         for (CategoryPanel panel : panels) {
+            float intro = panel.getIntroValue();
+            if (intro < 0.001f) continue;
+
+            float slideOffset = (1.0f - intro) * 10.0f;
+            float origY = panel.getY();
+            panel.setPosition(panel.getX(), origY - slideOffset);
+
+            float panelH = panel.getPanelHeight();
+            float revealedH = panelH * intro;
+
+            renderer.beginPass();
+            renderer.setScissor(
+                    panel.getX() - shadowPad, panel.getY() - shadowPad,
+                    panel.getWidth() + shadowPad * 2, revealedH + shadowPad,
+                    height);
+            panel.drawBackground(renderer);
+            renderer.flush();
+            renderer.clearScissor();
+
             float clipY = panel.getContentClipY();
             float clipH = panel.getContentClipHeight();
-            if (clipH > 0.5f) {
+            float revealedBottom = panel.getY() + revealedH;
+            float actualClipH = Math.min(clipH, revealedBottom - clipY);
+            if (actualClipH > 0.5f) {
                 renderer.beginPass();
-                renderer.setScissor(panel.getX(), clipY, panel.getWidth(), clipH, height);
+                renderer.setScissor(panel.getX(), clipY, panel.getWidth(), actualClipH, height);
                 panel.drawContent(renderer, mouseX, mouseY);
                 renderer.flush();
                 renderer.clearScissor();
             }
+
+            panel.setPosition(panel.getX(), origY);
         }
     }
 
@@ -176,6 +204,12 @@ public class DropdownScreen extends Screen {
             }
         }
         return super.charTyped(event);
+    }
+
+    @Override
+    public void onClose() {
+        TestGui.INSTANCE.setEnabled(false);
+        super.onClose();
     }
 
     @Override

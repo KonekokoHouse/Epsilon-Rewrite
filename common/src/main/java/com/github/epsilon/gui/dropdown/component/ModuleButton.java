@@ -14,6 +14,7 @@ import com.github.epsilon.utils.render.animation.Easing;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ModuleButton extends Component {
 
@@ -111,18 +112,23 @@ public class ModuleButton extends Component {
 
         Color surface;
         Color text;
+        Color outline;
         if (listeningKeybind) {
-            surface = MD3Theme.PRIMARY;
-            text = MD3Theme.ON_PRIMARY;
+            surface = DropdownTheme.keybindSurface(true);
+            text = DropdownTheme.keybindText(true);
+            outline = MD3Theme.withAlpha(MD3Theme.PRIMARY, 180);
         } else {
-            Color lerped = MD3Theme.lerp(MD3Theme.PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.55f);
-            Color baseSurface = new Color(lerped.getRed(), lerped.getGreen(), lerped.getBlue(), 255);
-            surface = MD3Theme.lerp(baseSurface, MD3Theme.PRIMARY, kbHover * 0.4f);
-            text = MD3Theme.ON_PRIMARY_CONTAINER;
+            Color idleSurface = DropdownTheme.keybindSurface(false);
+            Color activeSurface = MD3Theme.lerp(MD3Theme.PRIMARY_CONTAINER, MD3Theme.PRIMARY, 0.12f);
+            surface = MD3Theme.lerp(idleSurface, activeSurface, toggle);
+            surface = MD3Theme.lerp(surface, MD3Theme.SURFACE_CONTAINER_HIGHEST, kbHover * 0.35f);
+            text = MD3Theme.lerp(DropdownTheme.keybindText(false), DropdownTheme.keybindText(true), toggle);
+            outline = MD3Theme.lerp(MD3Theme.withAlpha(MD3Theme.OUTLINE, 92), MD3Theme.withAlpha(MD3Theme.PRIMARY, 150), toggle);
+            outline = MD3Theme.lerp(outline, MD3Theme.withAlpha(MD3Theme.TEXT_PRIMARY, 150), kbHover * 0.4f);
         }
 
         renderer.roundRect().addRoundRect(btnX, btnY, btnW, btnH, radius, surface);
-        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.75f, MD3Theme.withAlpha(listeningKeybind ? MD3Theme.PRIMARY : MD3Theme.ON_PRIMARY_CONTAINER, listeningKeybind ? 200 : 140));
+        renderer.outline().addOutline(btnX, btnY, btnW, btnH, radius, 0.8f, outline);
 
         float textX = btnX + (btnW - textW) * 0.5f;
         float textY = btnY + (btnH - textH) * 0.5f - 0.5f;
@@ -135,8 +141,21 @@ public class ModuleButton extends Component {
     private String formatCompactKeybind(int keyCode) {
         if (keyCode == KeybindUtils.NONE) return "NONE";
         if (KeybindUtils.isMouseButton(keyCode)) return "M" + (KeybindUtils.decodeMouseButton(keyCode) + 1);
-        String label = KeybindUtils.format(keyCode).replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        String label = KeybindUtils.format(keyCode).trim();
         if (label.isEmpty()) return "?";
+
+        String[] parts = label.split("[^A-Za-z0-9]+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty() && Character.isLetterOrDigit(part.charAt(0))) {
+                initials.append(Character.toUpperCase(part.charAt(0)));
+            }
+            if (initials.length() == 3) break;
+        }
+        if (initials.length() >= 2) return initials.toString();
+
+        String compact = label.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
+        if (!compact.isEmpty()) return compact.length() > 3 ? compact.substring(0, 3) : compact;
         return label.length() > 3 ? label.substring(0, 3) : label;
     }
 

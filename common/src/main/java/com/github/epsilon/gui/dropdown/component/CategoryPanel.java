@@ -18,6 +18,8 @@ public class CategoryPanel {
     private final Category category;
     private final List<ModuleButton> moduleButtons = new ArrayList<>();
     private final Animation openAnim = new Animation(Easing.EASE_IN_OUT_CUBIC, DropdownTheme.ANIM_OPEN);
+    private final Animation introAnim;
+    private final int panelIndex;
 
     private float x;
     private float y;
@@ -30,14 +32,28 @@ public class CategoryPanel {
     private float maxScroll;
     private float maxPanelHeight = 300.0f;
 
-    public CategoryPanel(Category category) {
+    public CategoryPanel(Category category, int panelIndex) {
         this.category = category;
+        this.panelIndex = panelIndex;
+        this.introAnim = new Animation(Easing.EASE_OUT_SINE, 120L + panelIndex * 70L);
         List<Module> modules = ModuleManager.INSTANCE.getModules().stream()
                 .filter(m -> m.getCategory() == category)
                 .toList();
         for (Module module : modules) {
             moduleButtons.add(new ModuleButton(module));
         }
+    }
+
+    public void startIntro() {
+        introAnim.setStartValue(0.0f);
+        introAnim.run(0.0f);
+        introAnim.run(1.0f);
+        openAnim.setStartValue(1.0f);
+    }
+
+    public float getIntroValue() {
+        introAnim.run(1.0f);
+        return introAnim.getValue();
     }
 
     public void drawBackground(DropdownRenderer renderer) {
