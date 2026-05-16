@@ -6,7 +6,7 @@ import java.awt.*;
 
 public final class DropdownTheme {
 
-    public static final float PANEL_WIDTH = 140.0f;
+    public static final float PANEL_WIDTH = 130.0f;
     public static final float PANEL_HEADER_HEIGHT = 24.0f;
     public static final float PANEL_RADIUS = 10.0f;
     public static final float PANEL_GAP = 14.0f;
