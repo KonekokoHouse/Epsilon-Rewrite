@@ -50,6 +50,8 @@ public class ClientSetting extends Module {
     private final SettingGroup sgNotification = settingGroup("Notification");
 
     // General
+    public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
+
     public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown, _ -> {
         if (mc.screen instanceof PanelScreen) {
             mc.setScreen(DropdownScreen.INSTANCE);
@@ -57,8 +59,6 @@ public class ClientSetting extends Module {
             mc.setScreen(PanelScreen.INSTANCE);
         }
     }).group(sgGeneral);
-
-    public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
     private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
 
