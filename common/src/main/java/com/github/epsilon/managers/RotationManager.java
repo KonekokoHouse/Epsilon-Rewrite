@@ -60,12 +60,6 @@ public class RotationManager {
             return;
         }
 
-        // RotationManager 在 setRotations() 内会立即调用 smooth()
-        // 但首次 tick 时 rotations 还没被 manager 的低优先级 tick 初始化。在 smooth() 加 try catch {} 太难看了，，就先这样修吧。
-        if (this.rotations == null || this.lastRotations == null) {
-            this.rotations = this.lastRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-        }
-
         if (s08) {
             this.rotations = this.lastRotations = this.targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
             s08 = false;

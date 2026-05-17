@@ -2,10 +2,7 @@ package com.github.epsilon;
 
 import com.github.epsilon.assets.i18n.I18NFileGenerator;
 import com.github.epsilon.events.bus.EventBus;
-import com.github.epsilon.managers.AddonManager;
-import com.github.epsilon.managers.ConfigManager;
-import com.github.epsilon.managers.HealthManager;
-import com.github.epsilon.managers.ModuleManager;
+import com.github.epsilon.managers.*;
 
 import java.lang.invoke.MethodHandles;
 
@@ -20,6 +17,7 @@ public class EpsilonCommon {
         ModuleManager.INSTANCE.initModules();
         AddonManager.INSTANCE.setupAddons();
         ConfigManager.INSTANCE.initConfig();
+        RotationManager.INSTANCE.getClass();
         HealthManager.INSTANCE.getClass();
 
         // 生成空的 i18n 文件
