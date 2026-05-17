@@ -175,14 +175,14 @@ public class RotationUtils {
         final Vec3 diff = to.subtract(from);
         final double distance = Math.hypot(diff.x, diff.z);
         final float yaw = (float) Math.toDegrees(Mth.atan2(diff.z, diff.x)) - 90.0F;
-        final float pitch = (float) Math.toDegrees(-(Mth.atan2(diff.y, distance)));
+        final float pitch = (float) -Math.toDegrees(Mth.atan2(diff.y, distance));
         return new Vector2f(yaw, pitch);
     }
 
     public static Vector2f calculate(final Entity entity) {
         return calculate(entity.position().add(0, Mth.clamp(
-                mc.player.getY() - entity.getY() + mc.player.getEyeHeight(mc.player.getPose()),
-                0,
+                mc.player.getY() - entity.getY() + mc.player.getEyeHeight(),
+                0.0,
                 (entity.getBoundingBox().maxY - entity.getBoundingBox().minY) * 0.9
         ), 0));
     }

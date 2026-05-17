@@ -50,12 +50,12 @@ public class RotationManager {
     }
 
     public void setRotations(Vector2f rotations, double rotationSpeed, final Function<Vector2f, Boolean> raytrace, Priority priority) {
-        if (active && priority.priority < this.priority) {
+        if (this.active && priority.priority < this.priority) {
             return;
         }
 
         if (s08) {
-            this.rotations = lastRotations = targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+            this.rotations = this.lastRotations = this.targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
             s08 = false;
             return;
         }
@@ -64,7 +64,7 @@ public class RotationManager {
         this.rotationSpeed = rotationSpeed * 18;
         this.raytrace = raytrace;
         this.priority = priority.priority;
-        active = true;
+        this.active = true;
 
         smooth();
     }

@@ -48,7 +48,6 @@ public class ClientSetting extends Module {
     }
 
     private final SettingGroup sgGeneral = settingGroup("General");
-    private final SettingGroup sgAntiCheat = settingGroup("Anti Cheat");
     private final SettingGroup sgAppearance = settingGroup("Appearance");
     private final SettingGroup sgNotification = settingGroup("Notification");
 
@@ -74,9 +73,6 @@ public class ClientSetting extends Module {
     public final BoolSetting fontAntiAliasing = boolSetting("Font Anti Aliasing", true).group(sgGeneral);
 
     public final BoolSetting closeOnOutside = boolSetting("Close Gui On Outside", false, () -> guiMode.is(GuiMode.Panel)).group(sgGeneral);
-
-    // Anti Cheat
-    public final DoubleSetting rotateBackSpeed = doubleSetting("Rotate Back Speed", 5.0f, 1.0f, 10.0f, 0.5f).group(sgAntiCheat);
 
     // Appearance
     public final EnumSetting<ThemeMode> themeMode = enumSetting("Theme Mode", ThemeMode.Dark).group(sgAppearance);
