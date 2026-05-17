@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.*;
 
 import java.util.*;
 
-public class InventoryUtils {
+public class InvHelper {
 
     public static final List<Block> blacklistedBlocks = Arrays.asList(
             Blocks.AIR,
@@ -283,7 +283,7 @@ public class InventoryUtils {
     public static float getBestArmorScore(EquipmentSlot slot) {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && getArmorSlot(item) == slot)
-                .map(InventoryUtils::getProtection)
+                .map(InvHelper::getProtection)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -294,15 +294,15 @@ public class InventoryUtils {
 
     public static float getBestSwordDamage() {
         return getAllItems().stream()
-                .filter(InventoryUtils::isSword)
-                .map(InventoryUtils::getSwordDamage)
+                .filter(InvHelper::isSword)
+                .map(InvHelper::getSwordDamage)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
 
     public static ItemStack getBestSword() {
         return getAllItems().stream()
-                .filter(InventoryUtils::isSword)
+                .filter(InvHelper::isSword)
                 .max(Comparator.comparingInt(s -> (int) (getSwordDamage(s) * 100.0F)))
                 .orElse(null);
     }
@@ -406,7 +406,7 @@ public class InventoryUtils {
     public static float getBestPickaxeScore() {
         return getAllItems().stream()
                 .filter(item -> isPickaxe(item) && isItemValid(item))
-                .map(InventoryUtils::getToolScore)
+                .map(InvHelper::getToolScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -421,7 +421,7 @@ public class InventoryUtils {
     public static float getBestAxeScore() {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && item.getItem() instanceof AxeItem && !isSharpnessAxe(item) && isItemValid(item))
-                .map(InventoryUtils::getToolScore)
+                .map(InvHelper::getToolScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -443,7 +443,7 @@ public class InventoryUtils {
     public static float getBestShovelScore() {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && item.getItem() instanceof ShovelItem && isItemValid(item))
-                .map(InventoryUtils::getToolScore)
+                .map(InvHelper::getToolScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -458,7 +458,7 @@ public class InventoryUtils {
     public static float getBestCrossbowScore() {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && item.getItem() instanceof CrossbowItem && isItemValid(item))
-                .map(InventoryUtils::getCrossbowScore)
+                .map(InvHelper::getCrossbowScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -473,7 +473,7 @@ public class InventoryUtils {
     public static float getBestPunchBowScore() {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && item.getItem() instanceof BowItem && isItemValid(item))
-                .map(InventoryUtils::getPunchBowScore)
+                .map(InvHelper::getPunchBowScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }
@@ -488,7 +488,7 @@ public class InventoryUtils {
     public static float getBestPowerBowScore() {
         return getAllItems().stream()
                 .filter(item -> !item.isEmpty() && item.getItem() instanceof BowItem && isItemValid(item))
-                .map(InventoryUtils::getPowerBowScore)
+                .map(InvHelper::getPowerBowScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
     }

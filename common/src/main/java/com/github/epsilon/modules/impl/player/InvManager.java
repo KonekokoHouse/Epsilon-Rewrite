@@ -8,7 +8,7 @@ import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.EnumSetting;
 import com.github.epsilon.settings.impl.IntSetting;
-import com.github.epsilon.utils.player.InventoryUtils;
+import com.github.epsilon.utils.player.InvHelper;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -90,35 +90,35 @@ public class InvManager extends Module {
 
     public boolean isItemUseful(ItemStack stack) {
         if (stack.isEmpty()) return false;
-        if (InventoryUtils.isGodItem(stack)) return true;
+        if (InvHelper.isGodItem(stack)) return true;
         if (stack.getDisplayName().getString().contains("点击使用")) return true;
-        if (InventoryUtils.isArmor(stack)) {
-            float protection = InventoryUtils.getProtection(stack);
-            if (InventoryUtils.getCurrentArmorScore(InventoryUtils.getArmorSlot(stack)) >= protection) return false;
-            float bestArmor = InventoryUtils.getBestArmorScore(InventoryUtils.getArmorSlot(stack));
+        if (InvHelper.isArmor(stack)) {
+            float protection = InvHelper.getProtection(stack);
+            if (InvHelper.getCurrentArmorScore(InvHelper.getArmorSlot(stack)) >= protection) return false;
+            float bestArmor = InvHelper.getBestArmorScore(InvHelper.getArmorSlot(stack));
             return !(protection < bestArmor);
         }
-        if (InventoryUtils.isSword(stack)) return InventoryUtils.getBestSword() == stack;
-        if (InventoryUtils.isPickaxe(stack)) return InventoryUtils.getBestPickaxe() == stack;
-        if (stack.getItem() instanceof AxeItem && !InventoryUtils.isSharpnessAxe(stack))
-            return InventoryUtils.getBestAxe() == stack;
-        if (stack.getItem() instanceof ShovelItem) return InventoryUtils.getBestShovel() == stack;
-        if (stack.getItem() instanceof CrossbowItem) return InventoryUtils.getBestCrossbow() == stack;
-        if (stack.getItem() instanceof BowItem && InventoryUtils.isPunchBow(stack))
-            return InventoryUtils.getBestPunchBow() == stack;
-        if (stack.getItem() instanceof BowItem && InventoryUtils.isPowerBow(stack))
-            return InventoryUtils.getBestPowerBow() == stack;
-        if (stack.getItem() instanceof BowItem && InventoryUtils.getItemCount(Items.BOW) > 1) return false;
-        if (stack.getItem() == Items.WATER_BUCKET && InventoryUtils.getItemCount(Items.WATER_BUCKET) > waterBucketCount.getValue())
+        if (InvHelper.isSword(stack)) return InvHelper.getBestSword() == stack;
+        if (InvHelper.isPickaxe(stack)) return InvHelper.getBestPickaxe() == stack;
+        if (stack.getItem() instanceof AxeItem && !InvHelper.isSharpnessAxe(stack))
+            return InvHelper.getBestAxe() == stack;
+        if (stack.getItem() instanceof ShovelItem) return InvHelper.getBestShovel() == stack;
+        if (stack.getItem() instanceof CrossbowItem) return InvHelper.getBestCrossbow() == stack;
+        if (stack.getItem() instanceof BowItem && InvHelper.isPunchBow(stack))
+            return InvHelper.getBestPunchBow() == stack;
+        if (stack.getItem() instanceof BowItem && InvHelper.isPowerBow(stack))
+            return InvHelper.getBestPowerBow() == stack;
+        if (stack.getItem() instanceof BowItem && InvHelper.getItemCount(Items.BOW) > 1) return false;
+        if (stack.getItem() == Items.WATER_BUCKET && InvHelper.getItemCount(Items.WATER_BUCKET) > waterBucketCount.getValue())
             return false;
-        if (stack.getItem() == Items.LAVA_BUCKET && InventoryUtils.getItemCount(Items.LAVA_BUCKET) > lavaBucketCount.getValue())
+        if (stack.getItem() == Items.LAVA_BUCKET && InvHelper.getItemCount(Items.LAVA_BUCKET) > lavaBucketCount.getValue())
             return false;
-        if (stack.getItem() instanceof FishingRodItem && InventoryUtils.getItemCount(Items.FISHING_ROD) > 1)
+        if (stack.getItem() instanceof FishingRodItem && InvHelper.getItemCount(Items.FISHING_ROD) > 1)
             return false;
         if ((stack.getItem() == Items.SNOWBALL || stack.getItem() == Items.EGG) && !keepProjectile.getValue())
             return false;
         if (stack.getItem() == Items.GOLDEN_APPLE || stack.getItem() == Items.ENCHANTED_GOLDEN_APPLE) return true;
-        return !(stack.getItem() instanceof StandingAndWallBlockItem) && InventoryUtils.isCommonItemUseful(stack);
+        return !(stack.getItem() instanceof StandingAndWallBlockItem) && InvHelper.isCommonItemUseful(stack);
     }
 
     @EventHandler
@@ -166,7 +166,7 @@ public class InvManager extends Module {
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (InventoryUtils.shouldDisableFeatures()) return;
+        if (InvHelper.shouldDisableFeatures()) return;
         if (MoveUtils.isMoving()) this.noMoveTicks = 0;
         else this.noMoveTicks++;
         boolean allowMove = !this.inventoryOnly.getValue();
@@ -181,9 +181,9 @@ public class InvManager extends Module {
         if (this.autoArmor.getValue()) {
             EquipmentSlot[] armorSlots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
             for (int i = 0; i < armorSlots.length; i++) {
-                ItemStack stack = InventoryUtils.getArmorStack(armorSlots[i]);
-                if (InventoryUtils.isArmor(stack)) {
-                    if (!stack.isEmpty() && timer.passedMillise(nextDelay) && InventoryUtils.getBestArmorScore(armorSlots[i]) > InventoryUtils.getProtection(stack)) {
+                ItemStack stack = InvHelper.getArmorStack(armorSlots[i]);
+                if (InvHelper.isArmor(stack)) {
+                    if (!stack.isEmpty() && timer.passedMillise(nextDelay) && InvHelper.getBestArmorScore(armorSlots[i]) > InvHelper.getProtection(stack)) {
                         mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, 4 + (4 - i), 1, ContainerInput.THROW, mc.player);
                         this.inventoryOpen = true;
                         timer.reset();
@@ -191,11 +191,11 @@ public class InvManager extends Module {
                 }
             }
             for (int ix = 0; ix < mc.player.getInventory().getNonEquipmentItems().size(); ix++) {
-                ItemStack stack = InventoryUtils.getInventoryStack(ix);
-                if (!stack.isEmpty() && InventoryUtils.isArmor(stack)) {
-                    float currentItemScore = InventoryUtils.getProtection(stack);
-                    boolean isBestItem = InventoryUtils.getBestArmorScore(InventoryUtils.getArmorSlot(stack)) == currentItemScore;
-                    boolean isBetterItem = InventoryUtils.getCurrentArmorScore(InventoryUtils.getArmorSlot(stack)) < currentItemScore;
+                ItemStack stack = InvHelper.getInventoryStack(ix);
+                if (!stack.isEmpty() && InvHelper.isArmor(stack)) {
+                    float currentItemScore = InvHelper.getProtection(stack);
+                    boolean isBestItem = InvHelper.getBestArmorScore(InvHelper.getArmorSlot(stack)) == currentItemScore;
+                    boolean isBetterItem = InvHelper.getCurrentArmorScore(InvHelper.getArmorSlot(stack)) < currentItemScore;
                     if (isBestItem && isBetterItem && timer.passedMillise(nextDelay)) {
                         if (ix < 9)
                             mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, ix + 36, 0, ContainerInput.QUICK_MOVE, mc.player);
@@ -216,11 +216,11 @@ public class InvManager extends Module {
         }
 
         if (this.offhandItems.is(OffhandItem.GoldenApple)) {
-            ItemStack offHand = InventoryUtils.getOffhandStack();
+            ItemStack offHand = InvHelper.getOffhandStack();
             Item offHandItem = offHand.getItem();
 
-            int egapSlot = InventoryUtils.getItemSlot(Items.ENCHANTED_GOLDEN_APPLE);
-            int gapSlot = InventoryUtils.getItemSlot(Items.GOLDEN_APPLE);
+            int egapSlot = InvHelper.getItemSlot(Items.ENCHANTED_GOLDEN_APPLE);
+            int gapSlot = InvHelper.getItemSlot(Items.GOLDEN_APPLE);
 
             if (offHandItem == Items.ENCHANTED_GOLDEN_APPLE) {
                 if (offHand.getCount() < offHand.getMaxStackSize() && egapSlot != -1) {
@@ -267,36 +267,36 @@ public class InvManager extends Module {
                 }
             }
         } else if (this.offhandItems.is(OffhandItem.Projectile)) {
-            ItemStack offHand = InventoryUtils.getOffhandStack();
-            ItemStack bestProjectile = InventoryUtils.getBestProjectile();
+            ItemStack offHand = InvHelper.getOffhandStack();
+            ItemStack bestProjectile = InvHelper.getBestProjectile();
             if (bestProjectile != null) {
-                int slot = InventoryUtils.getItemStackSlot(bestProjectile);
+                int slot = InvHelper.getItemStackSlot(bestProjectile);
                 boolean shouldSwap = offHand.getItem() != Items.EGG && offHand.getItem() != Items.SNOWBALL || offHand.getCount() < bestProjectile.getCount();
                 if (shouldSwap && slot != -1 && timer.passedMillise(nextDelay)) this.swapOffHand(slot);
             }
         } else if (this.offhandItems.is(OffhandItem.FishingRod)) {
-            ItemStack offHand = InventoryUtils.getOffhandStack();
-            int slotx = InventoryUtils.getItemSlot(Items.FISHING_ROD);
+            ItemStack offHand = InvHelper.getOffhandStack();
+            int slotx = InvHelper.getItemSlot(Items.FISHING_ROD);
             if (slotx != -1 && timer.passedMillise(nextDelay) && offHand.getItem() != Items.FISHING_ROD)
                 this.swapOffHand(slotx);
         } else if (this.offhandItems.is(OffhandItem.Block)) {
-            ItemStack offHand = InventoryUtils.getOffhandStack();
-            ItemStack bestBlock = InventoryUtils.getBestBlock();
+            ItemStack offHand = InvHelper.getOffhandStack();
+            ItemStack bestBlock = InvHelper.getBestBlock();
             if (bestBlock != null) {
-                int slotx = InventoryUtils.getItemStackSlot(bestBlock);
-                boolean shouldSwapx = !InventoryUtils.isValidStack(offHand) || offHand.getCount() < bestBlock.getCount();
+                int slotx = InvHelper.getItemStackSlot(bestBlock);
+                boolean shouldSwapx = !InvHelper.isValidStack(offHand) || offHand.getCount() < bestBlock.getCount();
                 if (shouldSwapx && slotx != -1 && timer.passedMillise(nextDelay)) this.swapOffHand(slotx);
             }
         }
 
         if (this.switchGoldenApple.getValue() && !this.offhandItems.is(OffhandItem.GoldenApple)) {
             int targetSlotIdx = this.goldenAppleSlot.getValue() - 1;
-            int egapSlot = InventoryUtils.getItemSlot(Items.ENCHANTED_GOLDEN_APPLE);
-            int gapSlot = InventoryUtils.getItemSlot(Items.GOLDEN_APPLE);
+            int egapSlot = InvHelper.getItemSlot(Items.ENCHANTED_GOLDEN_APPLE);
+            int gapSlot = InvHelper.getItemSlot(Items.GOLDEN_APPLE);
             int bestGapSlot = (egapSlot != -1) ? egapSlot : gapSlot;
             if (bestGapSlot != -1) {
-                ItemStack currentInSlot = InventoryUtils.getInventoryStack(targetSlotIdx);
-                ItemStack bestGapItem = InventoryUtils.getInventoryStack(bestGapSlot);
+                ItemStack currentInSlot = InvHelper.getInventoryStack(targetSlotIdx);
+                ItemStack bestGapItem = InvHelper.getInventoryStack(bestGapSlot);
                 if (currentInSlot.getItem() != bestGapItem.getItem() || (currentInSlot.getCount() < bestGapItem.getCount() && currentInSlot.getItem() == bestGapItem.getItem())) {
                     this.swapItem(targetSlotIdx, bestGapItem);
                 }
@@ -305,89 +305,89 @@ public class InvManager extends Module {
 
         if (this.switchBlock.getValue()) {
             int blockSlotIndex = this.blockSlot.getValue() - 1;
-            ItemStack currentBlock = InventoryUtils.getInventoryStack(blockSlotIndex);
-            ItemStack bestBlock = InventoryUtils.getBestBlock();
-            if (bestBlock != null && (bestBlock.getCount() > currentBlock.getCount() || !InventoryUtils.isValidStack(currentBlock)) && !this.offhandItems.is(OffhandItem.Block)) {
+            ItemStack currentBlock = InvHelper.getInventoryStack(blockSlotIndex);
+            ItemStack bestBlock = InvHelper.getBestBlock();
+            if (bestBlock != null && (bestBlock.getCount() > currentBlock.getCount() || !InvHelper.isValidStack(currentBlock)) && !this.offhandItems.is(OffhandItem.Block)) {
                 this.swapItem(blockSlotIndex, bestBlock);
             }
-            if ((float) InventoryUtils.getBlockCountInInventory() > this.maxBlockSize.getValue()) {
-                this.throwItem(InventoryUtils.getWorstBlock());
+            if ((float) InvHelper.getBlockCountInInventory() > this.maxBlockSize.getValue()) {
+                this.throwItem(InvHelper.getWorstBlock());
             }
         }
 
         if (this.switchSword.getValue()) {
             int slotIndex = this.swordSlot.getValue() - 1;
-            ItemStack currentSword = InventoryUtils.getInventoryStack(slotIndex);
-            ItemStack bestSword = InventoryUtils.getBestSword();
-            ItemStack bestShapeAxe = InventoryUtils.getBestShapeAxe();
-            if (InventoryUtils.getAxeDamage(bestShapeAxe) > InventoryUtils.getSwordDamage(bestSword))
+            ItemStack currentSword = InvHelper.getInventoryStack(slotIndex);
+            ItemStack bestSword = InvHelper.getBestSword();
+            ItemStack bestShapeAxe = InvHelper.getBestShapeAxe();
+            if (InvHelper.getAxeDamage(bestShapeAxe) > InvHelper.getSwordDamage(bestSword))
                 bestSword = bestShapeAxe;
             if (bestSword != null) {
-                float currentDamage = InventoryUtils.isSword(currentSword) ? InventoryUtils.getSwordDamage(currentSword) : InventoryUtils.getAxeDamage(currentSword);
-                float bestWeaponDamage = InventoryUtils.isSword(bestSword) ? InventoryUtils.getSwordDamage(bestSword) : InventoryUtils.getAxeDamage(bestSword);
+                float currentDamage = InvHelper.isSword(currentSword) ? InvHelper.getSwordDamage(currentSword) : InvHelper.getAxeDamage(currentSword);
+                float bestWeaponDamage = InvHelper.isSword(bestSword) ? InvHelper.getSwordDamage(bestSword) : InvHelper.getAxeDamage(bestSword);
                 if (bestWeaponDamage > currentDamage) this.swapItem(slotIndex, bestSword);
             }
         }
 
         if (this.switchPickaxe.getValue()) {
             int slotIndex = this.pickaxeSlot.getValue() - 1;
-            ItemStack bestPickaxe = InventoryUtils.getBestPickaxe();
-            ItemStack currentPickaxe = InventoryUtils.getInventoryStack(slotIndex);
-            if (InventoryUtils.isPickaxe(bestPickaxe) && (InventoryUtils.getToolScore(bestPickaxe) > InventoryUtils.getToolScore(currentPickaxe) || !InventoryUtils.isPickaxe(currentPickaxe)))
+            ItemStack bestPickaxe = InvHelper.getBestPickaxe();
+            ItemStack currentPickaxe = InvHelper.getInventoryStack(slotIndex);
+            if (InvHelper.isPickaxe(bestPickaxe) && (InvHelper.getToolScore(bestPickaxe) > InvHelper.getToolScore(currentPickaxe) || !InvHelper.isPickaxe(currentPickaxe)))
                 this.swapItem(slotIndex, bestPickaxe);
         }
 
         if (this.switchAxe.getValue()) {
             int slotIndex = this.axeSlot.getValue() - 1;
-            ItemStack bestAxe = InventoryUtils.getBestAxe();
-            ItemStack currentAxe = InventoryUtils.getInventoryStack(slotIndex);
-            if (bestAxe != null && bestAxe.getItem() instanceof AxeItem && (InventoryUtils.getToolScore(bestAxe) > InventoryUtils.getToolScore(currentAxe) || !(currentAxe.getItem() instanceof AxeItem)))
+            ItemStack bestAxe = InvHelper.getBestAxe();
+            ItemStack currentAxe = InvHelper.getInventoryStack(slotIndex);
+            if (bestAxe != null && bestAxe.getItem() instanceof AxeItem && (InvHelper.getToolScore(bestAxe) > InvHelper.getToolScore(currentAxe) || !(currentAxe.getItem() instanceof AxeItem)))
                 this.swapItem(slotIndex, bestAxe);
         }
 
         if (this.switchRod.getValue() && !this.offhandItems.is(OffhandItem.FishingRod)) {
             int slotIndex = this.rodSlot.getValue() - 1;
-            ItemStack bestRod = InventoryUtils.getFishingRod();
-            ItemStack currentRod = InventoryUtils.getInventoryStack(slotIndex);
+            ItemStack bestRod = InvHelper.getFishingRod();
+            ItemStack currentRod = InvHelper.getInventoryStack(slotIndex);
             if (!(currentRod.getItem() instanceof FishingRodItem)) this.swapItem(slotIndex, bestRod);
         }
 
         if (this.switchBow.getValue()) {
             int slotIndex = this.bowSlot.getValue() - 1;
-            ItemStack currentBow = InventoryUtils.getInventoryStack(slotIndex);
+            ItemStack currentBow = InvHelper.getInventoryStack(slotIndex);
             ItemStack bestBow;
             float bestScore, currentScore;
             if (this.preferBow.is(BowPriority.Crossbow)) {
-                bestBow = InventoryUtils.getBestCrossbow();
-                bestScore = InventoryUtils.getCrossbowScore(bestBow);
-                currentScore = InventoryUtils.getCrossbowScore(currentBow);
+                bestBow = InvHelper.getBestCrossbow();
+                bestScore = InvHelper.getCrossbowScore(bestBow);
+                currentScore = InvHelper.getCrossbowScore(currentBow);
             } else if (this.preferBow.is(BowPriority.PowerBow)) {
-                bestBow = InventoryUtils.getBestPowerBow();
-                bestScore = InventoryUtils.getPowerBowScore(bestBow);
-                currentScore = InventoryUtils.getPowerBowScore(currentBow);
+                bestBow = InvHelper.getBestPowerBow();
+                bestScore = InvHelper.getPowerBowScore(bestBow);
+                currentScore = InvHelper.getPowerBowScore(currentBow);
             } else {
-                bestBow = InventoryUtils.getBestPunchBow();
-                bestScore = InventoryUtils.getPunchBowScore(bestBow);
-                currentScore = InventoryUtils.getPunchBowScore(currentBow);
+                bestBow = InvHelper.getBestPunchBow();
+                bestScore = InvHelper.getPunchBowScore(bestBow);
+                currentScore = InvHelper.getPunchBowScore(currentBow);
             }
             if (bestBow == null) {
-                bestBow = InventoryUtils.getBestCrossbow();
-                bestScore = InventoryUtils.getCrossbowScore(bestBow);
-                currentScore = InventoryUtils.getCrossbowScore(currentBow);
+                bestBow = InvHelper.getBestCrossbow();
+                bestScore = InvHelper.getCrossbowScore(bestBow);
+                currentScore = InvHelper.getCrossbowScore(currentBow);
             }
             if (bestBow == null) {
-                bestBow = InventoryUtils.getBestPowerBow();
-                bestScore = InventoryUtils.getPowerBowScore(bestBow);
-                currentScore = InventoryUtils.getPowerBowScore(currentBow);
+                bestBow = InvHelper.getBestPowerBow();
+                bestScore = InvHelper.getPowerBowScore(bestBow);
+                currentScore = InvHelper.getPowerBowScore(currentBow);
             }
             if (bestBow == null) {
-                bestBow = InventoryUtils.getBestPunchBow();
-                bestScore = InventoryUtils.getPunchBowScore(bestBow);
-                currentScore = InventoryUtils.getPunchBowScore(currentBow);
+                bestBow = InvHelper.getBestPunchBow();
+                bestScore = InvHelper.getPunchBowScore(bestBow);
+                currentScore = InvHelper.getPunchBowScore(currentBow);
             }
             if (bestBow != null && bestScore > currentScore) this.swapItem(slotIndex, bestBow);
-            if ((float) InventoryUtils.getItemCount(Items.ARROW) > this.maxArrowSize.getValue())
-                this.throwItem(InventoryUtils.getWorstArrow());
+            if ((float) InvHelper.getItemCount(Items.ARROW) > this.maxArrowSize.getValue())
+                this.throwItem(InvHelper.getWorstArrow());
         }
 
         if (this.switchEnderPearl.getValue())
@@ -398,12 +398,12 @@ public class InvManager extends Module {
             this.swapItem(this.fireballSlot.getValue() - 1, Items.FIRE_CHARGE);
 
         if (this.keepProjectile.getValue()) {
-            if ((float) (InventoryUtils.getItemCount(Items.EGG) + InventoryUtils.getItemCount(Items.SNOWBALL)) > this.maxProjectileSize.getValue())
-                this.throwItem(InventoryUtils.getWorstProjectile());
+            if ((float) (InvHelper.getItemCount(Items.EGG) + InvHelper.getItemCount(Items.SNOWBALL)) > this.maxProjectileSize.getValue())
+                this.throwItem(InvHelper.getWorstProjectile());
             if (this.switchProjectile.getValue() && !this.offhandItems.is(OffhandItem.Projectile)) {
                 int pSlot = this.projectileSlot.getValue() - 1;
-                if (InventoryUtils.getItemCount(Items.EGG) > 0) this.swapItem(pSlot, Items.EGG);
-                else if (InventoryUtils.getItemCount(Items.SNOWBALL) > 0) this.swapItem(pSlot, Items.SNOWBALL);
+                if (InvHelper.getItemCount(Items.EGG) > 0) this.swapItem(pSlot, Items.EGG);
+                else if (InvHelper.getItemCount(Items.SNOWBALL) > 0) this.swapItem(pSlot, Items.SNOWBALL);
             }
         }
 
@@ -411,7 +411,7 @@ public class InvManager extends Module {
             List<Integer> slots = IntStream.range(0, mc.player.getInventory().getNonEquipmentItems().size()).boxed().collect(Collectors.toList());
             Collections.shuffle(slots);
             for (Integer slotIdx : slots) {
-                ItemStack stack = InventoryUtils.getInventoryStack(slotIdx);
+                ItemStack stack = InvHelper.getInventoryStack(slotIdx);
                 if (!stack.isEmpty() && !this.isItemUseful(stack) && timer.passedMillise(nextDelay)) {
                     this.throwItem(stack);
                     timer.reset();
@@ -434,8 +434,8 @@ public class InvManager extends Module {
 
     private void throwItem(ItemStack item) {
         int nextDelay = Math.max(minDelay.getValue(), (int) (this.delay.getValue() + random.nextGaussian() * 50));
-        if (InventoryUtils.isItemValid(item) && timer.passedMillise(nextDelay)) {
-            int itemSlot = InventoryUtils.getItemStackSlot(item);
+        if (InvHelper.isItemValid(item) && timer.passedMillise(nextDelay)) {
+            int itemSlot = InvHelper.getItemStackSlot(item);
             if (itemSlot != -1) {
                 if (itemSlot < 9) {
                     mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, itemSlot + 36, 1, ContainerInput.THROW, mc.player);
@@ -449,10 +449,10 @@ public class InvManager extends Module {
     }
 
     private void swapItem(int targetSlot, ItemStack bestItem) {
-        ItemStack currentSlot = InventoryUtils.getInventoryStack(targetSlot);
+        ItemStack currentSlot = InvHelper.getInventoryStack(targetSlot);
         int nextDelay = Math.max(minDelay.getValue(), (int) (this.delay.getValue() + random.nextGaussian() * 50));
-        if (InventoryUtils.isItemValid(currentSlot) && bestItem != currentSlot && timer.passedMillise(nextDelay)) {
-            int bestItemSlot = InventoryUtils.getItemStackSlot(bestItem);
+        if (InvHelper.isItemValid(currentSlot) && bestItem != currentSlot && timer.passedMillise(nextDelay)) {
+            int bestItemSlot = InvHelper.getItemStackSlot(bestItem);
             if (bestItemSlot != -1) {
                 if (bestItemSlot < 9) {
                     mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, bestItemSlot + 36, targetSlot, ContainerInput.SWAP, mc.player);
@@ -466,12 +466,12 @@ public class InvManager extends Module {
     }
 
     private void swapItem(int targetSlot, Item item) {
-        ItemStack currentSlot = InventoryUtils.getInventoryStack(targetSlot);
+        ItemStack currentSlot = InvHelper.getInventoryStack(targetSlot);
         int nextDelay = Math.max(minDelay.getValue(), (int) (this.delay.getValue() + random.nextGaussian() * 50));
-        if (InventoryUtils.isItemValid(currentSlot) && timer.passedMillise(nextDelay)) {
-            int bestItemSlot = InventoryUtils.getItemSlot(item);
+        if (InvHelper.isItemValid(currentSlot) && timer.passedMillise(nextDelay)) {
+            int bestItemSlot = InvHelper.getItemSlot(item);
             if (bestItemSlot != -1) {
-                ItemStack bestItemStack = InventoryUtils.getInventoryStack(bestItemSlot);
+                ItemStack bestItemStack = InvHelper.getInventoryStack(bestItemSlot);
                 if (currentSlot.getItem() != item || currentSlot.getItem() == item && currentSlot.getCount() < bestItemStack.getCount()) {
                     if (bestItemSlot < 9) {
                         mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, bestItemSlot + 36, targetSlot, ContainerInput.SWAP, mc.player);
