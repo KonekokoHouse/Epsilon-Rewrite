@@ -2,7 +2,7 @@ package com.github.epsilon.modules.impl.combat;
 
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.impl.PacketEvent;
-import com.github.epsilon.events.impl.PlayerTickEvent;
+import com.github.epsilon.events.impl.RespawnEvent;
 import com.github.epsilon.events.impl.TickEvent;
 import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
@@ -36,8 +36,7 @@ public class AntiBot extends Module {
     }
 
     @EventHandler
-    public void onRespawn(PlayerTickEvent event) {
-        if (mc.player == null) return;
+    public void onRespawn(RespawnEvent event) {
         if (mc.player.tickCount <= 1) {
             ids.clear();
             uuids.clear();

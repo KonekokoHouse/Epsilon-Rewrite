@@ -2,7 +2,7 @@ package com.github.epsilon.managers.network;
 
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.bus.EventHandler;
-import com.github.epsilon.events.impl.WorldEvent;
+import com.github.epsilon.events.impl.LevelUpdateEvent;
 import com.github.epsilon.utils.player.ChatUtils;
 import net.minecraft.network.protocol.Packet;
 
@@ -25,7 +25,7 @@ public class ServerboundPacketManager {
     static boolean forceFlush;
 
     @EventHandler
-    private void onWorldChange(WorldEvent event) {
+    private void onLevelUpdate(LevelUpdateEvent event) {
         forceFlush = true;
         blinking = false;
     }

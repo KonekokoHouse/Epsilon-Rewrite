@@ -3,9 +3,9 @@ package com.github.epsilon.mixins;
 import com.github.epsilon.Constants;
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.impl.ClickEvent;
+import com.github.epsilon.events.impl.LevelUpdateEvent;
 import com.github.epsilon.events.impl.StartUseItemEvent;
 import com.github.epsilon.events.impl.TickEvent;
-import com.github.epsilon.events.impl.WorldEvent;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.player.MultiTask;
@@ -96,7 +96,7 @@ public class MixinMinecraft {
 
     @Inject(method = "updateLevelInEngines(Lnet/minecraft/client/multiplayer/ClientLevel;Z)V", at = @At("HEAD"))
     private void onUpdateLevelInEngines(ClientLevel level, boolean stopSound, CallbackInfo ci) {
-        EventBus.INSTANCE.post(new WorldEvent());
+        EventBus.INSTANCE.post(new LevelUpdateEvent());
     }
 
     @Inject(method = "close", at = @At("HEAD"))

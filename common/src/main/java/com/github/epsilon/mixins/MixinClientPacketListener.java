@@ -1,5 +1,7 @@
 package com.github.epsilon.mixins;
 
+import com.github.epsilon.events.bus.EventBus;
+import com.github.epsilon.events.impl.RespawnEvent;
 import com.github.epsilon.modules.impl.player.NoRotate;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
@@ -9,6 +11,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,6 +22,11 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
 
     protected MixinClientPacketListener(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
         super(minecraft, connection, commonListenerCookie);
+    }
+
+    @Inject(method = "handleRespawn", at = @At("RETURN"))
+    private void onHandleRespawn(ClientboundRespawnPacket packet, CallbackInfo ci) {
+        EventBus.INSTANCE.post(new RespawnEvent());
     }
 
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))

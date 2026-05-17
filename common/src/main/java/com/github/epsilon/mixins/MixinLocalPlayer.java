@@ -8,6 +8,9 @@ import com.github.epsilon.events.impl.SwingHandEvent;
 import com.github.epsilon.modules.impl.movement.Velocity;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
@@ -18,10 +21,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LocalPlayer.class)
-public class MixinLocalPlayer {
+public class MixinLocalPlayer extends AbstractClientPlayer {
 
     @Unique
     private SendPositionEvent sakura$motionEvent;
+
+    protected MixinLocalPlayer(ClientLevel level, GameProfile gameProfile) {
+        super(level, gameProfile);
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTickHead(CallbackInfo ci) {

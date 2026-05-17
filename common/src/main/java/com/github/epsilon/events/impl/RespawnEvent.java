@@ -1,4 +1,4 @@
 package com.github.epsilon.events.impl;
 
-public class WorldEvent {
+public class RespawnEvent {
 }

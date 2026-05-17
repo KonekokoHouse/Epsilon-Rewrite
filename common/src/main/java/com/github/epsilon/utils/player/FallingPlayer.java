@@ -94,10 +94,6 @@ public class FallingPlayer {
     }
 
     public BlockPos findCollision(int ticks) {
-        if (mc.player == null) {
-            return null;
-        }
-
         for (int i = 0; i < ticks; i++) {
             Vec3 start = new Vec3(x, y, z);
             calculateForTick();
@@ -105,29 +101,25 @@ public class FallingPlayer {
             BlockPos raytracedBlock;
             float halfWidth = mc.player.getBbWidth() / 2.0F;
 
-            if ((raytracedBlock = rayTrace(start, end)) != null) return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(-halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(-halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
+            if ((raytracedBlock = raytrace(start, end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
                 return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(-halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
                 return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(halfWidth / 2.0F, 0.0, halfWidth), end)) != null)
+            if ((raytracedBlock = raytrace(start.add(halfWidth / 2.0F, 0.0, halfWidth), end)) != null)
                 return raytracedBlock;
-            if ((raytracedBlock = rayTrace(start.add(halfWidth / 2.0F, 0.0, -halfWidth), end)) != null)
+            if ((raytracedBlock = raytrace(start.add(halfWidth / 2.0F, 0.0, -halfWidth), end)) != null)
                 return raytracedBlock;
         }
 
         return null;
     }
 
-    private BlockPos rayTrace(Vec3 start, Vec3 end) {
-        if (mc.level == null) {
-            return null;
-        }
-
+    private BlockPos raytrace(Vec3 start, Vec3 end) {
         BlockHitResult result = mc.level.clip(new ClipContext(
                 start,
                 end,

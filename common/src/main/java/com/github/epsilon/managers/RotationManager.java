@@ -54,6 +54,8 @@ public class RotationManager {
     }
 
     public void setRotations(Vector2f rotations, double rotationSpeed, Function<Vector2f, Boolean> raytrace, Priority priority) {
+        if (rotations == null) return;
+
         if (this.active && priority.priority < this.priority) {
             return;
         }
@@ -147,11 +149,9 @@ public class RotationManager {
     }
 
     @EventHandler
-    private void onRespawn(SendPositionEvent event) {
-        if (mc.player.tickCount <= 1) {
-            lastRotations = null;
-            rotations = null;
-        }
+    private void onRespawn(RespawnEvent event) {
+        lastRotations = null;
+        rotations = null;
     }
 
     @EventHandler
