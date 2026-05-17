@@ -49,6 +49,7 @@ public class ModuleManager {
                 ClientSetting.INSTANCE,
 
                 // Combat
+                AnchorBlast.INSTANCE,
                 AntiBot.INSTANCE,
                 AutoClicker.INSTANCE,
                 AutoDtap.INSTANCE,
@@ -59,6 +60,7 @@ public class ModuleManager {
                 ZealotCrystalPlus.INSTANCE,
                 CrystalAura.INSTANCE,
                 CrystalBlocker.INSTANCE,
+                DoubleAnchor.INSTANCE,
                 HoverTotem.INSTANCE,
                 KillAura.INSTANCE,
                 KeyPearl.INSTANCE,
