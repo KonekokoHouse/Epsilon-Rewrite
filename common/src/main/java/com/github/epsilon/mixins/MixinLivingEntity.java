@@ -7,6 +7,7 @@ import com.github.epsilon.events.impl.RotationAnimationEvent;
 import com.github.epsilon.events.impl.TravelEvent;
 import com.github.epsilon.modules.impl.player.JumpCooldown;
 import com.github.epsilon.modules.impl.render.HandsView;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,9 +42,9 @@ public class MixinLivingEntity {
         return original.call(instance);
     }
 
-    @WrapOperation(method = "updateFallFlyingMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot()F"))
-    private float onUpdateFallFlyingMovement(LivingEntity instance, Operation<Float> original) {
-        FallFlyingEvent event = EventBus.INSTANCE.post(new FallFlyingEvent(original.call(instance)));
+    @ModifyExpressionValue(method = "updateFallFlyingMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot()F"))
+    private float modifyFallFlyingPitch(float original) {
+        FallFlyingEvent event = EventBus.INSTANCE.post(new FallFlyingEvent(original));
         return event.getPitch();
     }
 
