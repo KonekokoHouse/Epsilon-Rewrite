@@ -19,9 +19,10 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
     private static final float KNOB_INSET_OFF = 3.5f;
     private static final float KNOB_INSET_ON = 2.0f;
     private static final float STATE_LAYER_SIZE = 16.0f;
+    private static final float KNOB_STRETCH = 3.5f;
 
     private final Animation toggleAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_TOGGLE);
-    private final Animation knobBounceAnim = new Animation(Easing.EASE_OUT_ELASTIC, 320L);
+    private final Animation knobBounceAnim = new Animation(Easing.EASE_OUT_ELASTIC, 450L);
     private final Animation hoverAnim = new Animation(Easing.EASE_OUT_CUBIC, DropdownTheme.ANIM_HOVER);
 
     public BoolWidget(BoolSetting setting) {
@@ -63,9 +64,11 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
         }
 
         float knobSize = Mth.lerp(Mth.clamp(t, 0.0f, 1.0f), KNOB_SIZE_OFF, KNOB_SIZE_ON);
+        float stretchFactor = 4.0f * t * (1.0f - t);
+        float knobW = knobSize + KNOB_STRETCH * stretchFactor;
         float inset = Mth.lerp(t, KNOB_INSET_OFF, KNOB_INSET_ON);
-        float knobMinX = sx + inset + knobSize * 0.5f;
-        float knobMaxX = sx + sw - inset - knobSize * 0.5f;
+        float knobMinX = sx + inset + knobW * 0.5f;
+        float knobMaxX = sx + sw - inset - knobW * 0.5f;
         float knobCx = Mth.lerp(bounce, knobMinX, knobMaxX);
         float knobCy = sy + sh * 0.5f;
 
@@ -75,7 +78,8 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
             renderer.roundRect().addRoundRect(haloX, haloY, STATE_LAYER_SIZE, STATE_LAYER_SIZE, STATE_LAYER_SIZE * 0.5f, MD3Theme.stateLayer(MD3Theme.TEXT_PRIMARY, hoverProgress, 18));
         }
 
-        renderer.roundRect().addRoundRect(knobCx - knobSize * 0.5f, knobCy - knobSize * 0.5f, knobSize, knobSize, knobSize * 0.5f, MD3Theme.switchKnob(t));
+        float knobRadius = knobSize * 0.5f;
+        renderer.roundRect().addRoundRect(knobCx - knobW * 0.5f, knobCy - knobSize * 0.5f, knobW, knobSize, knobRadius, MD3Theme.switchKnob(t));
     }
 
     @Override
