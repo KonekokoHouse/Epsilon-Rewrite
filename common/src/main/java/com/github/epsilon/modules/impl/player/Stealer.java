@@ -6,21 +6,18 @@ import com.github.epsilon.modules.Category;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.impl.BoolSetting;
 import com.github.epsilon.settings.impl.IntSetting;
-import com.github.epsilon.utils.math.MathUtils;
-import com.github.epsilon.utils.player.InvHelper;
+import com.github.epsilon.utils.player.InventoryUtils;
 import com.github.epsilon.utils.timer.TimerUtils;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.ContainerScreen;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -32,12 +29,16 @@ public class Stealer extends Module {
         super("Stealer", Category.PLAYER);
     }
 
+    private final IntSetting minDelay = intSetting("Min Delay", 50, 0, 1000, 50);
+    private final IntSetting delay = intSetting("Delay", 50, 0, 1000, 50);
+    private final BoolSetting closeDelay = boolSetting("Close Delay", true);
+    private final IntSetting cDelay = intSetting("Close Delay Value", 150, 0, 1000, 1, closeDelay::getValue);
     private final BoolSetting pickEnderChest = boolSetting("Ender Chest", false);
-    private final IntSetting minDelay = intSetting("Min Delay", 90, 0, 500, 5);
-    private final IntSetting maxDelay = intSetting("Max Delay", 110, 0, 500, 5);
 
     private Screen lastTickScreen;
-    private final TimerUtils timer = new TimerUtils();
+
+    private static final TimerUtils timer = new TimerUtils();
+    private static final Random random = new Random();
 
     public boolean isWorking() {
         return !timer.hasDelayed(3);
@@ -46,72 +47,103 @@ public class Stealer extends Module {
     public static boolean isItemUseful(ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
-        } else if (InvHelper.isGodItem(stack) || InvHelper.isSharpnessAxe(stack)) {
+        } else if (InventoryUtils.isGodItem(stack) || InventoryUtils.isSharpnessAxe(stack)) {
             return true;
-        } else if (stack.is(ItemTags.ARMOR_ENCHANTABLE)) {
-            float protection = InvHelper.getProtection(stack);
-            Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
-            if (equippable == null) return false;
-            float bestArmor = InvHelper.getBestArmorScore(equippable.slot());
+        } else if (InventoryUtils.isArmor(stack)) {
+            float protection = InventoryUtils.getProtection(stack);
+            float bestArmor = InventoryUtils.getBestArmorScore(InventoryUtils.getArmorSlot(stack));
             return !(protection <= bestArmor);
-        } else if (stack.is(ItemTags.SWORDS)) {
-            float damage = InvHelper.getSwordDamage(stack);
-            float bestDamage = InvHelper.getBestSwordDamage();
+        } else if (InventoryUtils.isSword(stack)) {
+            float damage = InventoryUtils.getSwordDamage(stack);
+            float bestDamage = InventoryUtils.getBestSwordDamage();
             return !(damage <= bestDamage);
-        } else if (stack.is(ItemTags.PICKAXES)) {
-            float score = InvHelper.getToolScore(stack);
-            float bestScore = InvHelper.getBestPickaxeScore();
+        } else if (InventoryUtils.isPickaxe(stack)) {
+            float score = InventoryUtils.getToolScore(stack);
+            float bestScore = InventoryUtils.getBestPickaxeScore();
             return !(score <= bestScore);
-        } else if (stack.is(ItemTags.AXES)) {
-            float score = InvHelper.getToolScore(stack);
-            float bestScore = InvHelper.getBestAxeScore();
+        } else if (stack.getItem() instanceof AxeItem) {
+            float score = InventoryUtils.getToolScore(stack);
+            float bestScore = InventoryUtils.getBestAxeScore();
             return !(score <= bestScore);
-        } else if (stack.is(ItemTags.SHOVELS)) {
-            float score = InvHelper.getToolScore(stack);
-            float bestScore = InvHelper.getBestShovelScore();
+        } else if (stack.getItem() instanceof ShovelItem) {
+            float score = InventoryUtils.getToolScore(stack);
+            float bestScore = InventoryUtils.getBestShovelScore();
             return !(score <= bestScore);
         } else if (stack.getItem() instanceof CrossbowItem) {
-            float score = InvHelper.getCrossbowScore(stack);
-            float bestScore = InvHelper.getBestCrossbowScore();
+            float score = InventoryUtils.getCrossbowScore(stack);
+            float bestScore = InventoryUtils.getBestCrossbowScore();
             return !(score <= bestScore);
-        } else if (stack.getItem() instanceof BowItem && InvHelper.isPunchBow(stack)) {
-            float score = InvHelper.getPunchBowScore(stack);
-            float bestScore = InvHelper.getBestPunchBowScore();
+        } else if (stack.getItem() instanceof BowItem && InventoryUtils.isPunchBow(stack)) {
+            float score = InventoryUtils.getPunchBowScore(stack);
+            float bestScore = InventoryUtils.getBestPunchBowScore();
             return !(score <= bestScore);
-        } else if (stack.getItem() instanceof BowItem && InvHelper.isPowerBow(stack)) {
-            float score = InvHelper.getPowerBowScore(stack);
-            float bestScore = InvHelper.getBestPowerBowScore();
+        } else if (stack.getItem() instanceof BowItem && InventoryUtils.isPowerBow(stack)) {
+            float score = InventoryUtils.getPowerBowScore(stack);
+            float bestScore = InventoryUtils.getBestPowerBowScore();
             return !(score <= bestScore);
         } else if (stack.getItem() == Items.COMPASS) {
-            return !InvHelper.hasItem(stack.getItem());
-        } else if (stack.getItem() == Items.WATER_BUCKET && InvHelper.getItemCount(Items.WATER_BUCKET) >= InvManager.INSTANCE.getWaterBucketCount()) {
+            return !InventoryUtils.hasItem(stack.getItem());
+        } else if (stack.getItem() == Items.WATER_BUCKET && InventoryUtils.getItemCount(Items.WATER_BUCKET) >= InvManager.INSTANCE.waterBucketCount.getValue()) {
             return false;
-        } else if (stack.getItem() == Items.LAVA_BUCKET && InvHelper.getItemCount(Items.LAVA_BUCKET) >= InvManager.INSTANCE.getLavaBucketCount()) {
+        } else if (stack.getItem() == Items.LAVA_BUCKET && InventoryUtils.getItemCount(Items.LAVA_BUCKET) >= InvManager.INSTANCE.lavaBucketCount.getValue()) {
             return false;
         } else if (stack.getItem() instanceof BlockItem
-                && InvHelper.isValidStack(stack)
-                && InvHelper.getBlockCountInInventory() + stack.getCount() >= InvManager.INSTANCE.getMaxBlockSize()) {
+                && InventoryUtils.isValidStack(stack)
+                && InventoryUtils.getBlockCountInInventory() + stack.getCount() >= InvManager.INSTANCE.maxBlockSize.getValue()) {
             return false;
-        } else if (stack.getItem() == Items.ARROW && InvHelper.getItemCount(Items.ARROW) + stack.getCount() >= InvManager.INSTANCE.getMaxArrowSize()) {
+        } else if (stack.getItem() == Items.ARROW && InventoryUtils.getItemCount(Items.ARROW) + stack.getCount() >= InvManager.INSTANCE.maxArrowSize.getValue()) {
             return false;
-        } else if (stack.getItem() instanceof FishingRodItem && InvHelper.getItemCount(Items.FISHING_ROD) >= 1) {
+        } else if (stack.getItem() instanceof FishingRodItem && InventoryUtils.getItemCount(Items.FISHING_ROD) >= 1) {
             return false;
         } else if (stack.getItem() != Items.SNOWBALL && stack.getItem() != Items.EGG
-                || InvHelper.getItemCount(Items.SNOWBALL) + InvHelper.getItemCount(Items.EGG) + stack.getCount() < InvManager.INSTANCE.getMaxProjectileSize()
-                && InvManager.INSTANCE.shouldKeepProjectile()) {
-            return !stack.has(DataComponents.CUSTOM_NAME) && InvHelper.isCommonItemUseful(stack);
+                || InventoryUtils.getItemCount(Items.SNOWBALL) + InventoryUtils.getItemCount(Items.EGG) + stack.getCount() < InvManager.INSTANCE.maxProjectileSize.getValue()
+                && InvManager.INSTANCE.keepProjectile.getValue()
+        ) {
+            return !(stack.getItem() instanceof StandingAndWallBlockItem) && InventoryUtils.isCommonItemUseful(stack);
         } else {
             return false;
         }
     }
 
-    @EventHandler
-    public void onTick(TickEvent.Pre event) {
-        if (nullCheck()) return;
+    private static boolean isBestItemInChest(ChestMenu menu, ItemStack stack) {
+        if (!InventoryUtils.isGodItem(stack) && !InventoryUtils.isSharpnessAxe(stack)) {
+            for (int i = 0; i < menu.getRowCount() * 9; i++) {
+                ItemStack checkStack = menu.getSlot(i).getItem();
+                if (InventoryUtils.isArmor(stack) && InventoryUtils.isArmor(checkStack)) {
+                    if (InventoryUtils.getArmorSlot(stack) == InventoryUtils.getArmorSlot(checkStack)
+                            && InventoryUtils.getProtection(checkStack) > InventoryUtils.getProtection(stack)) {
+                        return false;
+                    }
+                } else if (InventoryUtils.isSword(stack) && InventoryUtils.isSword(checkStack)) {
+                    if (InventoryUtils.getSwordDamage(checkStack) > InventoryUtils.getSwordDamage(stack)) {
+                        return false;
+                    }
+                } else if (InventoryUtils.isPickaxe(stack) && InventoryUtils.isPickaxe(checkStack)) {
+                    if (InventoryUtils.getToolScore(checkStack) > InventoryUtils.getToolScore(stack)) {
+                        return false;
+                    }
+                } else if (stack.getItem() instanceof AxeItem && checkStack.getItem() instanceof AxeItem) {
+                    if (InventoryUtils.getToolScore(checkStack) > InventoryUtils.getToolScore(stack)) {
+                        return false;
+                    }
+                } else if (stack.getItem() instanceof ShovelItem
+                        && checkStack.getItem() instanceof ShovelItem
+                        && InventoryUtils.getToolScore(checkStack) > InventoryUtils.getToolScore(stack)) {
+                    return false;
+                }
+            }
 
+            return true;
+        } else {
+            return true;
+        }
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
+        if (nullCheck()) return;
         Screen currentScreen = mc.screen;
-        if (currentScreen instanceof ContainerScreen container) {
-            ChestMenu menu = container.getMenu();
+        if (currentScreen instanceof AbstractContainerScreen<?> container && container.getMenu() instanceof ChestMenu menu) {
             if (currentScreen != this.lastTickScreen) {
                 timer.reset();
             } else {
@@ -122,16 +154,22 @@ public class Stealer extends Module {
                 if (chestTitle.equals(chest)
                         || chestTitle.equals(largeChest)
                         || chestTitle.equals("Chest")
-                        || this.pickEnderChest.getValue() && chestTitle.equals(enderChest)) {
-                    if (this.isChestEmpty(menu) && timer.passedMillise(MathUtils.getRandom(minDelay.getValue(), maxDelay.getValue()))) {
-                        mc.player.closeContainer();
+                        || this.pickEnderChest.getValue() && chestTitle.equals(enderChest)
+                ) {
+                    int nextDelay = Math.max(minDelay.getValue(), (int) (this.delay.getValue() + random.nextGaussian() * 50));
+                    if (this.isChestEmpty(menu) && timer.passedMillise(nextDelay)) {
+                        if (mc.player != null && closeDelay.getValue() && timer.passedMillise(cDelay.getValue())) {
+                            mc.player.closeContainer();
+                            timer.reset();
+                        }
+
                     } else {
                         List<Integer> slots = IntStream.range(0, menu.getRowCount() * 9).boxed().collect(Collectors.toList());
                         Collections.shuffle(slots);
 
                         for (Integer pSlotId : slots) {
                             ItemStack stack = menu.getSlot(pSlotId).getItem();
-                            if (isItemUseful(stack) && this.isBestItemInChest(menu, stack) && timer.passedMillise(MathUtils.getRandom(minDelay.getValue(), maxDelay.getValue()))) {
+                            if (isItemUseful(stack) && isBestItemInChest(menu, stack) && timer.passedMillise(nextDelay)) {
                                 mc.gameMode.handleContainerInput(menu.containerId, pSlotId, 0, ContainerInput.QUICK_MOVE, mc.player);
                                 timer.reset();
                                 break;
@@ -145,45 +183,10 @@ public class Stealer extends Module {
         this.lastTickScreen = currentScreen;
     }
 
-    private boolean isBestItemInChest(ChestMenu menu, ItemStack stack) {
-        if (!InvHelper.isGodItem(stack) && !InvHelper.isSharpnessAxe(stack)) {
-            for (int i = 0; i < menu.getRowCount() * 9; i++) {
-                ItemStack checkStack = menu.getSlot(i).getItem();
-                if (stack.is(ItemTags.ARMOR_ENCHANTABLE) && checkStack.is(ItemTags.ARMOR_ENCHANTABLE)) {
-                    Equippable stackEquippable = stack.get(DataComponents.EQUIPPABLE);
-                    Equippable checkEquippable = checkStack.get(DataComponents.EQUIPPABLE);
-                    if (stackEquippable != null && checkEquippable != null && stackEquippable.slot() == checkEquippable.slot() && InvHelper.getProtection(checkStack) > InvHelper.getProtection(stack)) {
-                        return false;
-                    }
-                } else if (stack.is(ItemTags.SWORDS) && checkStack.is(ItemTags.SWORDS)) {
-                    if (InvHelper.getSwordDamage(checkStack) > InvHelper.getSwordDamage(stack)) {
-                        return false;
-                    }
-                } else if (stack.is(ItemTags.PICKAXES) && checkStack.is(ItemTags.PICKAXES)) {
-                    if (InvHelper.getToolScore(checkStack) > InvHelper.getToolScore(stack)) {
-                        return false;
-                    }
-                } else if (stack.is(ItemTags.AXES) && checkStack.is(ItemTags.AXES)) {
-                    if (InvHelper.getToolScore(checkStack) > InvHelper.getToolScore(stack)) {
-                        return false;
-                    }
-                } else if (stack.is(ItemTags.SHOVELS)
-                        && checkStack.is(ItemTags.SHOVELS)
-                        && InvHelper.getToolScore(checkStack) > InvHelper.getToolScore(stack)) {
-                    return false;
-                }
-            }
-
-            return true;
-        } else {
-            return true;
-        }
-    }
-
     private boolean isChestEmpty(ChestMenu menu) {
         for (int i = 0; i < menu.getRowCount() * 9; i++) {
             ItemStack item = menu.getSlot(i).getItem();
-            if (!item.isEmpty() && isItemUseful(item) && this.isBestItemInChest(menu, item)) {
+            if (!item.isEmpty() && isItemUseful(item) && isBestItemInChest(menu, item)) {
                 return false;
             }
         }

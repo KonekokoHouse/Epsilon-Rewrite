@@ -119,7 +119,7 @@ public class AutoClicker extends Module {
         IntSetting minCPS = clickButton == ClickButton.LEFT ? leftMinCPS : rightMinCPS;
         IntSetting maxCPS = clickButton == ClickButton.LEFT ? leftMaxCPS : rightMaxCPS;
 
-        double baseCPS = MathUtils.getRandomLongTail(minCPS.getValue(), maxCPS.getValue());
+        double baseCPS = MathUtils.getRandom(minCPS.getValue(), maxCPS.getValue());
         double adjustedCPS = applyBurstAndDecay(state, baseCPS, currentTime);
 
         state.nextDelay = (long) (1000.0 / adjustedCPS);
