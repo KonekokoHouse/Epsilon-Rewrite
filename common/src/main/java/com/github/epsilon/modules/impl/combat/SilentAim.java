@@ -60,7 +60,7 @@ public class SilentAim extends Module {
 
         Vector2f rotations = RotationUtils.calculate(target.getEyePosition());
 
-        RotationManager.INSTANCE.applyRotation(rotations, 10, Priority.High, _ -> {
+        RotationManager.INSTANCE.setRotations(rotations, 10, Priority.High, _ -> {
             if (!target.isAlive() || target.isDeadOrDying() || nullCheck()) {
                 redirecting = false;
                 return;

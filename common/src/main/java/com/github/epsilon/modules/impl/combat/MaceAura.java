@@ -95,7 +95,7 @@ public class MaceAura extends Module {
             return;
         }
 
-        RotationManager.INSTANCE.applyRotation(
+        RotationManager.INSTANCE.setRotations(
                 RotationUtils.getRotationsToEntity(target),
                 10,
                 Priority.Medium.priority,

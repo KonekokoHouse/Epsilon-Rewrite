@@ -267,13 +267,13 @@ public class ZealotCrystalPlus extends Module {
 
         if (preRotation.getValue()) {
             if (preBreak != null) {
-                RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
+                RotationManager.INSTANCE.setRotations(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
             } else if (prePlace != null) {
-                RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
+                RotationManager.INSTANCE.setRotations(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
             } else {
                 Vector2f rotation = getFallbackRotation();
                 if (rotation != null) {
-                    RotationManager.INSTANCE.applyRotation(rotation, getRotationSpeed(), Priority.Lowest);
+                    RotationManager.INSTANCE.setRotations(rotation, getRotationSpeed(), Priority.Lowest);
                 }
             }
         }
@@ -1006,7 +1006,7 @@ public class ZealotCrystalPlus extends Module {
 
         InteractionHand finalHand = hand;
         BlockHitResult hitResult = new BlockHitResult(placeInfo.hitVec(), placeInfo.side(), placeInfo.blockPos(), false);
-        RotationManager.INSTANCE.applyRotation(placeInfo.rotation(), getRotationSpeed(), Priority.High, ignored -> {
+        RotationManager.INSTANCE.setRotations(placeInfo.rotation(), getRotationSpeed(), Priority.High, ignored -> {
             if (!isEnabled() || nullCheck()) {
                 InvUtils.swapBack();
                 return;
@@ -1052,7 +1052,7 @@ public class ZealotCrystalPlus extends Module {
             }
         }
 
-        RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(breakPlan.pos()), getRotationSpeed(), Priority.High, ignored -> {
+        RotationManager.INSTANCE.setRotations(RotationUtils.calculate(breakPlan.pos()), getRotationSpeed(), Priority.High, ignored -> {
             if (!isEnabled() || nullCheck()) {
                 InvUtils.swapBack();
                 return;

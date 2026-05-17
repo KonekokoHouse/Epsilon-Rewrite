@@ -186,8 +186,7 @@ public class ElytraFly extends Module {
         if (horizontal < 1.0E-5 && Math.abs(y) < 1.0E-5) return;
         float yaw = (float) Math.toDegrees(Math.atan2(z, x)) - 90.0f;
         float pitch = (float) (-Math.toDegrees(Math.atan2(y, Math.max(horizontal, 1.0E-5))));
-        // TODO: 这为啥有时候转头会纠正？
-        RotationManager.INSTANCE.applyRotation(new Vector2f(Mth.wrapDegrees(yaw), Mth.clamp(pitch, -90.0f, 90.0f)), 10, Priority.Highest);
+        RotationManager.INSTANCE.setRotations(new Vector2f(Mth.wrapDegrees(yaw), Mth.clamp(pitch, -90.0f, 90.0f)), 10, Priority.Highest);
     }
 
     private boolean hasInput() {

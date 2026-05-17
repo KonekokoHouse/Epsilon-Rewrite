@@ -145,7 +145,7 @@ public class KillAura extends Module {
         attacks += MathUtils.getRandom(minCPS.getValue().doubleValue(), maxCPS.getValue().doubleValue()) / 20.0;
 
         if (target != null) {
-            RotationManager.INSTANCE.applyRotation(
+            RotationManager.INSTANCE.setRotations(
                     RotationUtils.getRotationsToEntity(target),
                     rotationSpeed.getValue().floatValue(),
                     Priority.Medium.priority,

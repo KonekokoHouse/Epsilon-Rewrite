@@ -52,7 +52,7 @@ public class AutoMend extends Module {
         FindItemResult result = InvUtils.findInHotbar(Items.EXPERIENCE_BOTTLE);
         if (!result.found()) return;
 
-        RotationManager.INSTANCE.applyRotation(new Vector2f(mc.player.getYRot(), 90), 10, Priority.High, _ -> {
+        RotationManager.INSTANCE.setRotations(new Vector2f(mc.player.getYRot(), 90), 10, Priority.High, _ -> {
             InvUtils.swap(result.slot(), true);
 
             InteractionHand hand = result.getHand();

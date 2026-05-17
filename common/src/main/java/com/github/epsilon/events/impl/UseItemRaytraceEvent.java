@@ -1,11 +1,11 @@
 package com.github.epsilon.events.impl;
 
-public class UseItemRayTraceEvent {
+public class UseItemRaytraceEvent {
 
     private float yaw;
     private float pitch;
 
-    public UseItemRayTraceEvent(float yaw, float pitch) {
+    public UseItemRaytraceEvent(float yaw, float pitch) {
         this.yaw = yaw;
         this.pitch = pitch;
     }

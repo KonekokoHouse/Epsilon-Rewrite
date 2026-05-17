@@ -1,7 +1,7 @@
 package com.github.epsilon.mixins;
 
 import com.github.epsilon.events.bus.EventBus;
-import com.github.epsilon.events.impl.UseItemRayTraceEvent;
+import com.github.epsilon.events.impl.UseItemRaytraceEvent;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -16,7 +16,7 @@ public class MixinItem {
 
     @ModifyExpressionValue(method = "getPlayerPOVHitResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;calculateViewVector(FF)Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 hookUseItemRayTrace(Vec3 original, Level level, Player player, ClipContext.Fluid fluid) {
-        UseItemRayTraceEvent event = EventBus.INSTANCE.post(new UseItemRayTraceEvent(player.getYRot(), player.getXRot()));
+        UseItemRaytraceEvent event = EventBus.INSTANCE.post(new UseItemRaytraceEvent(player.getYRot(), player.getXRot()));
         return player.calculateViewVector(event.getPitch(), event.getYaw());
     }
 

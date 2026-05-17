@@ -3,6 +3,7 @@ package com.github.epsilon.modules.impl.movement;
 import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.bus.listeners.ConsumerListener;
+import com.github.epsilon.events.impl.MoveInputEvent;
 import com.github.epsilon.events.impl.Render3DEvent;
 import com.github.epsilon.events.impl.SendPositionEvent;
 import com.github.epsilon.events.impl.TickEvent;
@@ -19,7 +20,6 @@ import com.github.epsilon.utils.player.InvUtils;
 import com.github.epsilon.utils.player.MoveUtils;
 import com.github.epsilon.utils.render.Render3DUtils;
 import com.github.epsilon.utils.render.animation.Easing;
-import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RaytraceUtils;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import com.github.epsilon.utils.world.BlockUtils;
@@ -103,7 +103,6 @@ public class Scaffold extends Module {
     private int yLevel;
     private int airTicks;
 
-    private boolean hasJump;
     private boolean shouldSwapBack;
 
     private BlockInfo blockInfo;
@@ -114,16 +113,11 @@ public class Scaffold extends Module {
     protected void onEnable() {
         blockInfo = null;
         shouldSwapBack = false;
-        hasJump = false;
     }
 
     @Override
     protected void onDisable() {
         blockInfo = null;
-        if (hasJump) {
-            mc.options.keyJump.setDown(false);
-            hasJump = false;
-        }
         if (shouldSwapBack) {
             InvUtils.swapBack();
         }
@@ -140,12 +134,6 @@ public class Scaffold extends Module {
     private void onTickPre(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        hasJump = false;
-        if (mc.player.onGround() && MoveUtils.isMoving() && mode.is(Mode.TellyBridge) && !mc.options.keyJump.isDown()) {
-            mc.options.keyJump.setDown(true); // 只能模拟跳跃键按下，mc.player.jumpFromGround() 不能在这时候调用
-            hasJump = true;
-        }
-
         updateBlockInfo();
 
         if (mode.getValue() == Mode.TellyBridge) {
@@ -154,12 +142,13 @@ public class Scaffold extends Module {
                 airTicks = 0;
                 blockInfo = null;
                 Vector2f rotation = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-                RotationManager.INSTANCE.applyRotation(rotation, rotationBackSpeed.getValue(), Priority.Low.priority);
+                RotationManager.INSTANCE.setRotations(rotation, rotationBackSpeed.getValue());
             } else {
                 if (airTicks >= tellyTick.getValue() && blockInfo != null) {
                     FindItemResult item = findItem();
                     if (item.found()) {
-                        queuePlaceWithRotation(blockInfo, item);
+                        RotationManager.INSTANCE.setRotations(getRotation(blockInfo), rotationSpeed.getValue());
+                        place(item);
                     }
                 }
                 airTicks++;
@@ -167,16 +156,16 @@ public class Scaffold extends Module {
         } else if (blockInfo != null) {
             FindItemResult item = findItem();
             if (item.found()) {
-                queuePlaceWithRotation(blockInfo, item);
+                RotationManager.INSTANCE.setRotations(getRotation(blockInfo), rotationSpeed.getValue());
+                place(item);
             }
         }
     }
 
     @EventHandler
-    private void onTickPost(TickEvent.Post event) {
-        if (hasJump) {
-            mc.options.keyJump.setDown(false);
-            hasJump = false;
+    private void onMoveInput(MoveInputEvent event) {
+        if (mc.player.onGround() && MoveUtils.isMoving() && mode.is(Mode.TellyBridge) && !mc.options.keyJump.isDown()) {
+            event.setJump(true);
         }
     }
 
@@ -254,19 +243,11 @@ public class Scaffold extends Module {
         }
     }
 
-    private void queuePlaceWithRotation(BlockInfo targetBlockInfo, FindItemResult item) {
-        final Vector2f requestedRotation = getRotation(targetBlockInfo);
-        RotationManager.INSTANCE.applyRotation(requestedRotation, rotationSpeed.getValue(), Priority.High.priority, record -> {
-            if (blockInfo == null || !blockInfo.equals(targetBlockInfo)) return;
-            place(targetBlockInfo, item, record.currentRotation());
-        });
-    }
-
-    private void place(BlockInfo currentBlockInfo, FindItemResult item, Vector2f rotation) {
+    private void place(FindItemResult item) {
         if (!onAir()) return;
-        if (!BlockUtils.canPlaceAt(currentBlockInfo.blockPos)) return;
+        if (!BlockUtils.canPlaceAt(blockInfo.blockPos)) return;
 
-        boolean hasRotated = RaytraceUtils.overBlock(rotation, currentBlockInfo.dir, currentBlockInfo.position, sideCheck.getValue());
+        boolean hasRotated = RaytraceUtils.overBlock(RotationManager.INSTANCE.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.getValue());
         if (hasRotated) {
             switch (swapMode.getValue()) {
                 case Normal -> {
@@ -278,7 +259,7 @@ public class Scaffold extends Module {
                 case InvSwitch -> InvUtils.invSwap(item.slot());
             }
 
-            InteractionResult result = mc.gameMode.useItemOn(mc.player, item.getHand(), new BlockHitResult(getVec3(currentBlockInfo.position, currentBlockInfo.dir), currentBlockInfo.dir, currentBlockInfo.position, false));
+            InteractionResult result = mc.gameMode.useItemOn(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
 
             if (result.consumesAction()) {
                 if (swingHand.getValue()) {
@@ -288,7 +269,7 @@ public class Scaffold extends Module {
                 }
 
                 if (render.getValue()) {
-                    renderBoxes.add(new RenderBox(new AABB(currentBlockInfo.blockPos), lineColor.getValue(), sideColor.getValue(), System.currentTimeMillis(), fade.getValue(), shrink.getValue()));
+                    renderBoxes.add(new RenderBox(new AABB(blockInfo.blockPos), lineColor.getValue(), sideColor.getValue(), System.currentTimeMillis(), fade.getValue(), shrink.getValue()));
                 }
             }
 

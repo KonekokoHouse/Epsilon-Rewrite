@@ -3,100 +3,97 @@ package com.github.epsilon.utils.rotation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import org.joml.Vector2f;
 
-import java.util.function.Predicate;
+import java.util.List;
+import java.util.Optional;
 
 import static com.github.epsilon.Constants.mc;
 
 public class RaytraceUtils {
 
-    public static Vec3 getRotationVector(Vector2f rotation) {
-        return getRotationVector(rotation.x, rotation.y);
-    }
-
-    public static Vec3 getRotationVector(float yaw, float pitch) {
-        return Vec3.directionFromRotation(pitch, yaw);
-    }
-
-    public static EntityHitResult rayTraceEntity(double range, Vector2f rotation, Predicate<Entity> filter) {
-        if (mc.getCameraEntity() == null) return null;
-        Entity entity = mc.getCameraEntity();
-
-        Vec3 cameraVec = entity.getEyePosition();
-        Vec3 rotationVec = getRotationVector(rotation);
-
-        Vec3 endVec = cameraVec.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
-        AABB box = entity.getBoundingBox().expandTowards(rotationVec.multiply(range, range, range)).inflate(1.0, 1.0, 1.0);
-
-        return ProjectileUtil.getEntityHitResult(entity, cameraVec, endVec, box, e -> !e.isSpectator() && e.isPickable() && filter.test(e), range * range);
-    }
-
-    public static BlockHitResult rayTraceBlock(double range, Vector2f rotation, BlockPos pos, BlockState state) {
-        Entity entity = mc.getCameraEntity();
-
-        Vec3 start = entity.getEyePosition();
-        Vec3 rotationVec = getRotationVector(rotation);
-
-        Vec3 end = start.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
-
-        return state.getCollisionShape(mc.level, pos, CollisionContext.of(mc.player)).clip(start, end, pos);
-    }
-
-    public static BlockHitResult rayCast(Vector2f rotation, double range) {
-        return rayCast(rotation, range, false, 1.0f);
-    }
-
-    public static BlockHitResult rayCast(Vector2f rotation, double range, boolean includeFluids, float tickDelta) {
-        return rayCast(range, includeFluids, mc.player.getPosition(tickDelta), getRotationVector(rotation), mc.getCameraEntity());
-    }
-
-    public static BlockHitResult rayCast(double range, boolean includeFluids, Vec3 start, Vec3 direction, Entity entity) {
-        Vec3 end = start.add(direction.x * range, direction.y * range, direction.z * range);
-
-        return mc.level.clip(
-                new ClipContext(
-                        start,
-                        end,
-                        ClipContext.Block.OUTLINE,
-                        includeFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
-                        entity
-                )
-        );
-    }
-
     public static boolean canSeePointFrom(Vec3 eyes, Vec3 vec3) {
         return mc.level.clip(new ClipContext(eyes, vec3, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player)).getType() == HitResult.Type.MISS;
     }
 
-    public static boolean facingEnemy(Entity toEntity, double range, Vector2f rotation) {
-        return rayTraceEntity(range, rotation, entity -> entity == toEntity) != null;
+    public static HitResult raytrace(Vector2f rotation, double range) {
+        return raytrace(rotation, range, 0);
     }
 
-    public static boolean facingEnemy(Entity fromEntity, Entity toEntity, Vector2f rotation, double range, double wallsRange) {
-        Vec3 cameraVec = fromEntity.getEyePosition();
-        Vec3 rotationVec = getRotationVector(rotation);
+    public static HitResult raytrace(Vector2f rotation, double range, float expand) {
+        return raytrace(rotation, range, expand, mc.player);
+    }
 
-        double rangeSquared = range * range;
-        double wallsRangeSquared = wallsRange * wallsRange;
+    public static HitResult raytrace(Vector2f rotation, double range, float expand, Entity entity) {
+        if (mc.level == null || entity == null) return null;
 
-        Vec3 endVec = cameraVec.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
-        AABB box = fromEntity.getBoundingBox().expandTowards(rotationVec.scale(range)).inflate(1.0);
+        float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
-        EntityHitResult entityHitResult = ProjectileUtil.getEntityHitResult(
-                fromEntity, cameraVec, endVec, box, e -> !e.isSpectator() && e.isPickable() && e == toEntity, rangeSquared
-        );
+        Vec3 eyePos = entity.getEyePosition(partialTicks);
+        Vec3 lookVec = Vec3.directionFromRotation(rotation.y, rotation.x);
+        Vec3 endVec = eyePos.add(lookVec.scale(range));
 
-        if (entityHitResult == null) return false;
+        HitResult objectMouseOver = mc.level.clip(new ClipContext(
+                eyePos,
+                endVec,
+                ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.NONE,
+                entity
+        ));
 
-        double distance = cameraVec.distanceToSqr(entityHitResult.getLocation());
+        double distToBlock = range;
+        if (objectMouseOver.getType() != HitResult.Type.MISS) {
+            distToBlock = objectMouseOver.getLocation().distanceTo(eyePos);
+        }
 
-        return distance <= rangeSquared && canSeePointFrom(cameraVec, entityHitResult.getLocation()) || distance <= wallsRangeSquared;
+        Vec3 entitySearchEndVec = eyePos.add(lookVec.scale(range));
+
+        Entity pointedEntity = null;
+        Vec3 hitVec = null;
+        double currentDist = distToBlock;
+
+        AABB searchBox = entity.getBoundingBox().expandTowards(lookVec.scale(range)).inflate(1.0D);
+
+        List<Entity> list = mc.level.getEntities(entity, searchBox, e -> !e.isSpectator() && e.isPickable());
+
+        for (Entity candidate : list) {
+            float collisionSize = candidate.getPickRadius() + expand;
+            AABB entityBox = candidate.getBoundingBox().inflate(collisionSize);
+
+            Optional<Vec3> intercept = entityBox.clip(eyePos, entitySearchEndVec);
+
+            if (entityBox.contains(eyePos)) {
+                if (currentDist >= 0.0D) {
+                    pointedEntity = candidate;
+                    hitVec = intercept.orElse(eyePos);
+                    currentDist = 0.0D;
+                }
+            } else if (intercept.isPresent()) {
+                Vec3 interceptVec = intercept.get();
+                double d3 = eyePos.distanceTo(interceptVec);
+
+                if (d3 < currentDist || currentDist == 0.0D) {
+                    if (candidate.getRootVehicle() == entity.getRootVehicle()) {
+                        if (currentDist == 0.0D) {
+                            pointedEntity = candidate;
+                            hitVec = interceptVec;
+                        }
+                    } else {
+                        pointedEntity = candidate;
+                        hitVec = interceptVec;
+                        currentDist = d3;
+                    }
+                }
+            }
+        }
+
+        if (pointedEntity != null && (currentDist < distToBlock || objectMouseOver.getType() == HitResult.Type.MISS)) {
+            return new EntityHitResult(pointedEntity, hitVec);
+        }
+
+        return objectMouseOver;
     }
 
     public static boolean overBlock(Vector2f rotation, Direction dir, BlockPos pos, boolean strict) {
