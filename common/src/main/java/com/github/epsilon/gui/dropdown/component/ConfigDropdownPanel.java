@@ -204,7 +204,8 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                         status = importedComponent.getTranslatedName() + " " + imported;
                     }
                 }
-                case 4 -> status = openFolderComponent.getTranslatedName() + " " + ConfigFolderOpener.openConfigFolder();
+                case 4 ->
+                        status = openFolderComponent.getTranslatedName() + " " + ConfigFolderOpener.openConfigFolder();
                 default -> {
                 }
             }
