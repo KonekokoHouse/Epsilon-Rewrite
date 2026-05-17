@@ -62,12 +62,11 @@ public class BoolWidget extends SettingWidget<BoolSetting> {
             renderer.outline().addOutline(sx, sy, sw, sh, SWITCH_RADIUS, outlineW, MD3Theme.switchTrackOutline(t, hoverProgress));
         }
 
-        float knobSize = Mth.lerp(Mth.clamp(bounce, 0.0f, 1.35f), KNOB_SIZE_OFF, KNOB_SIZE_ON);
-        knobSize = Math.max(KNOB_SIZE_OFF * 0.85f, knobSize);
+        float knobSize = Mth.lerp(Mth.clamp(t, 0.0f, 1.0f), KNOB_SIZE_OFF, KNOB_SIZE_ON);
         float inset = Mth.lerp(t, KNOB_INSET_OFF, KNOB_INSET_ON);
         float knobMinX = sx + inset + knobSize * 0.5f;
         float knobMaxX = sx + sw - inset - knobSize * 0.5f;
-        float knobCx = Mth.lerp(t, knobMinX, knobMaxX);
+        float knobCx = Mth.lerp(bounce, knobMinX, knobMaxX);
         float knobCy = sy + sh * 0.5f;
 
         if (hoverProgress > 0.02f) {

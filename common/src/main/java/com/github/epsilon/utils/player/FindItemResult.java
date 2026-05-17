@@ -3,6 +3,7 @@ package com.github.epsilon.utils.player;
 import net.minecraft.world.InteractionHand;
 
 public record FindItemResult(int slot, int count, int maxCount) {
+
     public boolean found() {
         return slot != -1;
     }
@@ -21,4 +22,5 @@ public record FindItemResult(int slot, int count, int maxCount) {
     public boolean isOffhand() {
         return getHand() == InteractionHand.OFF_HAND;
     }
+
 }
