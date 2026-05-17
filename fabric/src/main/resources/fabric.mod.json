@@ -5,10 +5,9 @@
   "name": "Epsilon",
   "description": "",
   "authors": [
-    "Chen Meng"
+    "Chen_Meng",
+    "ilove0329P"
   ],
-  "contact": {
-  },
   "entrypoints": {
     "client": [
       "com.github.epsilon.fabric.EpsilonFabric"
@@ -17,7 +16,7 @@
       "com.github.epsilon.fabric.addon.FabricSelfAddonEntrypoint"
     ]
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "environment": "client",
   "mixins": [
       "${mod_id}.mixins.json",
