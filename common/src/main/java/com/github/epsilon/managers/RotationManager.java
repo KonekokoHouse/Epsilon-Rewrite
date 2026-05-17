@@ -243,14 +243,14 @@ public class RotationManager {
 
     @EventHandler
     private void onStrafe(StrafeEvent event) {
-        if (active && rotations != null) {
+        if (MovementFix.INSTANCE.isEnabled() && active && rotations != null) {
             event.setYaw(rotations.x);
         }
     }
 
     @EventHandler
     private void onJump(JumpEvent event) {
-        if (active && rotations != null) {
+        if (MovementFix.INSTANCE.isEnabled() && active && rotations != null) {
             event.setYaw(rotations.x);
         }
     }
