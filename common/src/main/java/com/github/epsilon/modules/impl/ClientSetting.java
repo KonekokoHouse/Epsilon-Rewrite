@@ -56,11 +56,10 @@ public class ClientSetting extends Module {
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
     public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown, _ -> {
-        if (mc.screen instanceof PanelScreen) {
-            mc.setScreen(DropdownScreen.INSTANCE);
-        } else if (mc.screen instanceof DropdownScreen) {
-            mc.setScreen(PanelScreen.INSTANCE);
-        }
+        mc.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+            case Panel -> PanelScreen.INSTANCE;
+            case Dropdown -> DropdownScreen.INSTANCE;
+        });
     }).group(sgGeneral);
 
     private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);

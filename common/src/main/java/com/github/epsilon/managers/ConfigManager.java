@@ -3,6 +3,7 @@ package com.github.epsilon.managers;
 import com.github.epsilon.Constants;
 import com.github.epsilon.addon.EpsilonAddon;
 import com.github.epsilon.assets.config.LegacyConfigMigrator;
+import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.HudModule;
 import com.github.epsilon.modules.Module;
 import com.github.epsilon.settings.Setting;
@@ -491,6 +492,7 @@ public class ConfigManager {
             else if (setting instanceof IntSetting s) s.setValue(value.getAsInt());
             else if (setting instanceof DoubleSetting s) s.setValue(value.getAsDouble());
             else if (setting instanceof StringSetting s) s.setValue(value.getAsString());
+            else if (setting == ClientSetting.INSTANCE.guiMode && setting instanceof EnumSetting s) s.setModeSilently(value.getAsString());
             else if (setting instanceof EnumSetting s) s.setMode(value.getAsString());
             else if (setting instanceof ColorSetting s) {
                 int argb = value.getAsInt();

@@ -2,10 +2,12 @@ package com.github.epsilon.gui.hudeditor;
 
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.renderers.RectRenderer;
+import com.github.epsilon.gui.dropdown.DropdownScreen;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.gui.panel.PanelScreen;
 import com.github.epsilon.gui.panel.utils.IMEFocusHelper;
 import com.github.epsilon.modules.HudModule;
+import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.hud.notification.NotificationManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.IMEPreeditOverlay;
@@ -244,7 +246,11 @@ public class HudEditorScreen extends Screen {
         clearSnapPreview();
         IMEFocusHelper.deactivate();
         super.onClose();
-        minecraft.setScreen(PanelScreen.INSTANCE);
+
+        minecraft.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+            case Panel -> PanelScreen.INSTANCE;
+            case Dropdown -> DropdownScreen.INSTANCE;
+        });
     }
 
     @Override

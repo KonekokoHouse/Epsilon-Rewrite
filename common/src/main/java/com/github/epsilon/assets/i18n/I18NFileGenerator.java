@@ -54,6 +54,7 @@ public class I18NFileGenerator {
         root.addProperty(PREFIX + "gui.config.action.reload", "");
         root.addProperty(PREFIX + "gui.config.action.export", "");
         root.addProperty(PREFIX + "gui.config.action.import", "");
+        root.addProperty(PREFIX + "gui.config.action.open_folder", "");
         root.addProperty(PREFIX + "gui.config.delete.confirm.title", "");
         root.addProperty(PREFIX + "gui.config.delete.confirm.message", "");
         root.addProperty(PREFIX + "gui.config.delete.confirm.confirm", "");
@@ -64,6 +65,7 @@ public class I18NFileGenerator {
         root.addProperty(PREFIX + "gui.config.error.reload", "");
         root.addProperty(PREFIX + "gui.config.error.export", "");
         root.addProperty(PREFIX + "gui.config.error.import", "");
+        root.addProperty(PREFIX + "gui.config.error.open_folder", "");
         root.addProperty(PREFIX + "gui.config.error.switch", "");
         root.addProperty(PREFIX + "gui.config.error.delete", "");
         root.addProperty(PREFIX + "gui.config.error.delete_last", "");

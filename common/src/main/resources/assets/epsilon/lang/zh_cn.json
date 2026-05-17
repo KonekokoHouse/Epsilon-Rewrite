@@ -28,6 +28,8 @@
   "epsilon.gui.config.action.reload": "重新加载",
   "epsilon.gui.config.action.export": "导出",
   "epsilon.gui.config.action.import": "导入",
+  "epsilon.gui.config.action.open_folder": "打开文件夹",
+  "epsilon.gui.config.error.open_folder": "打开配置文件夹失败",
   "epsilon.gui.config.delete.confirm.title": "删除配置",
   "epsilon.gui.config.delete.confirm.message": "确定要删除此配置吗？",
   "epsilon.gui.config.delete.confirm.confirm": "删除",

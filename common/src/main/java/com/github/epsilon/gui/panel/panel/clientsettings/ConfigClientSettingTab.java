@@ -20,6 +20,7 @@ import com.github.epsilon.gui.panel.utils.PanelContentInvalidationState;
 import com.github.epsilon.gui.panel.utils.ScrollBarDragState;
 import com.github.epsilon.gui.panel.utils.ScrollBarUtils;
 import com.github.epsilon.managers.ConfigManager;
+import com.github.epsilon.utils.client.ConfigFolderOpener;
 import com.github.epsilon.utils.render.animation.Animation;
 import com.github.epsilon.utils.render.animation.Easing;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -44,6 +45,7 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
     private static final TranslateComponent reloadComponent = EpsilonTranslateComponent.create("gui", "config.action.reload");
     private static final TranslateComponent exportComponent = EpsilonTranslateComponent.create("gui", "config.action.export");
     private static final TranslateComponent importComponent = EpsilonTranslateComponent.create("gui", "config.action.import");
+    private static final TranslateComponent openFolderComponent = EpsilonTranslateComponent.create("gui", "config.action.open_folder");
     private static final TranslateComponent deleteConfirmTitleComponent = EpsilonTranslateComponent.create("gui", "config.delete.confirm.title");
     private static final TranslateComponent deleteConfirmMessageComponent = EpsilonTranslateComponent.create("gui", "config.delete.confirm.message");
     private static final TranslateComponent deleteConfirmConfirmComponent = EpsilonTranslateComponent.create("gui", "config.delete.confirm.confirm");
@@ -54,6 +56,7 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
     private static final TranslateComponent reloadErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.reload");
     private static final TranslateComponent exportErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.export");
     private static final TranslateComponent importErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.import");
+    private static final TranslateComponent openFolderErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.open_folder");
     private static final TranslateComponent switchErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.switch");
     private static final TranslateComponent deleteErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.delete");
     private static final TranslateComponent deleteLastErrorComponent = EpsilonTranslateComponent.create("gui", "config.error.delete_last");
@@ -322,17 +325,17 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
         Color baseColor = switch (button.type()) {
             case SAVE_AS -> MD3Theme.PRIMARY_CONTAINER;
             case RELOAD -> MD3Theme.SECONDARY_CONTAINER;
-            case EXPORT, IMPORT -> MD3Theme.SURFACE_CONTAINER_HIGH;
+            case EXPORT, IMPORT, OPEN_FOLDER -> MD3Theme.SURFACE_CONTAINER_HIGH;
         };
         Color hoverColor = switch (button.type()) {
             case SAVE_AS -> MD3Theme.PRIMARY;
             case RELOAD -> MD3Theme.SECONDARY;
-            case EXPORT, IMPORT -> MD3Theme.SURFACE_CONTAINER_HIGHEST;
+            case EXPORT, IMPORT, OPEN_FOLDER -> MD3Theme.SURFACE_CONTAINER_HIGHEST;
         };
         Color textColor = switch (button.type()) {
             case SAVE_AS -> MD3Theme.ON_PRIMARY_CONTAINER;
             case RELOAD -> MD3Theme.ON_SECONDARY_CONTAINER;
-            case EXPORT, IMPORT -> MD3Theme.TEXT_PRIMARY;
+            case EXPORT, IMPORT, OPEN_FOLDER -> MD3Theme.TEXT_PRIMARY;
         };
 
         scope.roundRect(button.bounds().x(), button.bounds().y(), button.bounds().width(), button.bounds().height(),
@@ -399,6 +402,7 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
             case RELOAD -> tryReload();
             case EXPORT -> tryExport();
             case IMPORT -> tryImport();
+            case OPEN_FOLDER -> tryOpenFolder();
         }
     }
 
@@ -450,6 +454,15 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
             state.setConfigScroll(0.0f);
         } catch (Exception exception) {
             openErrorPopup(importErrorComponent::getTranslatedName, exception);
+        }
+    }
+
+    private void tryOpenFolder() {
+        try {
+            ConfigFolderOpener.openConfigFolder();
+        } catch (Exception exception) {
+            Constants.LOGGER.error("打开配置文件夹失败", exception);
+            openErrorPopup(openFolderErrorComponent::getTranslatedName, exception);
         }
     }
 
@@ -574,7 +587,7 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
     }
 
     private PanelLayout.Rect getInputSectionBounds(PanelLayout.Rect bounds) {
-        float inputHeight = FIELD_HEIGHT + BUTTON_HEIGHT + SECTION_GAP * 2.0f;
+        float inputHeight = FIELD_HEIGHT + BUTTON_HEIGHT * 2.0f + SECTION_GAP * 3.0f;
         return new PanelLayout.Rect(bounds.x(), bounds.bottom() - inputHeight, bounds.width(), inputHeight);
     }
 
@@ -593,11 +606,13 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
         float y = getInputFieldBounds(inputBounds).bottom() + SECTION_GAP;
         float gap = 4.0f;
         float width = (inputBounds.width() - gap * 3.0f) / 4.0f;
+        float secondRowY = y + BUTTON_HEIGHT + SECTION_GAP;
         return List.of(
                 new ActionButton(ActionButtonType.SAVE_AS, saveAsComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x(), y, width, BUTTON_HEIGHT)),
                 new ActionButton(ActionButtonType.RELOAD, reloadComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x() + width + gap, y, width, BUTTON_HEIGHT)),
                 new ActionButton(ActionButtonType.EXPORT, exportComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x() + (width + gap) * 2.0f, y, width, BUTTON_HEIGHT)),
-                new ActionButton(ActionButtonType.IMPORT, importComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x() + (width + gap) * 3.0f, y, width, BUTTON_HEIGHT))
+                new ActionButton(ActionButtonType.IMPORT, importComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x() + (width + gap) * 3.0f, y, width, BUTTON_HEIGHT)),
+                new ActionButton(ActionButtonType.OPEN_FOLDER, openFolderComponent.getTranslatedName(), new PanelLayout.Rect(inputBounds.x(), secondRowY, inputBounds.width(), BUTTON_HEIGHT))
         );
     }
 
@@ -648,7 +663,8 @@ public class ConfigClientSettingTab implements ClientSettingTabView {
         SAVE_AS,
         RELOAD,
         EXPORT,
-        IMPORT
+        IMPORT,
+        OPEN_FOLDER
     }
 
 }

@@ -60,6 +60,14 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
         }
     }
 
+    public void setModeSilently(String mode) {
+        for (E e : constants) {
+            if (Objects.equals(e.toString(), mode)) {
+                setValueSilently(e);
+            }
+        }
+    }
+
     public void setMode(E mode) {
         setValue(mode);
     }

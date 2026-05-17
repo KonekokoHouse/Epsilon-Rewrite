@@ -46,6 +46,10 @@ public abstract class Setting<V> {
         if (this.onChanged != null) this.onChanged.accept(value);
     }
 
+    public void setValueSilently(V value) {
+        this.value = value;
+    }
+
     public void reset() {
         this.value = this.defaultValue;
     }

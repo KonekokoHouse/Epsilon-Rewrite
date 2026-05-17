@@ -28,6 +28,8 @@
   "epsilon.gui.config.action.reload": "Reload",
   "epsilon.gui.config.action.export": "Export",
   "epsilon.gui.config.action.import": "Import",
+  "epsilon.gui.config.action.open_folder": "Open Folder",
+  "epsilon.gui.config.error.open_folder": "Failed to open config folder",
   "epsilon.gui.config.delete.confirm.title": "Delete Config",
   "epsilon.gui.config.delete.confirm.message": "Are you sure you want to delete this config?",
   "epsilon.gui.config.delete.confirm.confirm": "Delete",

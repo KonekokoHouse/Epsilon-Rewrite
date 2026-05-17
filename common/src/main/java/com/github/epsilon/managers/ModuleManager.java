@@ -165,11 +165,10 @@ public class ModuleManager {
 
         ClientSetting cs = ClientSetting.INSTANCE;
         if (keyCode == cs.guiKeybind.getValue() && action == InputConstants.PRESS) {
-            if (cs.guiMode.is(ClientSetting.GuiMode.Dropdown)) {
-                mc.setScreen(DropdownScreen.INSTANCE);
-            } else {
-                mc.setScreen(PanelScreen.INSTANCE);
-            }
+            mc.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+                case Panel -> PanelScreen.INSTANCE;
+                case Dropdown -> DropdownScreen.INSTANCE;
+            });
         }
 
         dispatchKeyBind(keyCode, action);

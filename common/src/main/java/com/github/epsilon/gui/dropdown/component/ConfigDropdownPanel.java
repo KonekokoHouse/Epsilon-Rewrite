@@ -7,6 +7,7 @@ import com.github.epsilon.gui.dropdown.DropdownTheme;
 import com.github.epsilon.gui.dropdown.widget.DropdownTextField;
 import com.github.epsilon.gui.panel.MD3Theme;
 import com.github.epsilon.managers.ConfigManager;
+import com.github.epsilon.utils.client.ConfigFolderOpener;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,6 +20,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
     private static final TranslateComponent reloadComponent = EpsilonTranslateComponent.create("gui", "config.action.reload");
     private static final TranslateComponent exportComponent = EpsilonTranslateComponent.create("gui", "config.action.export");
     private static final TranslateComponent importComponent = EpsilonTranslateComponent.create("gui", "config.action.import");
+    private static final TranslateComponent openFolderComponent = EpsilonTranslateComponent.create("gui", "config.action.open_folder");
     private static final TranslateComponent savedComponent = EpsilonTranslateComponent.create("gui", "dropdown.status.saved");
     private static final TranslateComponent reloadedComponent = EpsilonTranslateComponent.create("gui", "dropdown.status.reloaded");
     private static final TranslateComponent exportedComponent = EpsilonTranslateComponent.create("gui", "dropdown.status.exported");
@@ -43,7 +45,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
     @Override
     protected float computeContentHeight() {
         int configCount = ConfigManager.INSTANCE.listConfigs().size();
-        return PADDING * 2.0f + FIELD_HEIGHT + GAP + BUTTON_HEIGHT * 2.0f + GAP * 2.0f
+        return PADDING * 2.0f + FIELD_HEIGHT + GAP + BUTTON_HEIGHT * 3.0f + GAP * 3.0f
                 + Math.max(ROW_HEIGHT, configCount * (ROW_HEIGHT + GAP))
                 + (status.isEmpty() ? 0.0f : ROW_HEIGHT);
     }
@@ -62,13 +64,20 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                 saveAsComponent.getTranslatedName(),
                 reloadComponent.getTranslatedName(),
                 exportComponent.getTranslatedName(),
-                importComponent.getTranslatedName()
+                importComponent.getTranslatedName(),
+                openFolderComponent.getTranslatedName()
         };
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 2; col++) {
+        for (int row = 0; row < 3; row++) {
+            int columns = row == 2 ? 1 : 2;
+            for (int col = 0; col < columns; col++) {
                 int index = row * 2 + col;
+                if (index >= actions.length) continue;
                 float btnW = (contentW - GAP) * 0.5f;
                 float btnX = contentX + col * (btnW + GAP);
+                if (row == 2) {
+                    btnW = contentW;
+                    btnX = contentX;
+                }
                 float btnY = currentY + row * (BUTTON_HEIGHT + GAP);
                 boolean hovered = isHovered(mouseX, mouseY, btnX, btnY, btnW, BUTTON_HEIGHT);
                 renderer.roundRect().addRoundRect(btnX, btnY, btnW, BUTTON_HEIGHT, DropdownTheme.BUTTON_RADIUS,
@@ -77,7 +86,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                 renderer.text().addText(actions[index], btnX + (btnW - labelW) * 0.5f, btnY + 3.0f, 0.48f, MD3Theme.TEXT_PRIMARY);
             }
         }
-        currentY += BUTTON_HEIGHT * 2.0f + GAP * 2.0f;
+        currentY += BUTTON_HEIGHT * 3.0f + GAP * 3.0f;
 
         if (!status.isEmpty()) {
             renderer.text().addText(trimToWidth(status, 0.50f, contentW, renderer), contentX, currentY + 2.0f, 0.50f, MD3Theme.TEXT_MUTED);
@@ -120,11 +129,17 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
         inputField.blur();
         currentY += FIELD_HEIGHT + GAP;
 
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 2; col++) {
+        for (int row = 0; row < 3; row++) {
+            int columns = row == 2 ? 1 : 2;
+            for (int col = 0; col < columns; col++) {
                 int index = row * 2 + col;
+                if (index >= 5) continue;
                 float btnW = (contentW - GAP) * 0.5f;
                 float btnX = contentX + col * (btnW + GAP);
+                if (row == 2) {
+                    btnW = contentW;
+                    btnX = contentX;
+                }
                 float btnY = currentY + row * (BUTTON_HEIGHT + GAP);
                 if (isHovered(mouseX, mouseY, btnX, btnY, btnW, BUTTON_HEIGHT)) {
                     runAction(index);
@@ -132,7 +147,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                 }
             }
         }
-        currentY += BUTTON_HEIGHT * 2.0f + GAP * 2.0f;
+        currentY += BUTTON_HEIGHT * 3.0f + GAP * 3.0f;
         if (!status.isEmpty()) currentY += ROW_HEIGHT;
 
         for (String name : ConfigManager.INSTANCE.listConfigs()) {
@@ -189,6 +204,7 @@ public class ConfigDropdownPanel extends AbstractDropdownPanel {
                         status = importedComponent.getTranslatedName() + " " + imported;
                     }
                 }
+                case 4 -> status = openFolderComponent.getTranslatedName() + " " + ConfigFolderOpener.openConfigFolder();
                 default -> {
                 }
             }
