@@ -12,7 +12,6 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
-import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 
 import java.awt.*;
@@ -29,12 +28,12 @@ public class FilterShader {
             .get();
 
     private RenderPipeline pipeline;
-    private MappableRingBuffer uniforms;
+    private GpuBuffer uniforms;
     private RenderTarget input;
 
     private void ensureProgram() {
         if (this.uniforms == null) {
-            this.uniforms = new MappableRingBuffer(() -> "EpsilonFilterUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
+            this.uniforms = RenderSystem.getDevice().createBuffer(() -> "EpsilonFilterUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
         }
         if (this.pipeline == null) {
             this.pipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
@@ -90,7 +89,7 @@ public class FilterShader {
                 framebuffer.width, framebuffer.height
         );
 
-        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.currentBuffer(), false, true)) {
+        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms, false, true)) {
             Std140Builder.intoBuffer(view.data())
                     .putVec4(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
         }
@@ -102,12 +101,10 @@ public class FilterShader {
         )) {
             renderPass.setPipeline(this.pipeline);
             RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.setUniform("FilterColor", this.uniforms.currentBuffer());
+            renderPass.setUniform("FilterColor", this.uniforms);
             renderPass.bindTexture("InputSampler", this.input.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
             renderPass.draw(0, 6);
         }
-
-        this.uniforms.rotate();
     }
 
 }

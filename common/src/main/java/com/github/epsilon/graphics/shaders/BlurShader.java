@@ -10,7 +10,6 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
-import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
@@ -33,12 +32,12 @@ public class BlurShader {
             .get();
 
     private RenderPipeline pipeline;
-    private MappableRingBuffer uniforms;
+    private GpuBuffer uniforms;
     private RenderTarget input;
 
     private void ensureProgram() {
         if (this.uniforms == null) {
-            this.uniforms = new MappableRingBuffer(() -> "LuminBlurUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
+            this.uniforms = RenderSystem.getDevice().createBuffer(() -> "LuminBlurUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
         }
         if (this.pipeline == null) {
             this.pipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
@@ -93,7 +92,7 @@ public class BlurShader {
                 fb.width, fb.height
         );
 
-        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.currentBuffer(), false, true)) {
+        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms, false, true)) {
             Std140Builder builder = Std140Builder.intoBuffer(view.data());
             builder.putVec3(fb.width, fb.height, quality);
             builder.putVec4(pxW, pxH, pxX, pxY);
@@ -109,11 +108,10 @@ public class BlurShader {
             renderPass.setPipeline(pipeline);
             renderPass.enableScissor((int) pxX, (int) pxY, Math.max(0, (int) pxW), Math.max(0, (int) pxH));
             RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.setUniform("BlurUniforms", uniforms.currentBuffer());
+            renderPass.setUniform("BlurUniforms", this.uniforms);
             renderPass.bindTexture("InputSampler", input.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
             renderPass.draw(0, 3);
         }
-        uniforms.rotate();
     }
 
     public void render(float x, float y, float width, float height, float radius, float blurStrength) {
