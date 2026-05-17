@@ -11,6 +11,7 @@ import com.mojang.math.Axis;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 
@@ -66,6 +67,14 @@ public class HandsView extends Module {
             return false;
         }
         return isBlocking() && itemStack.is(ItemTags.WEAPON_ENCHANTABLE);
+    }
+
+    public boolean shouldApplyThirdPersonBlockingAnimation(Avatar avatar, HumanoidArm arm) {
+        if (avatar != mc.player || !isEnabled() || !blockingAnimation.getValue() || avatar.getMainArm() != arm) {
+            return false;
+        }
+        ItemStack itemStack = avatar.getItemInHand(InteractionHand.MAIN_HAND);
+        return !itemStack.isEmpty() && isBlocking() && itemStack.is(ItemTags.WEAPON_ENCHANTABLE);
     }
 
     public void applyBlockingTransform(PoseStack poseStack, HumanoidArm arm, float attack) {

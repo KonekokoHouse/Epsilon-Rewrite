@@ -22,7 +22,7 @@ public class NotificationManager {
 
     public void post(String title, String subTitle, NotificationMode mode, int displayTime) {
         makeRoomIfNeeded();
-        Notification notification = new Notification(title, subTitle, mode, displayTime, mc.getWindow().getGuiScaledHeight(), false);
+        Notification notification = new Notification(title, subTitle, mode, displayTime, getScreenHeight(), false);
         notifications.add(notification);
     }
 
@@ -49,7 +49,7 @@ public class NotificationManager {
         makeRoomIfNeeded();
         String title = enabled ? enableComponent.getTranslatedName() : disableComponent.getTranslatedName();
         NotificationMode mode = enabled ? NotificationMode.Success : NotificationMode.Error;
-        Notification notification = new Notification(hashCode, title, moduleName, mode, displayTime, mc.getWindow().getGuiScaledHeight(), true);
+        Notification notification = new Notification(hashCode, title, moduleName, mode, displayTime, getScreenHeight(), true);
         notifications.add(notification);
         hashCodeMap.put(hashCode, notification);
     }
@@ -86,6 +86,13 @@ public class NotificationManager {
                 hashCodeMap.remove(oldest.getHashCode());
             }
         }
+    }
+
+    private float getScreenHeight() {
+        if (mc.getWindow() == null) {
+            return 0;
+        }
+        return mc.getWindow().getGuiScaledHeight();
     }
 
 }

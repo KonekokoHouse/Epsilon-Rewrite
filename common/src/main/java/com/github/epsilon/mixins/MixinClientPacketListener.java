@@ -25,7 +25,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Inject(method = "handleRespawn", at = @At("RETURN"))
-    private void onHandleRespawn(ClientboundRespawnPacket packet, CallbackInfo ci) {
+    private void onHandleRespawnReturn(ClientboundRespawnPacket packet, CallbackInfo ci) {
         EventBus.INSTANCE.post(new RespawnEvent());
     }
 

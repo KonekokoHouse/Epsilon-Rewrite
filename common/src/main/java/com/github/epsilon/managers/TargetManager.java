@@ -8,6 +8,7 @@ import com.github.epsilon.utils.rotation.RotationUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
@@ -87,7 +88,7 @@ public class TargetManager {
         List<LivingEntity> targets = new ArrayList<>();
 
         for (Entity entity : mc.level.entitiesForRendering()) {
-            if (!(entity instanceof LivingEntity living)) continue;
+            if (!(entity instanceof LivingEntity living) || entity instanceof ArmorStand) continue;
             if (living == mc.player) continue;
             if (!isValidTarget(living, request)) continue;
             targets.add(living);

@@ -95,8 +95,8 @@ public abstract class HudModule extends Module {
     }
 
     private void applyRenderPosition(float renderX, float renderY, boolean updateAnchors) {
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        int screenWidth = getScreenWidth();
+        int screenHeight = getScreenHeight();
         float clampedX = Mth.clamp(renderX, 0.0f, Math.max(0.0f, screenWidth - width));
         float clampedY = Mth.clamp(renderY, 0.0f, Math.max(0.0f, screenHeight - height));
 
@@ -114,11 +114,26 @@ public abstract class HudModule extends Module {
     }
 
     private float getAnchoredRenderX() {
-        return HudLayoutHelper.getRenderX(horizontalAnchor, anchorX, width, mc.getWindow().getGuiScaledWidth());
+        int screenWidth = getScreenWidth();
+        return HudLayoutHelper.getRenderX(horizontalAnchor, anchorX, width, screenWidth);
     }
 
     private float getAnchoredRenderY() {
-        return HudLayoutHelper.getRenderY(verticalAnchor, anchorY, height, mc.getWindow().getGuiScaledHeight());
+        return HudLayoutHelper.getRenderY(verticalAnchor, anchorY, height, getScreenHeight());
+    }
+
+    private int getScreenWidth() {
+        if (mc.getWindow() == null) {
+            return 0;
+        }
+        return mc.getWindow().getGuiScaledWidth();
+    }
+
+    private int getScreenHeight() {
+        if (mc.getWindow() == null) {
+            return 0;
+        }
+        return mc.getWindow().getGuiScaledHeight();
     }
 
     public abstract void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker);
