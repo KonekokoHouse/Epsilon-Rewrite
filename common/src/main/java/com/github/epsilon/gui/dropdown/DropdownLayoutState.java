@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public final class DropdownLayoutState {
+public class DropdownLayoutState {
 
     private static final String FILE_NAME = "dropdown-layout.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
