@@ -109,7 +109,7 @@ public class Stealer extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        Screen currentScreen = mc.screen;
+        Screen currentScreen = mc.gui.screen();
         if (currentScreen instanceof ContainerScreen container) {
             ChestMenu menu = container.getMenu();
             if (currentScreen != this.lastTickScreen) {

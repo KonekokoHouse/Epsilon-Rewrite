@@ -16,8 +16,8 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.awt.*;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 public class TriangleRenderer implements IRenderer {
 
@@ -32,11 +32,11 @@ public class TriangleRenderer implements IRenderer {
     private boolean scissorEnabled = false;
     private int scissorX, scissorY, scissorW, scissorH;
 
-    private TriangleRenderer() {
-    }
-
     public static TriangleRenderer create() {
         return RendererHolder.INSTANCE.register(new TriangleRenderer());
+    }
+
+    private TriangleRenderer() {
     }
 
     public void addChevronTriangle(float centerX, float centerY, float size, float progress, Color color) {
@@ -94,6 +94,10 @@ public class TriangleRenderer implements IRenderer {
     }
 
     public void setScissor(int x, int y, int width, int height) {
+        if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+            return;
+        }
+
         scissorEnabled = true;
         scissorX = x;
         scissorY = y;
@@ -120,15 +124,15 @@ public class TriangleRenderer implements IRenderer {
         if (colorView == null) return;
 
         GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(
-                RenderSystem.getModelViewMatrix(),
+                RenderSystem.getModelViewMatrixCopy(),
                 new Vector4f(1, 1, 1, 1),
                 new Vector3f(0, 0, 0),
-                TextureTransform.DEFAULT_TEXTURING.getMatrix()
+                TextureTransform.DEFAULT_TEXTURING.createMatrix()
         );
 
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                 () -> "Triangle Draw",
-                colorView, OptionalInt.empty(),
+                colorView, Optional.empty(),
                 depthView, OptionalDouble.empty())
         ) {
             pass.setPipeline(LuminRenderPipelines.TRIANGLE);
@@ -137,8 +141,8 @@ public class TriangleRenderer implements IRenderer {
             }
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", dynamicUniforms);
-            pass.setVertexBuffer(0, buffer.getGpuBuffer());
-            pass.draw(0, vertexCount);
+            pass.setVertexBuffer(0, new GpuBufferSlice(buffer.getGpuBuffer(), 0, buffer.getGpuBuffer().size()));
+            pass.draw(vertexCount, 1, 0, 0);
         }
     }
 

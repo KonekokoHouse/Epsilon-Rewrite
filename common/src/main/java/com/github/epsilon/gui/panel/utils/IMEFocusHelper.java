@@ -17,7 +17,7 @@ public class IMEFocusHelper {
      * Call this whenever a custom text field gains focus.
      */
     public static void activate() {
-        Screen screen = mc.screen;
+        Screen screen = mc.gui.screen();
         if (screen != null) {
             mc.onTextInputFocusChange(screen, true);
         }
@@ -33,7 +33,7 @@ public class IMEFocusHelper {
      * releasing the IME composition lock.</p>
      */
     public static void deactivate() {
-        Screen screen = mc.screen;
+        Screen screen = mc.gui.screen();
         if (screen != null) {
             mc.onTextInputFocusChange(screen, false);
         }

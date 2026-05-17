@@ -570,7 +570,7 @@ public class SafeAnchor extends Module {
         }
 
         Vec3 playerPos = mc.player.position();
-        Vec3 anchorPosVec = currentAnchorPos.getCenter();
+        Vec3 anchorPosVec = Vec3.atCenterOf(currentAnchorPos);
 
         for (double i = 0.3; i <= 0.7; i += 0.1) {
             Vec3 posVec = playerPos.lerp(anchorPosVec, i);
@@ -621,7 +621,7 @@ public class SafeAnchor extends Module {
     }
 
     private boolean isExplosionSafe() {
-        float damage = DamageUtils.anchorDamage(mc.player, currentAnchorPos.getCenter(), DamageUtils.ArmorEnchantmentMode.PPBP);
+        float damage = DamageUtils.anchorDamage(mc.player, Vec3.atCenterOf(currentAnchorPos), DamageUtils.ArmorEnchantmentMode.PPBP);
         float health = mc.player.getHealth() + mc.player.getAbsorptionAmount();
 
         return (health - damage) > minHealth.getValue().floatValue();

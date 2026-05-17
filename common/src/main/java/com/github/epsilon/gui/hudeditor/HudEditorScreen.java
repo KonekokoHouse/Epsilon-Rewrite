@@ -247,7 +247,7 @@ public class HudEditorScreen extends Screen {
         IMEFocusHelper.deactivate();
         super.onClose();
 
-        minecraft.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+        minecraft.gui.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
             case Panel -> PanelScreen.INSTANCE;
             case Dropdown -> DropdownScreen.INSTANCE;
         });

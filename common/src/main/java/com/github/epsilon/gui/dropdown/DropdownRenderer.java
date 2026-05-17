@@ -1,6 +1,7 @@
 package com.github.epsilon.gui.dropdown;
 
 import com.github.epsilon.graphics.renderers.*;
+import net.minecraft.client.Minecraft;
 
 import static com.github.epsilon.Constants.mc;
 
@@ -58,6 +59,15 @@ public final class DropdownRenderer {
         int y = Math.round((guiHeight - guiY - guiH) * scale);
         int w = Math.round(guiW * scale);
         int h = Math.round(guiH * scale);
+
+        int fbWidth = Minecraft.getInstance().getWindow().getWidth();
+        int fbHeight = Minecraft.getInstance().getWindow().getHeight();
+        if (x < 0) { w += x; x = 0; }
+        if (y < 0) { h += y; y = 0; }
+        if (x + w > fbWidth) w = fbWidth - x;
+        if (y + h > fbHeight) h = fbHeight - y;
+        if (w <= 0 || h <= 0) return;
+
         Slot slot = current();
         setScissorOn(slot.shadow, x, y, w, h);
         setScissorOn(slot.roundRect, x, y, w, h);

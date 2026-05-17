@@ -1,6 +1,7 @@
 package com.github.epsilon.utils.render.esp;
 
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
+import com.github.epsilon.graphics.immediate.LuminImmediateRenderer;
 import com.github.epsilon.utils.render.ColorUtils;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -11,18 +12,12 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 
 import java.awt.*;
-import java.util.function.Function;
 
 import static com.github.epsilon.Constants.mc;
 
@@ -50,19 +45,10 @@ public class FireflyESP {
             .withCull(false)
             .build();
 
-    private static final Function<RenderPipeline, RenderType> TARGET_ICON_LAYER = Util.memoize(
-            renderPipeline -> RenderType.create("epsilon_target_icon", RenderSetup.builder(renderPipeline)
-                    .withTexture("Sampler0", FIREFLY_TEX)
-                    .sortOnUpload()
-                    .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .setOutputTarget(OutputTarget.MAIN_TARGET)
-                    .createRenderSetup())
-    );
-
     public static void render(PoseStack stack, LivingEntity target, int espLength, int factor, double shaking, double amplitude, Color color, ColorMode colorMode, Color secondColor, double colorMix, double colorSpeed, double rainbowSpeed, double rainbowSaturation, double rainbowBrightness) {
         boolean canSee = mc.player.hasLineOfSight(target);
 
-        Camera camera = mc.gameRenderer.getMainCamera();
+        Camera camera = mc.gameRenderer.mainCamera();
         float tickDelta = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
         double tPosX = Mth.lerp(tickDelta, target.xOld, target.getX()) - camera.position().x;
@@ -70,7 +56,8 @@ public class FireflyESP {
         double tPosZ = Mth.lerp(tickDelta, target.zOld, target.getZ()) - camera.position().z;
         float iAge = (float) (target.tickCount - 1) + tickDelta;
 
-        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        RenderPipeline usePipeline = canSee ? TARGET_ICON_PIPELINE : TARGET_ICON_NO_DEPTH_PIPELINE;
+        LuminImmediateRenderer.PosTexColorQuads builder = LuminImmediateRenderer.beginPosTexColorQuads(usePipeline, FIREFLY_TEX);
 
         for (int j = 0; j < 3; j++) {
             for (int i = 0; i <= espLength; i++) {
@@ -103,16 +90,16 @@ public class FireflyESP {
                         (float) rainbowBrightness
                 ).getRGB();
 
-                buffer.addVertex(matrix, -scale, scale, 0).setUv(0f, 1f).setColor(renderColor);
-                buffer.addVertex(matrix, scale, scale, 0).setUv(1f, 1f).setColor(renderColor);
-                buffer.addVertex(matrix, scale, -scale, 0).setUv(1f, 0f).setColor(renderColor);
-                buffer.addVertex(matrix, -scale, -scale, 0).setUv(0f, 0f).setColor(renderColor);
+                builder.vertex(matrix, -scale, scale, 0, 0f, 1f, renderColor);
+                builder.vertex(matrix, scale, scale, 0, 1f, 1f, renderColor);
+                builder.vertex(matrix, scale, -scale, 0, 1f, 0f, renderColor);
+                builder.vertex(matrix, -scale, -scale, 0, 0f, 0f, renderColor);
 
                 stack.popPose();
             }
         }
 
-        TARGET_ICON_LAYER.apply(canSee ? TARGET_ICON_PIPELINE : TARGET_ICON_NO_DEPTH_PIPELINE).draw(buffer.buildOrThrow());
+        builder.end();
     }
 
     private static Color resolveColor(float age, int index, int ringIndex, int espLength, ColorMode mode, Color primaryColor, Color secondaryColor, float mixAmount, float blendSpeed, float rainbowSpeed, float rainbowSaturation, float rainbowBrightness) {

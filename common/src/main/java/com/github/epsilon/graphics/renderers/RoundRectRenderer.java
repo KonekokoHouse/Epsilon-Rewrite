@@ -6,14 +6,15 @@ import com.github.epsilon.graphics.LuminRenderSystem;
 import com.github.epsilon.graphics.buffer.LuminRingBuffer;
 import com.github.epsilon.graphics.elements.RoundRectElement;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.util.ARGB;
 import org.lwjgl.system.MemoryUtil;
 
 import java.awt.*;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 public class RoundRectRenderer implements IRenderer {
 
@@ -121,16 +122,16 @@ public class RoundRectRenderer implements IRenderer {
         if (info == null || info.colorView() == null) return;
 
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                () -> "Round Rect Draw", info.colorView(), OptionalInt.empty(),
+                () -> "Round Rect Draw", info.colorView(), Optional.empty(),
                 info.depthView(), OptionalDouble.empty())
         ) {
             pass.setPipeline(LuminRenderPipelines.ROUND_RECT);
             if (scissorEnabled) pass.enableScissor(scissorX, scissorY, scissorW, scissorH);
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", info.dynamicUniforms());
-            pass.setVertexBuffer(0, buffer.getGpuBuffer());
+            pass.setVertexBuffer(0, new GpuBufferSlice(buffer.getGpuBuffer(), 0, buffer.getGpuBuffer().size()));
             pass.setIndexBuffer(info.ibo(), info.autoIndices().type());
-            pass.drawIndexed(0, 0, info.indexCount(), 1);
+            pass.drawIndexed(info.indexCount(), 1, 0, 0, 0);
         }
     }
 
@@ -150,7 +151,7 @@ public class RoundRectRenderer implements IRenderer {
     }
 
     public void setScissor(int x, int y, int width, int height) {
-        if (x < 0 || y < 0) {
+        if (x < 0 || y < 0 || width <= 0 || height <= 0) {
             return;
         }
 

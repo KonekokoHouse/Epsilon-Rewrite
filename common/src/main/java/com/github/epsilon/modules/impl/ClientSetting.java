@@ -56,13 +56,13 @@ public class ClientSetting extends Module {
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
     public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown, _ -> {
-        mc.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+        mc.gui.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
             case Panel -> PanelScreen.INSTANCE;
             case Dropdown -> DropdownScreen.INSTANCE;
         });
     }).group(sgGeneral);
 
-    private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
+    private final ButtonSetting openHudEditor = buttonSetting("Open Hud Editor", () -> mc.gui.setScreen(HudEditorScreen.INSTANCE)).group(sgGeneral);
 
     public final BoolSetting i18nFallback = boolSetting("I18n Fallback", true, _ -> {
         TranslateHolder.INSTANCE.refresh();

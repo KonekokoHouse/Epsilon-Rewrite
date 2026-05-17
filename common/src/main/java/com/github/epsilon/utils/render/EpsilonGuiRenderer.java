@@ -1,23 +1,17 @@
 package com.github.epsilon.utils.render;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.logging.LogUtils;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -31,6 +25,7 @@ import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.client.renderer.state.WindowRenderState;
 import net.minecraft.client.renderer.state.gui.*;
 import net.minecraft.client.renderer.state.gui.pip.OversizedItemRenderState;
+import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.profiling.Profiler;
@@ -38,18 +33,13 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.joml.Matrix3x2fc;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.joml.Vector4fc;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
-import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.function.Supplier;
-
-import static com.github.epsilon.Constants.mc;
 
 public class EpsilonGuiRenderer implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -59,7 +49,7 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     public static final int GUI_3D_Z_FAR = 1000;
     public static final int GUI_3D_Z_NEAR = -1000;
     public static final int DEFAULT_ITEM_SIZE = 16;
-    public static final int CLEAR_COLOR = 0;
+    public static final Vector4fc CLEAR_COLOR = new Vector4f(0.0F);
     private static final Comparator<ScreenRectangle> SCISSOR_COMPARATOR = Comparator.nullsFirst(
             Comparator.comparing(ScreenRectangle::top)
                     .thenComparing(ScreenRectangle::bottom)
@@ -74,33 +64,22 @@ public class EpsilonGuiRenderer implements AutoCloseable {
             .thenComparing(GuiElementRenderState::textureSetup, TEXTURE_COMPARATOR);
     private final Map<Object, OversizedItemRenderer> oversizedItemRenderers = new Object2ObjectOpenHashMap<>();
     private final GuiRenderState renderState;
-    private final List<EpsilonGuiRenderer.Draw> draws = new ArrayList<>();
-    private final List<EpsilonGuiRenderer.MeshToDraw> meshesToDraw = new ArrayList<>();
-    private final ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(786432);
-    private final Map<VertexFormat, MappableRingBuffer> vertexBuffers = new Object2ObjectOpenHashMap<>();
+    private final List<Draw> draws = new ArrayList<>();
+    private final StagedVertexBuffer vertexBuffer = new StagedVertexBuffer(() -> "GUI Vertex Buffer", 786432);
     private int firstDrawIndexAfterBlur = Integer.MAX_VALUE;
     private final Projection guiProjection = new Projection();
     private final ProjectionMatrixBuffer guiProjectionMatrixBuffer = new ProjectionMatrixBuffer("gui");
-    private final MultiBufferSource.BufferSource bufferSource;
-    private final SubmitNodeCollector submitNodeCollector;
     private final FeatureRenderDispatcher featureRenderDispatcher;
-    private GuiItemAtlas itemAtlas;
+    private @Nullable GuiItemAtlas itemAtlas;
     private int cachedGuiScale;
     private final CubeMap cubeMap = new CubeMap(Identifier.withDefaultNamespace("textures/gui/title/background/panorama"));
-    private ScreenRectangle previousScissorArea = null;
-    private RenderPipeline previousPipeline = null;
-    private TextureSetup previousTextureSetup = null;
-    private BufferBuilder bufferBuilder = null;
+    private @Nullable ScreenRectangle previousScissorArea = null;
+    private @Nullable RenderPipeline previousPipeline = null;
+    private @Nullable TextureSetup previousTextureSetup = null;
+    private StagedVertexBuffer.@Nullable Draw previousDraw;
 
-    public EpsilonGuiRenderer(
-            GuiRenderState renderState,
-            MultiBufferSource.BufferSource bufferSource,
-            SubmitNodeCollector submitNodeCollector,
-            FeatureRenderDispatcher featureRenderDispatcher
-    ) {
+    public EpsilonGuiRenderer(GuiRenderState renderState, FeatureRenderDispatcher featureRenderDispatcher) {
         this.renderState = renderState;
-        this.bufferSource = bufferSource;
-        this.submitNodeCollector = submitNodeCollector;
         this.featureRenderDispatcher = featureRenderDispatcher;
     }
 
@@ -110,7 +89,7 @@ public class EpsilonGuiRenderer implements AutoCloseable {
         }
     }
 
-    public void render(GpuBufferSlice fogBuffer) {
+    public void render() {
         ProfilerFiller profiler = Profiler.get();
         if (this.renderState.panoramaRenderState != null) {
             this.cubeMap.render(10.0F, this.renderState.panoramaRenderState.spin());
@@ -118,17 +97,14 @@ public class EpsilonGuiRenderer implements AutoCloseable {
 
         profiler.push("prepare");
         this.prepare();
+        profiler.popPush("upload");
+        this.vertexBuffer.upload();
         profiler.popPush("draw");
-        this.draw(fogBuffer);
-        profiler.popPush("vertexBufferRotate");
-
-        for (MappableRingBuffer buffer : this.vertexBuffers.values()) {
-            buffer.rotate();
-        }
-
-        profiler.pop();
+        this.draw();
+        profiler.popPush("endFrame");
+        this.vertexBuffer.endDraw();
+        this.vertexBuffer.endFrame();
         this.draws.clear();
-        this.meshesToDraw.clear();
         this.renderState.reset();
         this.firstDrawIndexAfterBlur = Integer.MAX_VALUE;
         this.clearUnusedOversizedItemRenderers();
@@ -136,13 +112,15 @@ public class EpsilonGuiRenderer implements AutoCloseable {
             RenderPipeline.updateSortKeySeed();
             TextureSetup.updateSortKeySeed();
         }
+
+        profiler.pop();
     }
 
     private void clearUnusedOversizedItemRenderers() {
-        Iterator<Entry<Object, OversizedItemRenderer>> oversizedItemRendererIterator = this.oversizedItemRenderers.entrySet().iterator();
+        Iterator<Map.Entry<Object, OversizedItemRenderer>> oversizedItemRendererIterator = this.oversizedItemRenderers.entrySet().iterator();
 
         while (oversizedItemRendererIterator.hasNext()) {
-            Entry<Object, OversizedItemRenderer> next = oversizedItemRendererIterator.next();
+            Map.Entry<Object, OversizedItemRenderer> next = oversizedItemRendererIterator.next();
             OversizedItemRenderer renderer = next.getValue();
             if (!renderer.usedOnThisFrame()) {
                 renderer.close();
@@ -154,103 +132,61 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     }
 
     private void prepare() {
-        this.bufferSource.endBatch();
         this.prepareItemElements();
         this.prepareText();
         this.renderState.sortElements(ELEMENT_SORT_COMPARATOR);
         this.addElementsToMeshes(GuiRenderState.TraverseRange.BEFORE_BLUR);
-        this.firstDrawIndexAfterBlur = this.meshesToDraw.size();
+        this.firstDrawIndexAfterBlur = this.draws.size();
         this.addElementsToMeshes(GuiRenderState.TraverseRange.AFTER_BLUR);
-        this.recordDraws();
     }
 
     private void addElementsToMeshes(GuiRenderState.TraverseRange range) {
         this.previousScissorArea = null;
         this.previousPipeline = null;
         this.previousTextureSetup = null;
-        this.bufferBuilder = null;
+        this.previousDraw = null;
         this.renderState.forEachElement(this::addElementToMesh, range);
-        if (this.bufferBuilder != null) {
-            this.recordMesh(this.bufferBuilder, this.previousPipeline, this.previousTextureSetup, this.previousScissorArea);
-        }
     }
 
-    private void draw(GpuBufferSlice fogBuffer) {
+    private void draw() {
         if (!this.draws.isEmpty()) {
-            WindowRenderState windowState = mc.gameRenderer.getGameRenderState().windowRenderState;
+            Minecraft minecraft = Minecraft.getInstance();
+            WindowRenderState windowState = minecraft.gameRenderer.gameRenderState().windowRenderState;
             this.guiProjection
-                    .setupOrtho(1000.0F, 11000.0F, (float) windowState.width / windowState.guiScale, (float) windowState.height / windowState.guiScale, true);
+                    .setupOrtho(1000.0F, 11000.0F, (float)windowState.width / windowState.guiScale, (float)windowState.height / windowState.guiScale, true);
             RenderSystem.setProjectionMatrix(this.guiProjectionMatrixBuffer.getBuffer(this.guiProjection), ProjectionType.ORTHOGRAPHIC);
-            RenderTarget mainRenderTarget = mc.getMainRenderTarget();
-            int maxIndexCount = 0;
-
-            for (EpsilonGuiRenderer.Draw draw : this.draws) {
-                if (draw.indexCount > maxIndexCount) {
-                    maxIndexCount = draw.indexCount;
-                }
-            }
-
-            RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-            GpuBuffer indexBuffer = autoIndices.getBuffer(maxIndexCount);
-            VertexFormat.IndexType indexType = autoIndices.type();
-            GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
-                    .writeTransform(new Matrix4f().setTranslation(0.0F, 0.0F, -11000.0F), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
+            RenderTarget mainRenderTarget = minecraft.gameRenderer.mainRenderTarget();
+            GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f().setTranslation(0.0F, 0.0F, -11000.0F));
             if (this.firstDrawIndexAfterBlur > 0) {
                 this.executeDrawRange(
-                        () -> "GUI before blur",
-                        mainRenderTarget,
-                        fogBuffer,
-                        dynamicTransforms,
-                        indexBuffer,
-                        indexType,
-                        0,
-                        Math.min(this.firstDrawIndexAfterBlur, this.draws.size())
+                        () -> "GUI before blur", mainRenderTarget, dynamicTransforms, 0, Math.min(this.firstDrawIndexAfterBlur, this.draws.size())
                 );
             }
 
             if (this.draws.size() > this.firstDrawIndexAfterBlur) {
-                RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-                mc.gameRenderer.processBlurEffect();
-                this.executeDrawRange(
-                        () -> "GUI after blur",
-                        mainRenderTarget,
-                        fogBuffer,
-                        dynamicTransforms,
-                        indexBuffer,
-                        indexType,
-                        this.firstDrawIndexAfterBlur,
-                        this.draws.size()
-                );
+                RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 0.0);
+                minecraft.gameRenderer.processBlurEffect();
+                this.executeDrawRange(() -> "GUI after blur", mainRenderTarget, dynamicTransforms, this.firstDrawIndexAfterBlur, this.draws.size());
             }
         }
     }
 
-    private void executeDrawRange(
-            Supplier<String> label,
-            RenderTarget mainRenderTarget,
-            GpuBufferSlice fogBuffer,
-            GpuBufferSlice dynamicTransforms,
-            GpuBuffer indexBuffer,
-            VertexFormat.IndexType indexType,
-            int startIndex,
-            int endIndex
-    ) {
+    private void executeDrawRange(Supplier<String> label, RenderTarget mainRenderTarget, GpuBufferSlice dynamicTransforms, int startIndex, int endIndex) {
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()
                 .createRenderPass(
                         label,
                         mainRenderTarget.getColorTextureView(),
-                        OptionalInt.empty(),
+                        Optional.empty(),
                         mainRenderTarget.useDepth ? mainRenderTarget.getDepthTextureView() : null,
                         OptionalDouble.empty()
                 )) {
             RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.setUniform("Fog", fogBuffer);
             renderPass.setUniform("DynamicTransforms", dynamicTransforms);
 
             for (int i = startIndex; i < endIndex; i++) {
-                EpsilonGuiRenderer.Draw draw = this.draws.get(i);
-                this.executeDraw(draw, renderPass, indexBuffer, indexType);
+                Draw draw = this.draws.get(i);
+                this.executeDraw(draw, renderPass);
             }
         }
     }
@@ -259,18 +195,18 @@ public class EpsilonGuiRenderer implements AutoCloseable {
         RenderPipeline pipeline = elementState.pipeline();
         TextureSetup textureSetup = elementState.textureSetup();
         ScreenRectangle scissorArea = elementState.scissorArea();
-        if (pipeline != this.previousPipeline || this.scissorChanged(scissorArea, this.previousScissorArea) || !textureSetup.equals(this.previousTextureSetup)) {
-            if (this.bufferBuilder != null) {
-                this.recordMesh(this.bufferBuilder, this.previousPipeline, this.previousTextureSetup, this.previousScissorArea);
-            }
-
-            this.bufferBuilder = this.getBufferBuilder(pipeline);
+        if (this.previousDraw == null
+                || pipeline != this.previousPipeline
+                || this.scissorChanged(scissorArea, this.previousScissorArea)
+                || !textureSetup.equals(this.previousTextureSetup)) {
             this.previousPipeline = pipeline;
             this.previousTextureSetup = textureSetup;
             this.previousScissorArea = scissorArea;
+            this.previousDraw = this.vertexBuffer.appendDraw(pipeline.getVertexFormatBinding(0), pipeline.getPrimitiveTopology());
+            this.draws.add(new Draw(this.previousDraw, pipeline, textureSetup, scissorArea));
         }
 
-        elementState.buildVertices(this.bufferBuilder);
+        elementState.buildVertices(this.vertexBuffer.getVertexBuilder(Objects.requireNonNull(this.previousDraw)));
     }
 
     private void prepareText() {
@@ -278,22 +214,9 @@ public class EpsilonGuiRenderer implements AutoCloseable {
             final Matrix3x2fc pose = text.pose;
             final ScreenRectangle scissor = text.scissor;
             text.ensurePrepared().visit(new Font.GlyphVisitor() {
-                {
-                    Objects.requireNonNull(EpsilonGuiRenderer.this);
-                }
-
                 @Override
-                public void acceptGlyph(TextRenderable.Styled glyph) {
-                    this.accept(glyph);
-                }
-
-                @Override
-                public void acceptEffect(TextRenderable effect) {
-                    this.accept(effect);
-                }
-
-                private void accept(TextRenderable glyph) {
-                    EpsilonGuiRenderer.this.renderState.addGlyphToCurrentLayer(new GlyphRenderState(pose, glyph, scissor));
+                public void acceptRenderable(TextRenderable renderable) {
+                    renderState.addGlyphToCurrentLayer(new GlyphRenderState(pose, renderable, scissor));
                 }
             });
         });
@@ -322,12 +245,12 @@ public class EpsilonGuiRenderer implements AutoCloseable {
                                     if (itemState.oversizedItemBounds() != null) {
                                         TrackingItemStackRenderState itemStackRenderState = itemState.itemStackRenderState();
                                         OversizedItemRenderer oversizedItemRenderer = this.oversizedItemRenderers
-                                                .computeIfAbsent(itemStackRenderState.getModelIdentity(), key -> new OversizedItemRenderer(this.bufferSource));
+                                                .computeIfAbsent(itemStackRenderState.getModelIdentity(), var0 -> new OversizedItemRenderer());
                                         ScreenRectangle actualItemBounds = itemState.oversizedItemBounds();
                                         OversizedItemRenderState oversizedItemRenderState = new OversizedItemRenderState(
                                                 itemState, actualItemBounds.left(), actualItemBounds.top(), actualItemBounds.right(), actualItemBounds.bottom()
                                         );
-                                        oversizedItemRenderer.prepare(oversizedItemRenderState, this.renderState, guiScale);
+                                        oversizedItemRenderer.prepare(oversizedItemRenderState, this.renderState, this.featureRenderDispatcher, guiScale);
                                     }
                                 }
                         );
@@ -360,29 +283,26 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     private GuiItemAtlas prepareItemAtlas(Set<Object> itemsInFrame, int slotTextureSize) {
         if (this.itemAtlas != null && this.itemAtlas.tryPrepareFor(itemsInFrame)) {
             return this.itemAtlas;
-        } else {
-            int newTextureSize = GuiItemAtlas.computeTextureSizeFor(slotTextureSize, itemsInFrame.size());
-            if (this.itemAtlas != null && this.itemAtlas.textureSize() == newTextureSize) {
-                LOGGER.warn(
-                        "Too many items ({}) in UI, some will be skipped! (Reached maximum texture size {}x{})",
-                        itemsInFrame.size(),
-                        newTextureSize,
-                        newTextureSize
-                );
-                return this.itemAtlas;
-            } else {
-                if (this.itemAtlas != null) {
-                    this.itemAtlas.close();
-                }
-
-                this.itemAtlas = new GuiItemAtlas(this.submitNodeCollector, this.featureRenderDispatcher, this.bufferSource, newTextureSize, slotTextureSize);
-                return this.itemAtlas;
-            }
         }
+
+        int newTextureSize = GuiItemAtlas.computeTextureSizeFor(slotTextureSize, itemsInFrame.size());
+        if (this.itemAtlas != null && this.itemAtlas.textureSize() == newTextureSize) {
+            LOGGER.warn(
+                    "Too many items ({}) in UI, some will be skipped! (Reached maximum texture size {}x{})", itemsInFrame.size(), newTextureSize, newTextureSize
+            );
+            return this.itemAtlas;
+        }
+
+        if (this.itemAtlas != null) {
+            this.itemAtlas.close();
+        }
+
+        this.itemAtlas = new GuiItemAtlas(this.featureRenderDispatcher, newTextureSize, slotTextureSize);
+        return this.itemAtlas;
     }
 
     private int getGuiScaleInvalidatingItemAtlasIfChanged() {
-        int guiScale = mc.gameRenderer.getGameRenderState().windowRenderState.guiScale;
+        int guiScale = Minecraft.getInstance().gameRenderer.gameRenderState().windowRenderState.guiScale;
         if (guiScale != this.cachedGuiScale) {
             this.invalidateItemAtlas();
 
@@ -403,114 +323,34 @@ public class EpsilonGuiRenderer implements AutoCloseable {
         }
     }
 
-    private void recordMesh(BufferBuilder bufferBuilder, RenderPipeline pipeline, TextureSetup textureSetup, @Nullable ScreenRectangle scissorArea) {
-        MeshData mesh = bufferBuilder.build();
-        if (mesh != null) {
-            this.meshesToDraw.add(new EpsilonGuiRenderer.MeshToDraw(mesh, pipeline, textureSetup, scissorArea));
-        }
-    }
-
-    private void recordDraws() {
-        this.ensureVertexBufferSizes();
-        CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
-        Object2IntMap<VertexFormat> offsets = new Object2IntOpenHashMap<>();
-
-        for (EpsilonGuiRenderer.MeshToDraw meshToDraw : this.meshesToDraw) {
-            MeshData mesh = meshToDraw.mesh;
-            MeshData.DrawState drawState = mesh.drawState();
-            VertexFormat format = drawState.format();
-            MappableRingBuffer vertexBuffer = this.vertexBuffers.get(format);
-            if (!offsets.containsKey(format)) {
-                offsets.put(format, 0);
+    private void executeDraw(Draw draw, RenderPass renderPass) {
+        StagedVertexBuffer.ExecuteInfo executeInfo = this.vertexBuffer.getExecuteInfo(draw.draw);
+        if (executeInfo != null) {
+            RenderPipeline pipeline = draw.pipeline();
+            renderPass.setPipeline(pipeline);
+            renderPass.setVertexBuffer(0, executeInfo.vertexBuffer().slice());
+            ScreenRectangle scissorArea = draw.scissorArea();
+            if (scissorArea != null) {
+                this.enableScissor(scissorArea, renderPass);
+            } else {
+                renderPass.disableScissor();
             }
 
-            ByteBuffer meshVertexBuffer = mesh.vertexBuffer();
-            int meshBufferSize = meshVertexBuffer.remaining();
-            int offset = offsets.getInt(format);
-
-            try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(vertexBuffer.currentBuffer().slice(offset, meshBufferSize), false, true)) {
-                MemoryUtil.memCopy(meshVertexBuffer, mappedView.data());
+            if (draw.textureSetup.texure0() != null) {
+                renderPass.bindTexture("Sampler0", draw.textureSetup.texure0(), draw.textureSetup.sampler0());
             }
 
-            offsets.put(format, offset + meshBufferSize);
-            this.draws
-                    .add(
-                            new EpsilonGuiRenderer.Draw(
-                                    vertexBuffer.currentBuffer(),
-                                    offset / format.getVertexSize(),
-                                    drawState.mode(),
-                                    drawState.indexCount(),
-                                    meshToDraw.pipeline,
-                                    meshToDraw.textureSetup,
-                                    meshToDraw.scissorArea
-                            )
-                    );
-            meshToDraw.close();
-        }
-    }
-
-    private void ensureVertexBufferSizes() {
-        Object2IntMap<VertexFormat> requiredSizes = this.calculatedRequiredVertexBufferSizes();
-
-        for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<VertexFormat> entry : requiredSizes.object2IntEntrySet()) {
-            VertexFormat vertexFormat = entry.getKey();
-            int requiredSize = entry.getIntValue();
-            MappableRingBuffer vertexBuffer = this.vertexBuffers.get(vertexFormat);
-            if (vertexBuffer == null || vertexBuffer.size() < requiredSize) {
-                if (vertexBuffer != null) {
-                    vertexBuffer.close();
-                }
-
-                this.vertexBuffers.put(vertexFormat, new MappableRingBuffer(() -> "GUI vertex buffer for " + vertexFormat, 34, requiredSize));
-            }
-        }
-    }
-
-    private Object2IntMap<VertexFormat> calculatedRequiredVertexBufferSizes() {
-        Object2IntMap<VertexFormat> requiredVertexBufferSizes = new Object2IntOpenHashMap<>();
-
-        for (EpsilonGuiRenderer.MeshToDraw meshToDraw : this.meshesToDraw) {
-            MeshData.DrawState drawState = meshToDraw.mesh.drawState();
-            VertexFormat format = drawState.format();
-            if (!requiredVertexBufferSizes.containsKey(format)) {
-                requiredVertexBufferSizes.put(format, 0);
+            if (draw.textureSetup.texure1() != null) {
+                renderPass.bindTexture("Sampler1", draw.textureSetup.texure1(), draw.textureSetup.sampler1());
             }
 
-            requiredVertexBufferSizes.put(format, requiredVertexBufferSizes.getInt(format) + drawState.vertexCount() * format.getVertexSize());
+            if (draw.textureSetup.texure2() != null) {
+                renderPass.bindTexture("Sampler2", draw.textureSetup.texure2(), draw.textureSetup.sampler2());
+            }
+
+            renderPass.setIndexBuffer(executeInfo.indexBuffer(), executeInfo.indexType());
+            renderPass.drawIndexed(executeInfo.indexCount(), 1, executeInfo.firstIndex(), executeInfo.baseVertex(), 0);
         }
-
-        return requiredVertexBufferSizes;
-    }
-
-    private void executeDraw(EpsilonGuiRenderer.Draw draw, RenderPass renderPass, GpuBuffer indexBuffer, VertexFormat.IndexType indexType) {
-        RenderPipeline pipeline = draw.pipeline();
-        renderPass.setPipeline(pipeline);
-        renderPass.setVertexBuffer(0, draw.vertexBuffer);
-        ScreenRectangle scissorArea = draw.scissorArea();
-        if (scissorArea != null) {
-            this.enableScissor(scissorArea, renderPass);
-        } else {
-            renderPass.disableScissor();
-        }
-
-        if (draw.textureSetup.texure0() != null) {
-            renderPass.bindTexture("Sampler0", draw.textureSetup.texure0(), draw.textureSetup.sampler0());
-        }
-
-        if (draw.textureSetup.texure1() != null) {
-            renderPass.bindTexture("Sampler1", draw.textureSetup.texure1(), draw.textureSetup.sampler1());
-        }
-
-        if (draw.textureSetup.texure2() != null) {
-            renderPass.bindTexture("Sampler2", draw.textureSetup.texure2(), draw.textureSetup.sampler2());
-        }
-
-        renderPass.setIndexBuffer(indexBuffer, indexType);
-        renderPass.drawIndexed(draw.baseVertex, 0, draw.indexCount, 1);
-    }
-
-    private BufferBuilder getBufferBuilder(RenderPipeline pipeline) {
-        return new BufferBuilder(this.byteBufferBuilder, pipeline.getVertexFormatMode(), pipeline.getVertexFormat());
     }
 
     private boolean scissorChanged(@Nullable ScreenRectangle newScissor, @Nullable ScreenRectangle oldScissor) {
@@ -522,14 +362,13 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     }
 
     private void enableScissor(ScreenRectangle rectangle, RenderPass renderPass) {
-        WindowRenderState windowState = mc.gameRenderer.getGameRenderState().windowRenderState;
-        int windowHeight = windowState.height;
-        int guiScale = windowState.guiScale;
+        WindowRenderState window = Minecraft.getInstance().gameRenderer.gameRenderState().windowRenderState;
+        int guiScale = window.guiScale;
         double left = rectangle.left() * guiScale;
-        double bottom = windowHeight - rectangle.bottom() * guiScale;
-        double width = rectangle.width() * guiScale;
-        double height = rectangle.height() * guiScale;
-        renderPass.enableScissor((int) left, (int) bottom, Math.max(0, (int) width), Math.max(0, (int) height));
+        double top = rectangle.top() * guiScale;
+        double right = Math.min(rectangle.right() * guiScale, window.width);
+        double bottom = Math.min(rectangle.bottom() * guiScale, window.height);
+        renderPass.enableScissor((int)left, window.height - (int)bottom, Math.max(0, (int)(right - left)), Math.max(0, (int)(bottom - top)));
     }
 
     public void registerPanoramaTextures(TextureManager textureManager) {
@@ -538,39 +377,17 @@ public class EpsilonGuiRenderer implements AutoCloseable {
 
     @Override
     public void close() {
-        this.byteBufferBuilder.close();
+        this.vertexBuffer.close();
         if (this.itemAtlas != null) {
             this.itemAtlas.close();
             this.itemAtlas = null;
         }
 
         this.guiProjectionMatrixBuffer.close();
-
-        for (MappableRingBuffer buffer : this.vertexBuffers.values()) {
-            buffer.close();
-        }
-
         this.oversizedItemRenderers.values().forEach(PictureInPictureRenderer::close);
         this.cubeMap.close();
     }
 
-    private record Draw(
-            GpuBuffer vertexBuffer,
-            int baseVertex,
-            VertexFormat.Mode mode,
-            int indexCount,
-            RenderPipeline pipeline,
-            TextureSetup textureSetup,
-            ScreenRectangle scissorArea
-    ) {
+    private record Draw(StagedVertexBuffer.Draw draw, RenderPipeline pipeline, TextureSetup textureSetup, @Nullable ScreenRectangle scissorArea) {
     }
-
-    private record MeshToDraw(MeshData mesh, RenderPipeline pipeline, TextureSetup textureSetup,
-                              ScreenRectangle scissorArea) implements AutoCloseable {
-        @Override
-        public void close() {
-            this.mesh.close();
-        }
-    }
-
 }

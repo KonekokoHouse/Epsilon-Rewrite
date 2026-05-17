@@ -3,8 +3,10 @@ package com.github.epsilon.graphics.shaders;
 import com.github.epsilon.assets.resources.ResourceLocationUtils;
 import com.github.epsilon.graphics.LuminRenderSystem;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -16,8 +18,8 @@ import net.minecraft.util.Util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 import static com.github.epsilon.Constants.mc;
 
@@ -46,7 +48,7 @@ public class GlslSandBox implements AutoCloseable {
                 .withLocation(Identifier.fromNamespaceAndPath(shader.getNamespace(), "pipelines/glsl_sandbox/" + shader.getPath().replace('/', '_')))
                 .withVertexShader(FULLSCREEN_VERTEX)
                 .withFragmentShader(shader)
-                .withUniform("GlslSandboxInfo", UniformType.UNIFORM_BUFFER)
+                .withBindGroupLayout(BindGroupLayout.builder().withUniform("GlslSandboxInfo", UniformType.UNIFORM_BUFFER).build())
                 .withCull(false)
                 .build()
         );
@@ -77,8 +79,8 @@ public class GlslSandBox implements AutoCloseable {
         ensureUniformBuffer();
 
         final var activeTarget = LuminRenderSystem.getActiveTarget();
-        final int targetWidth = activeTarget != null ? activeTarget.width() : mc.getMainRenderTarget().width;
-        final int targetHeight = activeTarget != null ? activeTarget.height() : mc.getMainRenderTarget().height;
+        final int targetWidth = activeTarget != null ? activeTarget.width() : mc.gameRenderer.mainRenderTarget().width;
+        final int targetHeight = activeTarget != null ? activeTarget.height() : mc.gameRenderer.mainRenderTarget().height;
 
         if (targetWidth <= 0 || targetHeight <= 0) return;
 
@@ -92,7 +94,7 @@ public class GlslSandBox implements AutoCloseable {
         float elapsedTime = (Util.getMillis() - startTimeMs) / 1000.0f;
 
         final var encoder = RenderSystem.getDevice().createCommandEncoder();
-        try (GpuBuffer.MappedView mappedView = encoder.mapBuffer(sandboxInfoUniformBuf, false, true)) {
+        try (GpuBufferSlice.MappedView mappedView = sandboxInfoUniformBuf.map(false, true)) {
             Std140Builder.intoBuffer(mappedView.data())
                     .putVec4(targetWidth, targetHeight, elapsedTime, 0.0f)
                     .putVec4(mouseUvX, mouseUvY, mousePxX, mousePxY);
@@ -100,13 +102,13 @@ public class GlslSandBox implements AutoCloseable {
 
         try (RenderPass pass = encoder.createRenderPass(
                 () -> "Lumin GLSL Sandbox",
-                colorView, OptionalInt.empty(),
+                colorView, Optional.empty(),
                 LuminRenderSystem.resolveDepthView(), OptionalDouble.empty())
         ) {
             pass.setPipeline(getOrCreatePipeline(fragmentShader));
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("GlslSandboxInfo", sandboxInfoUniformBuf);
-            pass.draw(0, 6);
+            pass.draw(6, 1, 0, 0);
         }
     }
 

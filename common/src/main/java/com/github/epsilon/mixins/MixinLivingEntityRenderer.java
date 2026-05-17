@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Vector2f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,7 +29,7 @@ public abstract class MixinLivingEntityRenderer<S extends LivingEntityRenderStat
     private RenderType modifyRenderType(RenderType original, S state, boolean isBodyVisible, boolean forceTransparent, boolean appearGlowing) {
         Chams chamsModule = Chams.INSTANCE;
 
-        if (!chamsModule.isEnabled() || state.entityType != EntityType.PLAYER) {
+        if (!chamsModule.isEnabled() || state.entityType != EntityTypes.PLAYER) {
             return original;
         }
 

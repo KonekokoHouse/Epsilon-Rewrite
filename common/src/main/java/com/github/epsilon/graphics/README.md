@@ -55,7 +55,7 @@ Minecraft libraries) to ensure safe and lazy initialization.
 
 ```java
 // Recommended initialization method
-private final Supplier<RectRenderer> rectRenderer = Suppliers.memoize(RectRenderer::new);
+private final Supplier<RectRenderer> rectRenderer = Suppliers.memoize(RectRenderer::create);
 
 // Use .get() to access the renderer instance
 rectRenderer.get().addRect(10f,10f,100f,100f,Color.WHITE);
