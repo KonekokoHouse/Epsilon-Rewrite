@@ -145,23 +145,17 @@ public class KillAura extends Module {
         attacks += MathUtils.getRandom(minCPS.getValue().doubleValue(), maxCPS.getValue().doubleValue()) / 20.0;
 
         if (target != null) {
-            RotationManager.INSTANCE.setRotations(
-                    RotationUtils.getRotationsToEntity(target),
-                    rotationSpeed.getValue().floatValue(),
-                    Priority.Medium.priority,
-                    _ -> {
-                        if (mode.is(Mode.OnePointEight)) {
-                            while (attacks >= 1.0) {
-                                clickTargets(targets);
-                                attacks -= 1.0;
-                            }
-                        } else {
-                            if (mc.player.getAttackStrengthScale(0.5f) >= 1.0f) {
-                                clickTargets(targets);
-                            }
-                        }
-                    }
-            );
+            RotationManager.INSTANCE.setRotations(RotationUtils.getRotationsToEntity(target), rotationSpeed.getValue().floatValue(), Priority.Medium);
+            if (mode.is(Mode.OnePointEight)) {
+                while (attacks >= 1.0) {
+                    clickTargets(targets);
+                    attacks -= 1.0;
+                }
+            } else {
+                if (mc.player.getAttackStrengthScale(0.5f) >= 1.0f) {
+                    clickTargets(targets);
+                }
+            }
         }
     }
 
