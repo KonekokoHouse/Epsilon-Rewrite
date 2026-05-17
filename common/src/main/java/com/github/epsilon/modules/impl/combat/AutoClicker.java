@@ -131,8 +131,8 @@ public class AutoClicker extends Module {
 
         float yaw = mc.player.getYRot();
         float pitch = mc.player.getXRot();
-        float yawRandom = (float) ((MathUtils.getRandomLongTail(-0.5f, 0.5f)) * 0.5);
-        float pitchRandom = (float) ((MathUtils.getRandomLongTail(-0.5f, 0.5f)) * 0.5);
+        float yawRandom = (float) ((MathUtils.getRandom(-0.5f, 0.5f)) * 0.5);
+        float pitchRandom = (float) ((MathUtils.getRandom(-0.5f, 0.5f)) * 0.5);
         mc.player.setYRot(yaw + yawRandom);
         mc.player.setXRot(pitch + pitchRandom);
     }
