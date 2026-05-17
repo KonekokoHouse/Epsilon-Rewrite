@@ -1,5 +1,7 @@
 package com.github.epsilon.graphics.vulkan;
 
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.systems.GpuDeviceBackend;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vulkan.VulkanDevice;
 import com.mojang.blaze3d.vulkan.VulkanQueue;
@@ -10,6 +12,7 @@ import org.lwjgl.vulkan.VkDevice;
 
 import javax.annotation.Nullable;
 
+import java.lang.reflect.Field;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
@@ -34,11 +37,12 @@ public class LuminVulkanContext {
     private long cmdPool;
 
     public LuminVulkanContext() {
-        if (!(RenderSystem.getDevice().backend instanceof VulkanDevice)) {
+        GpuDeviceBackend backend = getBackend();
+        if (!(backend instanceof VulkanDevice)) {
             return;
         }
 
-        VulkanDevice blz3dDevice = (VulkanDevice) RenderSystem.getDevice().backend;
+        VulkanDevice blz3dDevice = (VulkanDevice) backend;
 
         this.blz3dDevice = blz3dDevice;
         this.device = blz3dDevice.vkDevice();
@@ -134,6 +138,10 @@ public class LuminVulkanContext {
 
     public void destroy() {
         vkDestroyCommandPool(device, cmdPool, null);
+    }
+
+    private static GpuDeviceBackend getBackend() {
+        return RenderSystem.getDevice().backend;
     }
 
 }

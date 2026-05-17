@@ -76,7 +76,7 @@ public class LuminRenderSystem {
      */
     public static GpuTextureView resolveColorView() {
         if (activeTarget != null) return activeTarget.colorView();
-        return mc.mainRenderTarget().getColorTextureView();
+        return mc.gameRenderer.mainRenderTarget().getColorTextureView();
     }
 
     @Nullable

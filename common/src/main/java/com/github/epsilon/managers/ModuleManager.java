@@ -145,7 +145,7 @@ public class ModuleManager {
 
     @EventHandler
     private void onRender2D(Render2DEvent.HUD event) {
-        if (ClientUtils.isLoading() || mc.level == null || mc.screen instanceof HudEditorScreen) return;
+        if (ClientUtils.isLoading() || mc.level == null || mc.gui.screen() instanceof HudEditorScreen) return;
 
         for (Module m : modules) {
             if (m instanceof HudModule module && module.isEnabled()) {
@@ -158,14 +158,14 @@ public class ModuleManager {
 
     @EventHandler
     private void onKeyPress(KeyPressEvent event) {
-        if (mc.level == null || mc.screen != null || event.getKey() == GLFW.GLFW_KEY_UNKNOWN) return;
+        if (mc.level == null || mc.gui.screen() != null || event.getKey() == GLFW.GLFW_KEY_UNKNOWN) return;
 
         int keyCode = event.getKey();
         int action = event.getAction();
 
         ClientSetting cs = ClientSetting.INSTANCE;
         if (keyCode == cs.guiKeybind.getValue() && action == InputConstants.PRESS) {
-            mc.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+            mc.gui.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
                 case Panel -> PanelScreen.INSTANCE;
                 case Dropdown -> DropdownScreen.INSTANCE;
             });
@@ -176,7 +176,7 @@ public class ModuleManager {
 
     @EventHandler
     private void onMousePress(MousePressEvent event) {
-        if (mc.level != null && mc.screen == null) {
+        if (mc.level != null && mc.gui.screen() == null) {
             dispatchKeyBind(KeybindUtils.encodeMouseButton(event.getButton()), event.getAction());
         }
     }

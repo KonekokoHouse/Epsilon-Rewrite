@@ -11,6 +11,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -39,8 +40,6 @@ import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.function.Supplier;
-
-import static com.github.epsilon.Constants.mc;
 
 public class EpsilonGuiRenderer implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -151,24 +150,13 @@ public class EpsilonGuiRenderer implements AutoCloseable {
 
     private void draw() {
         if (!this.draws.isEmpty()) {
-            WindowRenderState windowState = mc.gameRenderer.getGameRenderState().windowRenderState;
+            Minecraft minecraft = Minecraft.getInstance();
+            WindowRenderState windowState = minecraft.gameRenderer.gameRenderState().windowRenderState;
             this.guiProjection
                     .setupOrtho(1000.0F, 11000.0F, (float)windowState.width / windowState.guiScale, (float)windowState.height / windowState.guiScale, true);
             RenderSystem.setProjectionMatrix(this.guiProjectionMatrixBuffer.getBuffer(this.guiProjection), ProjectionType.ORTHOGRAPHIC);
-            RenderTarget mainRenderTarget = mc.getMainRenderTarget();
-            int maxIndexCount = 0;
-
-            for (EpsilonGuiRenderer.Draw draw : this.draws) {
-                if (draw.indexCount > maxIndexCount) {
-                    maxIndexCount = draw.indexCount;
-                }
-            }
-
-            RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-            GpuBuffer indexBuffer = autoIndices.getBuffer(maxIndexCount);
-            VertexFormat.IndexType indexType = autoIndices.type();
-            GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
-                    .writeTransform(new Matrix4f().setTranslation(0.0F, 0.0F, -11000.0F), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
+            RenderTarget mainRenderTarget = minecraft.gameRenderer.mainRenderTarget();
+            GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f().setTranslation(0.0F, 0.0F, -11000.0F));
             if (this.firstDrawIndexAfterBlur > 0) {
                 this.executeDrawRange(
                         () -> "GUI before blur", mainRenderTarget, dynamicTransforms, 0, Math.min(this.firstDrawIndexAfterBlur, this.draws.size())
@@ -176,18 +164,9 @@ public class EpsilonGuiRenderer implements AutoCloseable {
             }
 
             if (this.draws.size() > this.firstDrawIndexAfterBlur) {
-                RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-                mc.gameRenderer.processBlurEffect();
-                this.executeDrawRange(
-                        () -> "GUI after blur",
-                        mainRenderTarget,
-                        fogBuffer,
-                        dynamicTransforms,
-                        indexBuffer,
-                        indexType,
-                        this.firstDrawIndexAfterBlur,
-                        this.draws.size()
-                );
+                RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 0.0);
+                minecraft.gameRenderer.processBlurEffect();
+                this.executeDrawRange(() -> "GUI after blur", mainRenderTarget, dynamicTransforms, this.firstDrawIndexAfterBlur, this.draws.size());
             }
         }
     }
@@ -323,7 +302,7 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     }
 
     private int getGuiScaleInvalidatingItemAtlasIfChanged() {
-        int guiScale = mc.gameRenderer.getGameRenderState().windowRenderState.guiScale;
+        int guiScale = Minecraft.getInstance().gameRenderer.gameRenderState().windowRenderState.guiScale;
         if (guiScale != this.cachedGuiScale) {
             this.invalidateItemAtlas();
 
@@ -383,9 +362,8 @@ public class EpsilonGuiRenderer implements AutoCloseable {
     }
 
     private void enableScissor(ScreenRectangle rectangle, RenderPass renderPass) {
-        WindowRenderState windowState = mc.gameRenderer.getGameRenderState().windowRenderState;
-        int windowHeight = windowState.height;
-        int guiScale = windowState.guiScale;
+        WindowRenderState window = Minecraft.getInstance().gameRenderer.gameRenderState().windowRenderState;
+        int guiScale = window.guiScale;
         double left = rectangle.left() * guiScale;
         double top = rectangle.top() * guiScale;
         double right = Math.min(rectangle.right() * guiScale, window.width);

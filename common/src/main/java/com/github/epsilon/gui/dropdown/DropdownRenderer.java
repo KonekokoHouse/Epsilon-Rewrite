@@ -1,6 +1,7 @@
 package com.github.epsilon.gui.dropdown;
 
 import com.github.epsilon.graphics.renderers.*;
+import net.minecraft.client.Minecraft;
 
 import static com.github.epsilon.Constants.mc;
 

@@ -56,7 +56,7 @@ public class ClientSetting extends Module {
     public final KeybindSetting guiKeybind = keybindSetting("Gui Keybind", GLFW.GLFW_KEY_RIGHT_SHIFT).group(sgGeneral);
 
     public final EnumSetting<GuiMode> guiMode = enumSetting("Gui Mode", GuiMode.Dropdown, _ -> {
-        mc.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
+        mc.gui.setScreen(switch (ClientSetting.INSTANCE.guiMode.getValue()) {
             case Panel -> PanelScreen.INSTANCE;
             case Dropdown -> DropdownScreen.INSTANCE;
         });

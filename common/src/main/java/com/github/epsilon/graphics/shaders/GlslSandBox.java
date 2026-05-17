@@ -79,8 +79,8 @@ public class GlslSandBox implements AutoCloseable {
         ensureUniformBuffer();
 
         final var activeTarget = LuminRenderSystem.getActiveTarget();
-        final int targetWidth = activeTarget != null ? activeTarget.width() : mc.getMainRenderTarget().width;
-        final int targetHeight = activeTarget != null ? activeTarget.height() : mc.getMainRenderTarget().height;
+        final int targetWidth = activeTarget != null ? activeTarget.width() : mc.gameRenderer.mainRenderTarget().width;
+        final int targetHeight = activeTarget != null ? activeTarget.height() : mc.gameRenderer.mainRenderTarget().height;
 
         if (targetWidth <= 0 || targetHeight <= 0) return;
 
