@@ -42,14 +42,18 @@ public class RotationManager {
     }
 
     public void setRotations(Vector2f rotations, double rotationSpeed) {
-        setRotations(rotations, rotationSpeed, null, Priority.Lowest);
+        setRotations(rotations, rotationSpeed, null, Priority.Medium);
     }
 
-    public void setRotations(Vector2f rotations, final double rotationSpeed, Priority priority) {
+    public void setRotations(Vector2f rotations, double rotationSpeed, Priority priority) {
         setRotations(rotations, rotationSpeed, null, priority);
     }
 
-    public void setRotations(Vector2f rotations, double rotationSpeed, final Function<Vector2f, Boolean> raytrace, Priority priority) {
+    public void setRotations(Vector2f rotations, double rotationSpeed, Function<Vector2f, Boolean> raytrace) {
+        setRotations(rotations, rotationSpeed, raytrace, Priority.Medium);
+    }
+
+    public void setRotations(Vector2f rotations, double rotationSpeed, Function<Vector2f, Boolean> raytrace, Priority priority) {
         if (this.active && priority.priority < this.priority) {
             return;
         }
