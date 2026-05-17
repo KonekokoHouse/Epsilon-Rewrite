@@ -31,10 +31,6 @@ neoForge {
             gameDirectory = file("runs/data").also { it.mkdirs() }
             programArguments.addAll("--mod", modId, "--all", "--output", file("src/generated/resources/").absolutePath, "--existing", file("src/main/resources/").absolutePath)
         }
-        register("server") {
-            server()
-            gameDirectory = file("runs/server").also { it.mkdirs() }
-        }
     }
     mods {
         register(modId) {
