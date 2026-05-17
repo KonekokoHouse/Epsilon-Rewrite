@@ -13,38 +13,6 @@ public class MovementFix extends Module {
         super("Movement Fix", Category.MOVEMENT);
     }
 
-    public void fixMovement(MoveInputEvent event, float yaw) {
-        float forward = event.getForward();
-        float strafe = event.getStrafe();
-
-        int angleUnit = 45;
-        float angleTolerance = 22.5f;
-        float directionFactor = Math.max(Math.abs(forward), Math.abs(strafe));
-        double angleDifference = Mth.wrapDegrees(getDirection(forward, strafe) - yaw);
-        double angleDistance = Math.abs(angleDifference);
-
-        forward = 0.0f;
-        strafe = 0.0f;
-
-        if (angleDistance <= (double) ((float) angleUnit + angleTolerance)) {
-            forward++;
-        } else if (angleDistance >= (double) (180.0F - (float) angleUnit - angleTolerance)) {
-            forward--;
-        }
-
-        if (angleDifference >= (double) ((float) angleUnit - angleTolerance) && angleDifference <= (double) (180.0F - (float) angleUnit + angleTolerance)) {
-            strafe--;
-        } else if (angleDifference <= (double) ((float) (-angleUnit) + angleTolerance) && angleDifference >= (double) (-180.0F + (float) angleUnit - angleTolerance)) {
-            strafe++;
-        }
-
-        forward *= directionFactor;
-        strafe *= directionFactor;
-
-        event.setForward(forward);
-        event.setStrafe(strafe);
-    }
-
     private float getDirection(float forward, float strafe) {
         float direction = mc.player.getYRot();
 
@@ -80,6 +48,38 @@ public class MovementFix extends Module {
         }
 
         return direction;
+    }
+
+    public void fixMovement(MoveInputEvent event, float yaw) {
+        float forward = event.getForward();
+        float strafe = event.getStrafe();
+
+        int angleUnit = 45;
+        float angleTolerance = 22.5f;
+        float directionFactor = Math.max(Math.abs(forward), Math.abs(strafe));
+        double angleDifference = Mth.wrapDegrees(getDirection(forward, strafe) - yaw);
+        double angleDistance = Math.abs(angleDifference);
+
+        forward = 0.0f;
+        strafe = 0.0f;
+
+        if (angleDistance <= (double) ((float) angleUnit + angleTolerance)) {
+            forward++;
+        } else if (angleDistance >= (double) (180.0F - (float) angleUnit - angleTolerance)) {
+            forward--;
+        }
+
+        if (angleDifference >= (double) ((float) angleUnit - angleTolerance) && angleDifference <= (double) (180.0F - (float) angleUnit + angleTolerance)) {
+            strafe--;
+        } else if (angleDifference <= (double) ((float) (-angleUnit) + angleTolerance) && angleDifference >= (double) (-180.0F + (float) angleUnit - angleTolerance)) {
+            strafe++;
+        }
+
+        forward *= directionFactor;
+        strafe *= directionFactor;
+
+        event.setForward(forward);
+        event.setStrafe(strafe);
     }
 
 }

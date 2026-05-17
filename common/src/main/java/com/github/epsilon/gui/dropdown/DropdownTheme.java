@@ -4,7 +4,7 @@ import com.github.epsilon.gui.panel.MD3Theme;
 
 import java.awt.*;
 
-public final class DropdownTheme {
+public class DropdownTheme {
 
     public static final float PANEL_WIDTH = 130.0f;
     public static final float PANEL_HEADER_HEIGHT = 28.0f;

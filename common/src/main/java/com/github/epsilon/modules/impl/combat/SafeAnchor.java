@@ -192,7 +192,7 @@ public class SafeAnchor extends Module {
         if (nullCheck()) return;
 
         if (silentRotation.getValue() && targetRotation != null) {
-            RotationManager.INSTANCE.applyRotation(targetRotation, currentRotationSpeed, Priority.High);
+            RotationManager.INSTANCE.setRotations(targetRotation, currentRotationSpeed, Priority.High);
         }
 
         if (delay > 0) {

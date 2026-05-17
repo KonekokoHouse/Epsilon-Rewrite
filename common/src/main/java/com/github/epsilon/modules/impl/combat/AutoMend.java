@@ -52,23 +52,23 @@ public class AutoMend extends Module {
         FindItemResult result = InvUtils.findInHotbar(Items.EXPERIENCE_BOTTLE);
         if (!result.found()) return;
 
-        RotationManager.INSTANCE.applyRotation(new Vector2f(mc.player.getYRot(), 90), 10, Priority.High, _ -> {
-            InvUtils.swap(result.slot(), true);
+        RotationManager.INSTANCE.setRotations(new Vector2f(mc.player.getYRot(), 90), 10, Priority.High);
 
-            InteractionHand hand = result.getHand();
-            mc.gameMode.useItem(mc.player, hand);
-            if (swingHand.getValue()) {
-                mc.player.swing(hand);
-            } else {
-                mc.getConnection().send(new ServerboundSwingPacket(hand));
-            }
+        InvUtils.swap(result.slot(), true);
 
-            if (switchMode.is(SwitchMode.Silent)) {
-                InvUtils.swapBack();
-            } else {
-                shouldSwapBack = true;
-            }
-        });
+        InteractionHand hand = result.getHand();
+        mc.gameMode.useItem(mc.player, hand);
+        if (swingHand.getValue()) {
+            mc.player.swing(hand);
+        } else {
+            mc.getConnection().send(new ServerboundSwingPacket(hand));
+        }
+
+        if (switchMode.is(SwitchMode.Silent)) {
+            InvUtils.swapBack();
+        } else {
+            shouldSwapBack = true;
+        }
     }
 
 }

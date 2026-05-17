@@ -267,13 +267,13 @@ public class ZealotCrystalPlus extends Module {
 
         if (preRotation.getValue()) {
             if (preBreak != null) {
-                RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
+                RotationManager.INSTANCE.setRotations(RotationUtils.calculate(preBreak.pos()), getRotationSpeed(), Priority.Lowest);
             } else if (prePlace != null) {
-                RotationManager.INSTANCE.applyRotation(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
+                RotationManager.INSTANCE.setRotations(prePlace.rotation(), getRotationSpeed(), Priority.Lowest);
             } else {
                 Vector2f rotation = getFallbackRotation();
                 if (rotation != null) {
-                    RotationManager.INSTANCE.applyRotation(rotation, getRotationSpeed(), Priority.Lowest);
+                    RotationManager.INSTANCE.setRotations(rotation, getRotationSpeed(), Priority.Lowest);
                 }
             }
         }
@@ -1004,27 +1004,21 @@ public class ZealotCrystalPlus extends Module {
             }
         }
 
-        InteractionHand finalHand = hand;
         BlockHitResult hitResult = new BlockHitResult(placeInfo.hitVec(), placeInfo.side(), placeInfo.blockPos(), false);
-        RotationManager.INSTANCE.applyRotation(placeInfo.rotation(), getRotationSpeed(), Priority.High, ignored -> {
-            if (!isEnabled() || nullCheck()) {
-                InvUtils.swapBack();
-                return;
-            }
+        RotationManager.INSTANCE.setRotations(placeInfo.rotation(), getRotationSpeed(), Priority.High);
 
-            InteractionResult result = mc.gameMode.useItemOn(mc.player, finalHand, hitResult);
-            if (result.consumesAction()) {
-                if (placeSwing.getValue()) {
-                    doSwing(resolveSwingHand(true));
-                }
-                placedPosMap.put(placeInfo.blockPos().asLong(), System.currentTimeMillis() + ownTimeout.getValue());
-                placeTimer.reset();
-                lastActiveTime = System.currentTimeMillis();
-                target = placeInfo.target();
-                updateRenderTarget(placeInfo.blockPos(), placeInfo.targetDamage(), placeInfo.selfDamage());
+        InteractionResult result = mc.gameMode.useItemOn(mc.player, hand, hitResult);
+        if (result.consumesAction()) {
+            if (placeSwing.getValue()) {
+                doSwing(resolveSwingHand(true));
             }
-            InvUtils.swapBack();
-        });
+            placedPosMap.put(placeInfo.blockPos().asLong(), System.currentTimeMillis() + ownTimeout.getValue());
+            placeTimer.reset();
+            lastActiveTime = System.currentTimeMillis();
+            target = placeInfo.target();
+            updateRenderTarget(placeInfo.blockPos(), placeInfo.targetDamage(), placeInfo.selfDamage());
+        }
+        InvUtils.swapBack();
 
         return true;
     }
@@ -1052,38 +1046,33 @@ public class ZealotCrystalPlus extends Module {
             }
         }
 
-        RotationManager.INSTANCE.applyRotation(RotationUtils.calculate(breakPlan.pos()), getRotationSpeed(), Priority.High, ignored -> {
-            if (!isEnabled() || nullCheck()) {
-                InvUtils.swapBack();
-                return;
-            }
+        RotationManager.INSTANCE.setRotations(RotationUtils.calculate(breakPlan.pos()), getRotationSpeed(), Priority.High);
 
-            Entity current = mc.level.getEntity(breakPlan.entityId());
-            if (!(current instanceof EndCrystal currentCrystal) || !currentCrystal.isAlive()) {
-                InvUtils.swapBack();
-                return;
-            }
-            if (!checkBreakRange(currentCrystal.position())) {
-                InvUtils.swapBack();
-                return;
-            }
-
-            mc.gameMode.attack(mc.player, currentCrystal);
-            doSwing(resolveSwingHand(false));
-            breakTimer.reset();
-            lastActiveTime = System.currentTimeMillis();
-            attackedCrystalMap.put(currentCrystal.getId(), System.currentTimeMillis() + 1000L);
-            attackedPosMap.put(BlockPos.containing(currentCrystal.position()).asLong(), System.currentTimeMillis() + 1000L);
-            updateRenderTarget(currentCrystal.blockPosition().below(), breakPlan.targetDamage(), breakPlan.selfDamage());
-
-            PlaceInfo placeInfo = getActionPlaceInfo();
-            cacheFallbackRotation(placeInfo != null ? placeInfo.rotation() : RotationUtils.calculate(breakPlan.pos()));
-            if (packetPlace.getValue().onBreak && placeInfo != null && crystalPlaceBoxIntersects(placeInfo.blockPos(), currentCrystal.getBoundingBox())) {
-                placeDirect(placeInfo, true);
-            }
-
+        Entity current = mc.level.getEntity(breakPlan.entityId());
+        if (!(current instanceof EndCrystal currentCrystal) || !currentCrystal.isAlive()) {
             InvUtils.swapBack();
-        });
+            return true;
+        }
+        if (!checkBreakRange(currentCrystal.position())) {
+            InvUtils.swapBack();
+            return true;
+        }
+
+        mc.gameMode.attack(mc.player, currentCrystal);
+        doSwing(resolveSwingHand(false));
+        breakTimer.reset();
+        lastActiveTime = System.currentTimeMillis();
+        attackedCrystalMap.put(currentCrystal.getId(), System.currentTimeMillis() + 1000L);
+        attackedPosMap.put(BlockPos.containing(currentCrystal.position()).asLong(), System.currentTimeMillis() + 1000L);
+        updateRenderTarget(currentCrystal.blockPosition().below(), breakPlan.targetDamage(), breakPlan.selfDamage());
+
+        PlaceInfo placeInfo = getActionPlaceInfo();
+        cacheFallbackRotation(placeInfo != null ? placeInfo.rotation() : RotationUtils.calculate(breakPlan.pos()));
+        if (packetPlace.getValue().onBreak && placeInfo != null && crystalPlaceBoxIntersects(placeInfo.blockPos(), currentCrystal.getBoundingBox())) {
+            placeDirect(placeInfo, true);
+        }
+
+        InvUtils.swapBack();
         return true;
     }
 

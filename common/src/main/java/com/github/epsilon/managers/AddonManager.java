@@ -5,14 +5,15 @@ import com.github.epsilon.addon.EpsilonAddon;
 
 import java.util.*;
 
-public final class AddonManager {
+public class AddonManager {
+
     public static final AddonManager INSTANCE = new AddonManager();
+
     private final List<EpsilonAddon> addons = new ArrayList<>();
     private final Set<String> addonIds = new HashSet<>();
     private boolean setupComplete;
 
     private AddonManager() {
-
     }
 
     public synchronized void registerAddon(EpsilonAddon addon) {

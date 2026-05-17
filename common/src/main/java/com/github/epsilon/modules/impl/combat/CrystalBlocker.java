@@ -132,7 +132,7 @@ public class CrystalBlocker extends Module {
             mc.player.setYRot(rot.x);
             mc.player.setXRot(Mth.clamp(rot.y, -90.0f, 90.0f));
         } else if (rotate.is(RotateMode.Silent)) {
-            RotationManager.INSTANCE.applyRotation(rot, silentSpeed.getValue(), Priority.Highest);
+            RotationManager.INSTANCE.setRotations(rot, silentSpeed.getValue(), Priority.Highest);
 
             if (RotationManager.INSTANCE.rotations != null) {
                 double yawDiff = Math.abs(Mth.wrapDegrees(RotationManager.INSTANCE.rotations.x - rot.x));

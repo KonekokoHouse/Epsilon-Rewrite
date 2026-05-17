@@ -1,6 +1,7 @@
 package com.github.epsilon.mixins;
 
-import com.github.epsilon.managers.RotationManager;
+import com.github.epsilon.events.bus.EventBus;
+import com.github.epsilon.events.impl.RotationAnimationEvent;
 import com.github.epsilon.modules.impl.render.Chams;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -11,7 +12,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import org.joml.Vector2f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,40 +27,35 @@ public abstract class MixinLivingEntityRenderer<S extends LivingEntityRenderStat
     @ModifyReturnValue(method = "getRenderType", at = @At("RETURN"))
     private RenderType modifyRenderType(RenderType original, S state, boolean isBodyVisible, boolean forceTransparent, boolean appearGlowing) {
         Chams chamsModule = Chams.INSTANCE;
-
         if (!chamsModule.isEnabled() || state.entityType != EntityType.PLAYER) {
             return original;
         }
-
         return Chams.INSTANCE.getRenderType(getTextureLocation(state));
     }
 
-    @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Mth;rotLerp(FFF)F"))
-    private float hookHeadYaw(float original, LivingEntity entity, S state, float partialTick) {
+    @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;solveBodyRot(Lnet/minecraft/world/entity/LivingEntity;FF)F"))
+    private float modifyBodyYaw(float original, LivingEntity entity, S state, float partialTicks) {
         if (entity == mc.player) {
-            Vector2f rotation = RotationManager.INSTANCE.animationRotation;
-            Vector2f lastRotation = RotationManager.INSTANCE.lastAnimationRotation;
-            if (rotation != null && lastRotation != null && RotationManager.INSTANCE.isActive()) {
-                float lastYaw = lastRotation.x;
-                float currentYaw = rotation.x;
-                float diff = Mth.wrapDegrees(currentYaw - lastYaw);
-                return Mth.wrapDegrees(lastYaw + diff * partialTick);
-            }
+            RotationAnimationEvent event = EventBus.INSTANCE.post(new RotationAnimationEvent(entity.yBodyRot, entity.yBodyRotO, 0.0f, 0.0f));
+            return Mth.rotLerp(partialTicks, event.getLastYaw(), event.getYaw());
+        }
+        return original;
+    }
+
+    @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Mth;rotLerp(FFF)F"))
+    private float modifyHeadYaw(float original, LivingEntity entity, S state, float partialTicks) {
+        if (entity == mc.player) {
+            RotationAnimationEvent event = EventBus.INSTANCE.post(new RotationAnimationEvent(entity.yHeadRot, entity.yHeadRotO, 0.0f, 0.0f));
+            return Mth.rotLerp(partialTicks, event.getLastYaw(), event.getYaw());
         }
         return original;
     }
 
     @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot(F)F"))
-    private float hookPitch(float original, LivingEntity entity, S state, float partialTick) {
+    private float modifyPitch(float original, LivingEntity entity, S state, float partialTicks) {
         if (entity == mc.player) {
-            Vector2f rotation = RotationManager.INSTANCE.animationRotation;
-            Vector2f lastRotation = RotationManager.INSTANCE.lastAnimationRotation;
-            if (rotation != null && lastRotation != null && RotationManager.INSTANCE.isActive()) {
-                float lastPitch = lastRotation.y;
-                float currentPitch = rotation.y;
-                float diff = currentPitch - lastPitch;
-                return lastPitch + diff * partialTick;
-            }
+            RotationAnimationEvent event = EventBus.INSTANCE.post(new RotationAnimationEvent(0.0f, 0.0f, entity.getXRot(), entity.getXRot(0.0f)));
+            return Mth.rotLerp(partialTicks, event.getLastPitch(), event.getPitch());
         }
         return original;
     }

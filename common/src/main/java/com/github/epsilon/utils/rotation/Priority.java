@@ -1,6 +1,7 @@
 package com.github.epsilon.utils.rotation;
 
 public enum Priority {
+
     Lowest(0),
     Low(10),
     Medium(50),
@@ -12,4 +13,5 @@ public enum Priority {
     Priority(int priority) {
         this.priority = priority;
     }
+
 }

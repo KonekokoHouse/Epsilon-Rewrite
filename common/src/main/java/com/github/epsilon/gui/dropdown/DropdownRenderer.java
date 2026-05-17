@@ -4,7 +4,7 @@ import com.github.epsilon.graphics.renderers.*;
 
 import static com.github.epsilon.Constants.mc;
 
-public final class DropdownRenderer {
+public class DropdownRenderer {
 
     private static final int MAX_SLOTS = 32;
 

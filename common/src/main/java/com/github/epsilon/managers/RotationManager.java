@@ -4,16 +4,15 @@ import com.github.epsilon.events.bus.EventBus;
 import com.github.epsilon.events.bus.EventHandler;
 import com.github.epsilon.events.bus.EventPriority;
 import com.github.epsilon.events.impl.*;
-import com.github.epsilon.modules.impl.ClientSetting;
 import com.github.epsilon.modules.impl.movement.MovementFix;
 import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerRotationPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.github.epsilon.Constants.mc;
@@ -32,105 +31,75 @@ public class RotationManager {
     private boolean active;
     private boolean smoothed;
     private double rotationSpeed;
-    private Function<Vector2f, Boolean> raycast;
+    private Function<Vector2f, Boolean> raytrace;
     private float randomAngle;
+    private boolean s08;
 
-    private final List<RotationRequest> tickRequests = new ArrayList<>();
+    private int priority;
 
     private RotationManager() {
         EventBus.INSTANCE.subscribe(this);
     }
 
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed) {
-        applyRotation(rotations, rotationSpeed, null, Priority.Lowest, null);
+    public void setRotations(Vector2f rotations, double rotationSpeed) {
+        setRotations(rotations, rotationSpeed, null, Priority.Lowest);
     }
 
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final Priority priority) {
-        applyRotation(rotations, rotationSpeed, null, priority, null);
+    public void setRotations(Vector2f rotations, final double rotationSpeed, Priority priority) {
+        setRotations(rotations, rotationSpeed, null, priority);
     }
 
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final int priority) {
-        applyRotation(rotations, rotationSpeed, null, priority, null);
-    }
-
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final Priority priority, final Consumer<RotationApplyRecord> callback) {
-        applyRotation(rotations, rotationSpeed, null, priority, callback);
-    }
-
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final int priority, final Consumer<RotationApplyRecord> callback) {
-        applyRotation(rotations, rotationSpeed, null, priority, callback);
-    }
-
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final Function<Vector2f, Boolean> raycast, final Priority priority, final Consumer<RotationApplyRecord> callback) {
-        if (Double.isNaN(rotations.x) || Double.isNaN(rotations.y) || Double.isInfinite(rotations.x) || Double.isInfinite(rotations.y)) {
+    public void setRotations(Vector2f rotations, double rotationSpeed, final Function<Vector2f, Boolean> raytrace, Priority priority) {
+        if (this.active && priority.priority < this.priority) {
             return;
         }
 
-        final Priority safePriority = priority == null ? Priority.Lowest : priority;
-        tickRequests.add(new RotationRequest(new Vector2f(rotations.x, rotations.y), rotationSpeed * 18, raycast, safePriority, safePriority.priority, callback));
-    }
-
-    public void applyRotation(final Vector2f rotations, final double rotationSpeed, final Function<Vector2f, Boolean> raycast, final int priority, final Consumer<RotationApplyRecord> callback) {
-        if (Double.isNaN(rotations.x) || Double.isNaN(rotations.y) || Double.isInfinite(rotations.x) || Double.isInfinite(rotations.y)) {
+        if (s08) {
+            this.rotations = this.lastRotations = this.targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+            s08 = false;
             return;
         }
 
-        final int safePriority = Math.max(Priority.Lowest.priority, priority);
-        tickRequests.add(new RotationRequest(new Vector2f(rotations.x, rotations.y), rotationSpeed * 18, raycast, resolvePriority(safePriority), safePriority, callback));
-    }
+        this.targetRotations = rotations;
+        this.rotationSpeed = rotationSpeed * 18;
+        this.raytrace = raytrace;
+        this.priority = priority.priority;
+        this.active = true;
 
-    private Priority resolvePriority(int priority) {
-        if (priority >= Priority.Highest.priority) return Priority.Highest;
-        if (priority >= Priority.High.priority) return Priority.High;
-        if (priority >= Priority.Medium.priority) return Priority.Medium;
-        if (priority >= Priority.Low.priority) return Priority.Low;
-        return Priority.Lowest;
-    }
-
-    private void prepareRotateBack() {
-        targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-        rotationSpeed = ClientSetting.INSTANCE.rotateBackSpeed.getValue() * 18;
-        raycast = null;
-        smoothed = false;
-    }
-
-    public boolean isDone() {
-        return Math.abs(Mth.wrapDegrees(rotations.x - targetRotations.x)) <= 1 && Math.abs(Mth.wrapDegrees(rotations.y - targetRotations.y)) <= 1;
+        smooth();
     }
 
     private void smooth() {
         if (!smoothed) {
             float targetYaw = targetRotations.x;
             float targetPitch = targetRotations.y;
-            float currentYaw = rotations != null ? rotations.x : mc.player.getYRot();
-            float currentPitch = rotations != null ? rotations.y : mc.player.getXRot();
 
-            if (raycast != null && (Math.abs(targetYaw - currentYaw) > 5 || Math.abs(targetPitch - currentPitch) > 5)) {
+            if (raytrace != null && (Math.abs(targetYaw - rotations.x) > 5 || Math.abs(targetPitch - rotations.y) > 5)) {
                 final Vector2f trueTargetRotations = new Vector2f(targetRotations.x, targetRotations.y);
 
                 double speed = (Math.random() * Math.random() * Math.random()) * 20;
                 randomAngle += (float) ((20 + (float) (Math.random() - 0.5) * (Math.random() * Math.random() * Math.random() * 360)) * (mc.player.tickCount / 10 % 2 == 0 ? -1 : 1));
 
-                offset.x = ((float) (offset.x + -Mth.sin((float) Math.toRadians(randomAngle)) * speed));
-                offset.y = ((float) (offset.y + Mth.cos((float) Math.toRadians(randomAngle)) * speed));
+                offset.x = (float) (offset.x + -Mth.sin((float) Math.toRadians(randomAngle)) * speed);
+                offset.y = (float) (offset.y + Mth.cos((float) Math.toRadians(randomAngle)) * speed);
 
                 targetYaw += offset.x;
                 targetPitch += offset.y;
 
-                if (!raycast.apply(new Vector2f(targetYaw, targetPitch))) {
+                if (!raytrace.apply(new Vector2f(targetYaw, targetPitch))) {
                     randomAngle = (float) Math.toDegrees(Math.atan2(trueTargetRotations.x - targetYaw, targetPitch - trueTargetRotations.y)) - 180;
 
                     targetYaw -= offset.x;
                     targetPitch -= offset.y;
 
-                    offset.x = ((float) (offset.x + -Mth.sin((float) Math.toRadians(randomAngle)) * speed));
-                    offset.y = ((float) (offset.y + Mth.cos((float) Math.toRadians(randomAngle)) * speed));
+                    offset.x = (float) (offset.x + -Mth.sin((float) Math.toRadians(randomAngle)) * speed);
+                    offset.y = (float) (offset.y + Mth.cos((float) Math.toRadians(randomAngle)) * speed);
 
                     targetYaw = targetYaw + offset.x;
                     targetPitch = targetPitch + offset.y;
                 }
 
-                if (!raycast.apply(new Vector2f(targetYaw, targetPitch))) {
+                if (!raytrace.apply(new Vector2f(targetYaw, targetPitch))) {
                     offset.x = 0;
                     offset.y = 0;
 
@@ -145,6 +114,18 @@ public class RotationManager {
         smoothed = true;
     }
 
+    public Vector2f getRotation() {
+        return active ? rotations : new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+    }
+
+    public Vector2f getLastRotation() {
+        return lastRotations != null ? lastRotations : new Vector2f(mc.player.yRotO, mc.player.xRotO);
+    }
+
+    public boolean isDone() {
+        return Math.abs(Mth.wrapDegrees(rotations.x - targetRotations.x)) <= 1 && Math.abs(Mth.wrapDegrees(rotations.y - targetRotations.y)) <= 1;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -153,76 +134,40 @@ public class RotationManager {
         this.active = active;
     }
 
-    public float getYaw() {
-        if (mc.player == null) {
-            return 0.0f;
-        } else if (active) {
-            return rotations.x;
-        } else {
-            return mc.player.getYRot();
+    public boolean isSmoothed() {
+        return smoothed;
+    }
+
+    public void setSmoothed(boolean smoothed) {
+        this.smoothed = smoothed;
+    }
+
+    @EventHandler
+    private void onRespawn(SendPositionEvent event) {
+        if (mc.player.tickCount <= 1) {
+            lastRotations = null;
+            rotations = null;
         }
     }
 
-    public float getPitch() {
-        if (mc.player == null) {
-            return 0.0f;
-        } else if (active) {
-            return rotations.y;
-        } else {
-            return mc.player.getXRot();
+    @EventHandler
+    private void onPacketSend(PacketEvent.Send event) {
+        if (active && event.getPacket() instanceof ServerboundUseItemPacket packet) {
+            event.setPacket(new ServerboundUseItemPacket(packet.getHand(), packet.getSequence(), rotations.x, rotations.y));
         }
     }
 
-    public Vector2f getRotation() {
-        if (active) return rotations;
-        else return new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+    @EventHandler
+    private void onPacketReceive(PacketEvent.Receive event) {
+        if (event.getPacket() instanceof ClientboundPlayerPositionPacket || event.getPacket() instanceof ClientboundPlayerRotationPacket) {
+            s08 = true;
+        }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    private void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.level == null) {
-            tickRequests.clear();
-            return;
-        }
-
+    @EventHandler(priority = EventPriority.LOWEST)
+    private void onTick(PlayerTickEvent event) {
         if (!active || rotations == null || lastRotations == null || targetRotations == null) {
-            Vector2f rotation = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-            targetRotations = rotation;
-            lastRotations = rotation;
-            rotations = rotation;
-        }
-
-        if (!tickRequests.isEmpty()) {
-            RotationRequest selectedRequest = tickRequests.getFirst();
-            for (int i = 1; i < tickRequests.size(); i++) {
-                RotationRequest request = tickRequests.get(i);
-                if (request.priorityValue() > selectedRequest.priorityValue()) {
-                    selectedRequest = request;
-                }
-            }
-
-            this.targetRotations = new Vector2f(selectedRequest.targetRotation().x, selectedRequest.targetRotation().y);
-            this.rotationSpeed = selectedRequest.rotationSpeed();
-            this.raycast = selectedRequest.raycast();
-            this.active = true;
-            this.smoothed = false;
-
-            smooth();
-
-            Vector2f currentRot = rotations != null ? new Vector2f(rotations.x, rotations.y) : new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-
-            RotationApplyRecord record = new RotationApplyRecord(currentRot, active);
-
-            if (selectedRequest.callback() != null) {
-                try {
-                    selectedRequest.callback().accept(record);
-                } catch (Exception ignored) {
-                }
-            }
-
-            tickRequests.clear();
-        } else if (active) {
-            prepareRotateBack();
+            rotations = lastRotations = targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
         }
 
         if (active) {
@@ -231,19 +176,29 @@ public class RotationManager {
     }
 
     @EventHandler
+    private void onAnimation(RotationAnimationEvent event) {
+        if (active && animationRotation != null && lastAnimationRotation != null) {
+            event.setYaw(animationRotation.x);
+            event.setLastYaw(lastAnimationRotation.x);
+            event.setPitch(animationRotation.y);
+            event.setLastPitch(lastAnimationRotation.y);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     private void onSendPosition(SendPositionEvent event) {
         if (active && rotations != null) {
             float yaw = rotations.x;
             float pitch = rotations.y;
-
-            if (!Float.isNaN(yaw) && !Float.isNaN(pitch)) {
+            if (!Float.isNaN(yaw) && !Float.isNaN(pitch) && active) {
                 event.setYaw(yaw);
                 event.setPitch(pitch);
             }
 
             if (Math.abs((rotations.x - mc.player.getYRot()) % 360) < 1 && Math.abs((rotations.y - mc.player.getXRot())) < 1) {
                 active = false;
-                correctDisabledRotations();
+                priority = 0;
+                this.correctDisabledRotations();
             }
 
             lastRotations = rotations;
@@ -254,41 +209,28 @@ public class RotationManager {
         lastAnimationRotation = animationRotation;
         animationRotation = new Vector2f(event.getYaw(), event.getPitch());
         targetRotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+        raytrace = null;
         smoothed = false;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    private void onMoveInput(MoveInputEvent event) {
+        MovementFix moveFix = MovementFix.INSTANCE;
+        if (moveFix.isEnabled() && active && rotations != null) {
+            moveFix.fixMovement(event, rotations.x);
+        }
     }
 
     @EventHandler
     private void onRaytrace(RaytraceEvent event) {
-        if (active && rotations != null) {
+        if (rotations != null && event.getEntity() == mc.player && active) {
             event.setYaw(rotations.x);
             event.setPitch(rotations.y);
         }
     }
 
     @EventHandler
-    private void onKeyboardInput(MoveInputEvent event) {
-        MovementFix moveFix = MovementFix.INSTANCE;
-        if (active && moveFix.isEnabled() && rotations != null && !mc.player.isFallFlying()) {
-            moveFix.fixMovement(event, rotations.x);
-        }
-    }
-
-    @EventHandler
-    private void onStrafe(StrafeEvent event) {
-        if (active && MovementFix.INSTANCE.isEnabled() && rotations != null) {
-            event.setYaw(rotations.x);
-        }
-    }
-
-    @EventHandler
-    private void onJump(JumpEvent event) {
-        if (active && MovementFix.INSTANCE.isEnabled() && rotations != null) {
-            event.setYaw(rotations.x);
-        }
-    }
-
-    @EventHandler
-    private void onItemRayTrace(UseItemRayTraceEvent event) {
+    private void onItemRaytrace(UseItemRaytraceEvent event) {
         if (rotations != null && active) {
             event.setYaw(rotations.x);
             event.setPitch(rotations.y);
@@ -296,8 +238,22 @@ public class RotationManager {
     }
 
     @EventHandler
+    private void onStrafe(StrafeEvent event) {
+        if (active && rotations != null) {
+            event.setYaw(rotations.x);
+        }
+    }
+
+    @EventHandler
+    private void onJump(JumpEvent event) {
+        if (active && rotations != null) {
+            event.setYaw(rotations.x);
+        }
+    }
+
+    @EventHandler
     private void onFallFlying(FallFlyingEvent event) {
-        if (active && MovementFix.INSTANCE.isEnabled() && rotations != null) {
+        if (rotations != null) {
             event.setPitch(rotations.y);
         }
     }
@@ -310,21 +266,10 @@ public class RotationManager {
     }
 
     private void correctDisabledRotations() {
-        if (lastRotations == null) return;
-        final Vector2f rotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
-        final Vector2f fixedRotations = RotationUtils.resetRotation(RotationUtils.applySensitivityPatch(rotations, lastRotations));
-
-        if (!Float.isNaN(fixedRotations.x) && !Float.isNaN(fixedRotations.y)) {
-            mc.player.setYRot(fixedRotations.x);
-            mc.player.setXRot(fixedRotations.y);
-        }
-    }
-
-    private record RotationRequest(Vector2f targetRotation, double rotationSpeed, Function<Vector2f, Boolean> raycast,
-                                   Priority priority, int priorityValue, Consumer<RotationApplyRecord> callback) {
-    }
-
-    public record RotationApplyRecord(Vector2f currentRotation, boolean active) {
+        Vector2f rotations = new Vector2f(mc.player.getYRot(), mc.player.getXRot());
+        Vector2f fixedRotations = RotationUtils.resetRotation(RotationUtils.applySensitivityPatch(rotations, lastRotations));
+        mc.player.setYRot(fixedRotations.x);
+        mc.player.setXRot(fixedRotations.y);
     }
 
 }
