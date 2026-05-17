@@ -91,22 +91,12 @@ public class MaceAura extends Module {
 
         updateTarget();
         if (target == null) {
-            rotationReady = false;
             return;
         }
 
-        RotationManager.INSTANCE.setRotations(
-                RotationUtils.getRotationsToEntity(target),
-                10,
-                Priority.Medium.priority,
-                record -> {
-                    if (!isEnabled() || nullCheck()) return;
-                    rotationReady = true;
-                }
-        );
+        RotationManager.INSTANCE.setRotations(RotationUtils.getRotationsToEntity(target), 10, Priority.Medium);
 
         if (!isReadyToAttack()) return;
-        if (!rotationReady) return;
 
         doAura();
     }

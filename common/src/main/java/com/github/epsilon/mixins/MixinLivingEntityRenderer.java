@@ -54,7 +54,7 @@ public abstract class MixinLivingEntityRenderer<S extends LivingEntityRenderStat
 
     @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot(F)F"))
     private float modifyPitch(float original, LivingEntity entity, S state, float partialTicks) {
-        if (entity == Minecraft.getInstance().player) {
+        if (entity == mc.player) {
             RotationAnimationEvent event = new RotationAnimationEvent(0.0f, 0.0f, entity.getXRot(), entity.getXRot(0.0f));
             return Mth.rotLerp(partialTicks, event.getLastPitch(), event.getPitch());
         }

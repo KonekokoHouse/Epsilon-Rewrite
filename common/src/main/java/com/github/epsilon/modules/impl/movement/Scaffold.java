@@ -82,6 +82,18 @@ public class Scaffold extends Module {
         ));
     }
 
+    private enum Mode {
+        GodBridge,
+        TellyBridge,
+    }
+
+    private enum SwapMode {
+        None,
+        Normal,
+        InvSwitch,
+        Silent,
+    }
+
     private final EnumSetting<Mode> mode = enumSetting("Mode", Mode.TellyBridge);
     private final EnumSetting<SwapMode> swapMode = enumSetting("Swap Mode", SwapMode.Normal);
     private final BoolSetting swapBack = boolSetting("Swap Back", true, () -> swapMode.is(SwapMode.Normal));
@@ -124,13 +136,6 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
-    private void onMotion(SendPositionEvent event) {
-        if (safeWalk.getValue() && mode.is(Mode.GodBridge)) {
-            mc.options.keyShift.setDown(mc.player.onGround() && SafeWalk.INSTANCE.isOnBlockEdge(0.3F));
-        }
-    }
-
-    @EventHandler
     private void onTickPre(TickEvent.Pre event) {
         if (nullCheck()) return;
 
@@ -159,6 +164,13 @@ public class Scaffold extends Module {
                 RotationManager.INSTANCE.setRotations(getRotation(blockInfo), rotationSpeed.getValue());
                 place(item);
             }
+        }
+    }
+
+    @EventHandler
+    private void onMotion(SendPositionEvent event) {
+        if (safeWalk.getValue() && mode.is(Mode.GodBridge)) {
+            mc.options.keyShift.setDown(mc.player.onGround() && SafeWalk.INSTANCE.isOnBlockEdge(0.3F));
         }
     }
 
@@ -323,7 +335,7 @@ public class Scaffold extends Module {
 
             Vec3 relevant = hit.subtract(baseVec);
             if (relevant.lengthSqr() <= 4.5 * 4.5 && relevant.dot(new Vec3(dir.getUnitVec3i())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && mode.is("GodBridge") && MoveUtils.isMoving() && !mc.options.keyJump.isDown()) {
+                if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtils.isMoving() && !mc.options.keyJump.isDown()) {
                     continue;
                 }
                 blockInfo = new BlockInfo(pos, new BlockPos(baseBlock), dir.getOpposite());
@@ -344,8 +356,7 @@ public class Scaffold extends Module {
     private boolean onAir() {
         Vec3 baseVec = mc.player.getEyePosition();
         BlockPos base = BlockPos.containing(baseVec.x, getYLevel(), baseVec.z);
-        return mc.level.getBlockState(base).getBlock() instanceof AirBlock
-                || mc.level.getBlockState(base).getBlock() instanceof WaterloggedTransparentBlock;
+        return mc.level.getBlockState(base).getBlock() instanceof AirBlock || mc.level.getBlockState(base).getBlock() instanceof WaterloggedTransparentBlock;
     }
 
     private record BlockInfo(BlockPos blockPos, BlockPos position, Direction dir) {
@@ -353,18 +364,6 @@ public class Scaffold extends Module {
 
     private record RenderBox(AABB aabb, Color lineColor, Color sideColor, long startTime, boolean fade,
                              boolean shrink) {
-    }
-
-    private enum Mode {
-        GodBridge,
-        TellyBridge,
-    }
-
-    private enum SwapMode {
-        None,
-        Normal,
-        InvSwitch,
-        Silent,
     }
 
 }

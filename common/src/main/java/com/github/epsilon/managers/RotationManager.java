@@ -9,6 +9,7 @@ import com.github.epsilon.utils.rotation.Priority;
 import com.github.epsilon.utils.rotation.RotationUtils;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerRotationPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
 
@@ -150,7 +151,14 @@ public class RotationManager {
     }
 
     @EventHandler
-    private void onPacket(PacketEvent.Receive event) {
+    private void onPacketSend(PacketEvent.Send event) {
+        if (active && event.getPacket() instanceof ServerboundUseItemPacket packet) {
+            event.setPacket(new ServerboundUseItemPacket(packet.getHand(), packet.getSequence(), rotations.x, rotations.y));
+        }
+    }
+
+    @EventHandler
+    private void onPacketReceive(PacketEvent.Receive event) {
         if (event.getPacket() instanceof ClientboundPlayerPositionPacket || event.getPacket() instanceof ClientboundPlayerRotationPacket) {
             s08 = true;
         }

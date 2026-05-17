@@ -26,7 +26,7 @@ public class MixinLivingEntity {
 
     @WrapOperation(method = "tickHeadTurn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getYRot()F"))
     private float modifyHeadYaw(LivingEntity entity, Operation<Float> original) {
-        if (entity == Minecraft.getInstance().player) {
+        if (entity == mc.player) {
             RotationAnimationEvent event = EventBus.INSTANCE.post(new RotationAnimationEvent(entity.getYRot(), 0.0f, 0.0f, 0.0f));
             return event.getYaw();
         }

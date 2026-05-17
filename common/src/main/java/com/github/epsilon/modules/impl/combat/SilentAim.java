@@ -60,17 +60,17 @@ public class SilentAim extends Module {
 
         Vector2f rotations = RotationUtils.calculate(target.getEyePosition());
 
-        RotationManager.INSTANCE.setRotations(rotations, 10, Priority.High, _ -> {
-            if (!target.isAlive() || target.isDeadOrDying() || nullCheck()) {
-                redirecting = false;
-                return;
-            }
+        RotationManager.INSTANCE.setRotations(rotations, 10, Priority.High);
 
-            mc.gameMode.attack(mc.player, target);
-            mc.player.swing(InteractionHand.MAIN_HAND);
-
+        if (!target.isAlive() || target.isDeadOrDying()) {
             redirecting = false;
-        });
+            return;
+        }
+
+        mc.gameMode.attack(mc.player, target);
+        mc.player.swing(InteractionHand.MAIN_HAND);
+
+        redirecting = false;
     }
 
 }
